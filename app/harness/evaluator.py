@@ -24,10 +24,42 @@ class HarnessEvaluator:
         memory_reuse = 1.0 if run.memory_snapshot else 0.0
         completion = 1.0 if run.completed else 0.0
 
+        security_block_count = 0
+        security_challenge_count = 0
+        for step in run.steps:
+            for note in step.guardrail_notes:
+                if "SECURITY_BLOCK" in note:
+                    security_block_count += 1
+                if "SECURITY_CHALLENGE" in note:
+                    security_challenge_count += 1
+
+        discovery = run.metadata.get("discovery", [])
+        discovery_count = float(len(discovery)) if isinstance(discovery, list) else 0.0
+
+        used_tools = {step.tool_call.name for step in run.steps if step.tool_call}
+        discovery_names = set()
+        if isinstance(discovery, list):
+            for item in discovery:
+                if isinstance(item, dict):
+                    name = item.get("name")
+                    if isinstance(name, str):
+                        discovery_names.add(name)
+        discovery_utilization = len(used_tools & discovery_names) / max(len(used_tools), 1)
+
+        recipe_meta = run.metadata.get("recipe", {})
+        recipe_total_steps = int(recipe_meta.get("total_steps", 0)) if isinstance(recipe_meta, dict) else 0
+        recipe_executed_steps = int(recipe_meta.get("executed_steps", 0)) if isinstance(recipe_meta, dict) else 0
+        recipe_completion = recipe_executed_steps / max(recipe_total_steps, 1) if recipe_total_steps else 0.0
+
         return {
             "tool_calls": float(len(tool_steps)),
             "tool_success_rate": round(tool_success_rate, 4),
             "guardrail_block_count": float(guardrail_hits),
             "context_reuse_score": memory_reuse,
             "completion_score": completion,
+            "security_block_count": float(security_block_count),
+            "security_challenge_count": float(security_challenge_count),
+            "discovery_count": discovery_count,
+            "discovery_utilization": round(discovery_utilization, 4),
+            "recipe_completion": round(recipe_completion, 4),
         }

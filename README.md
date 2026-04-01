@@ -1,185 +1,160 @@
-# 🤖 Agent Harness
+<p align="center">
+  <img src="https://capsule-render.vercel.app/api?type=waving&color=0:0B1020,35:0EA5E9,70:22C55E,100:F59E0B&height=230&section=header&text=Agent%20Harness&fontSize=56&fontColor=ffffff&desc=Agents%20think.%20Skills%20act.%20The%20harness%20decides.&descAlignY=68&animation=fadeIn" alt="Agent Harness banner"/>
+</p>
 
-> **Agents think. Skills act. The harness decides.** 🎯
->
-> A multi-agent system where each agent dynamically selects complementary skills with full routing trace.
+<p align="center">
+  <b>A multi-agent system where each agent dynamically selects complementary skills with full routing trace.</b>
+</p>
 
----
+<p align="center">
+  <img src="https://img.shields.io/badge/Harness-Engineering-0ea5e9?style=for-the-badge"/>
+  <img src="https://img.shields.io/badge/Visual-Demo%20Ready-22c55e?style=for-the-badge"/>
+  <img src="https://img.shields.io/badge/Security-Allow%20%7C%20Challenge%20%7C%20Block-f59e0b?style=for-the-badge"/>
+  <img src="https://img.shields.io/badge/Showcase-Impact%20Lens-9333ea?style=for-the-badge"/>
+</p>
 
-## ✨ Core Features
+<p align="center">
+  <img src="https://img.shields.io/badge/Python-3.11%2B-3776AB?logo=python&logoColor=white"/>
+  <img src="https://img.shields.io/badge/LangGraph-Orchestrated-121D33"/>
+  <img src="https://img.shields.io/badge/CLI-Typer-black"/>
+  <img src="https://img.shields.io/badge/Output-JSON%20Protocol-brightgreen"/>
+</p>
 
-| 🎪 | Feature | Details |
-|:---:|---------|---------|
-| 🧠 | **Agent Routing** | Complexity estimation + collaboration hints |
-| 🛠️ | **Skill Arsenal** | 12 built-in + 6+ marketplace skills |
-| ⚡ | **Complementarity Engine V2** | Synergy detection • Conflict avoidance • Budget-aware |
-| 🎭 | **Personality Engine** | Adaptive profiles + role-slot portfolio planning |
-| 🎛️ | **System Modes** | `fast` ⚙️ `balanced` ⚖️ `deep` 🔍 `safety_critical` 🛡️ |
-| 🔍 | **Conflict Detection** | Cross-skill consensus building + DISSENT branch |
-| 📊 | **Multi-View Traces** | Sankey • Skill Matrix • Gantt • Waterfall |
-| 🏷️ | **SkillCard** | Inspect built-in & external skill lifecycle |
+## Why This Repo Turns Heads
 
----
+Most agent repos stop at "it runs."  
+This one ships the data model that powers high-impact visuals from day one:
 
-## 🏗️ Architecture Pipeline
+- Value scoring: `reliability + observability + adaptability + safety + innovation`
+- Front-end protocol: radar, timeline, discovery board, security lane, network graph, hero cards
+- First-screen blueprint: panel layout + refs + motion hints
+- Event stream: replay-ready timeline for animated storytelling
+- Scenario packs: one-click multi-run comparison to prove business value
+- Auto optimizer: find best `mode + recipe` config per query
 
+## First Screen Architecture
+
+```mermaid
+flowchart LR
+    A[User Query] --> B[Security Preflight]
+    B --> C[Agent + Skill Routing]
+    C --> D[Tool Discovery + Recipe Loop]
+    D --> E[Guardrails + Tool Execution]
+    E --> F[Value Card]
+    F --> G[Visual Payload]
+    G --> H[First Screen Blueprint]
+    G --> I[Event Stream Playback]
+    G --> J[Showcase Comparison]
 ```
-┌─────────────────────────────────────────────────────────────────┐
-│                          🎯 START                               │
-├─────────────────────────────────────────────────────────────────┤
-│ 1️⃣  query_understanding      → Mode + Risk + Constraints       │
-│ 2️⃣  route_agent              → AURORA-style scoring            │
-│ 3️⃣  adapt_personality        → Dynamic adaptation              │
-│ 4️⃣  route_skills             → Complementary selection v2      │
-│ 5️⃣  execute                  → Skill execution + retry         │
-│ 6️⃣  detect_conflicts         → Cross-skill detection           │
-│ 7️⃣  build_consensus          → Shared themes + agreement       │
-│ 8️⃣  dissent                  → Structured disagreement         │
-│ 9️⃣  aggregate                → Ensemble synthesis + metrics    │
-├─────────────────────────────────────────────────────────────────┤
-│                          🏁 END                                 │
-└─────────────────────────────────────────────────────────────────┘
-```
 
----
+## Visual Demo Power Map
 
-## 🚀 Quick Start
+| You Need to Show | Already Exported | Data Source |
+|---|---|---|
+| KPI hero strip | `kpis` + `value_index` | `harness-value` / `harness-visual` |
+| Radar chart | `radar.labels` + `radar.values` | `harness-visual` |
+| Gantt timeline | `timeline[]` with step status | `harness-visual` |
+| Discovery scatter | `discovery_board[]` (score/novelty/risk) | `harness-visual` |
+| Security lane | `security_board` (preflight + step actions) | `harness-visual` |
+| Force graph | `tool_network.nodes/links` | `harness-visual` |
+| Animated replay | `event_stream[]` with timestamps | `harness-stream` |
+| Multi-scenario leaderboard | `comparison.rows` + `best` | `harness-showcase` |
+| Best strategy recommendation | `best + recommendation` | `harness-optimize` |
 
-Get up and running in seconds:
+## Quick Start
 
 ```bash
-python -m app.main run "Summarize this report and highlight the main risks"
+pip install -r requirements.txt
+python -m app.main run "Compare two rollout plans and highlight compliance risk"
 ```
 
----
-
-## 📚 Harness Engineering Layer
-
-Located in `app/harness/` — your control center for intelligent task execution:
-
-- 🔌 **Tool Integration** - API/browser/code adapters (`ToolRegistry`)
-- ⏰ **Task Scheduling** - Planner loop (`HarnessPlanner` + `HarnessEngine.run`)
-- 💾 **Memory & Context** - Persistent state (`HarnessMemoryStore`)
-- 🛡️ **Guardrails** - Constraints & blocking rules (`GuardrailEngine`)
-- 📈 **Evaluation Suite** - Harness metrics + eval (`HarnessEvaluator`, `harness-eval`)
-
----
-
-## 🎮 CLI Commands
-
-| Command | What It Does |
-|---------|-------------|
-| `run` | 🚀 End-to-end routing pipeline |
-| `trace` | 🔍 Show full reasoning path |
-| `benchmark` | 📊 Compare routing strategies |
-| `market-search` | 🔎 Find marketplace skills |
-| `personality` | 🎭 List/blend/view profiles |
-| `ecosystem` | 🌍 Browse trending skills & providers |
-| `mode-compare` | ⚖️ Compare across system modes |
-| `skill-card` | 🏷️ Inspect skill metadata & lifecycle |
-| `policy` | 📋 View mode-specific policies |
-| `harness` | ⚙️ Run planner/tools/memory loop |
-| `harness-eval` | 📈 Run evaluation suite |
-| `replay` / `traces` | 🎬 Replay & audit past runs |
-
----
-
-## 📁 Project Structure
-
-```
-agent-harness/
-│
-├── 🤖 app/
-│   ├── agents/          8 agent profiles with adaptive personalities
-│   ├── benchmark/       Dataset, strategies, evaluation framework
-│   ├── coordination/    Conflict detection & consensus building
-│   ├── core/            Core enums, models, graph state
-│   ├── ecosystem/       Marketplace discovery & reputation system
-│   ├── harness/         🎯 Planner, tools, memory, guardrails, eval
-│   ├── memory/          Online learning & reliability stats
-│   ├── personality/     Profiles, strategy engine, adaptation logic
-│   ├── policy/          Mode-aware policy bundles
-│   ├── routing/         Agent/skill routing & executor
-│   ├── tracing/         Events, visualizer, analyzer
-│   ├── utils/           Rich display helpers
-│   ├── graph.py         8-node LangGraph topology
-│   ├── main.py          CLI entry point
-│   └── demo.py          Feature demonstrations
-│
-├── 📊 data/             Generated marketplace & benchmark datasets
-├── 🧪 tests/            Comprehensive test suite
-├── 📦 requirements.txt   Dependencies
-└── 📖 README.md         You are here!
-```
-
----
-
-## 💡 Example Commands
+## One-Liners That Generate "Wow" Data
 
 ```bash
-# 🛡️ Safety-first analysis
-python -m app.main run --mode safety_critical --contract "Audit this proposal"
+# 1) Value card (great for headline KPI section)
+python -m app.main harness-value "compare safe rollout strategies" --json
 
-# 🎯 Targeted skill selection  
-python -m app.main run --style cautious --max-skills 4 "Evaluate proposal & list risks"
+# 2) Full visual payload (single-run dashboard data)
+python -m app.main harness-visual "map ecosystem opportunities" --output reports/visual.json
 
-# 🔍 Full reasoning trace
-python -m app.main trace --views "Analyze risks and compare options"
+# 3) First-screen blueprint (layout + motion hints)
+python -m app.main harness-blueprint "audit governance posture" --output reports/blueprint.json
 
-# 🌍 Explore marketplace
-python -m app.main ecosystem trending
+# 4) Event playback stream (animation timeline)
+python -m app.main harness-stream "audit governance posture" --output reports/stream.json
 
-# 🎭 Blend personalities
-python -m app.main personality --blend "scholar:0.6,explorer:0.4"
+# 5) Multi-scenario showcase (side-by-side comparison)
+python -m app.main harness-showcase --pack impact-lens --output reports/showcase.json
 
-# 📊 Run full evaluation
-python -m app.main harness-eval
-
-# 🎬 Replay past runs
-python -m app.main traces
-
-# 🎨 View all demos
-python -m app.main demo all
+# 6) Auto-select best mode + recipe for this query
+python -m app.main harness-optimize "design a safe and innovative rollout strategy" --output reports/optimize.json
 ```
 
----
+## Real Payload Glimpse
 
-## 🔗 External Skills & Marketplace Integration
+```json
+{
+  "kpis": {
+    "value_index": 86.63,
+    "reliability": 0.85,
+    "safety": 0.72,
+    "innovation": 0.91
+  },
+  "radar": {
+    "labels": ["reliability", "observability", "adaptability", "safety", "innovation"],
+    "values": [85.0, 84.0, 88.0, 72.0, 91.0]
+  },
+  "hero_cards": [
+    {"title": "Reliability Signal", "headline": "85% reliable execution"},
+    {"title": "Safety Signal", "headline": "72% safety posture"},
+    {"title": "Innovation Signal", "headline": "91% innovation density"}
+  ]
+}
+```
 
-Expand your capabilities with third-party skills:
+## Showcase Packs
 
-- 📦 Import marketplace skill bundles (`import_marketplace_from_file`)
-- 🔌 Register runtime external skills via `app/skills/registry.py`
-- 🔍 Hybrid search: Cosine similarity + BM25 + reputation scoring
-- 📝 Sample bundles in `examples/external_skills.sample.json` and `examples/marketplace_bundle.sample.json`
+| Pack | Storyline | Best For |
+|---|---|---|
+| `impact-lens` | governance + ecosystem + architecture evolution | investor/demo first screen |
+| `security-first` | attack defense + constrained audit flow | enterprise/security buyers |
+
+List packs:
 
 ```bash
-# 📥 Load external skills
-python -m app.main import-external-skills examples/external_skills.sample.json
-
-# 📥 Import marketplace bundle
-python -m app.main import-marketplace examples/marketplace_bundle.sample.json
+python -m app.main harness-showcase-packs
 ```
 
+## Core Harness Files
+
+- `app/harness/manifest.py`
+- `app/harness/discovery.py`
+- `app/harness/security.py`
+- `app/harness/recipes.py`
+- `app/harness/value.py`
+- `app/harness/visuals.py`
+- `app/harness/presentation.py`
+- `app/harness/stream.py`
+- `app/harness/showcase.py`
+- `app/harness/optimizer.py`
+- `app/harness/engine.py`
+
+Visual protocol docs:
+
+- `examples/visual_payload_contract.md`
+- `examples/harness_recipe.sample.json`
+
+## Suggested GitHub Topics
+
+`ai`, `llm`, `agent`, `multi-agent`, `langchain`, `agent-framework`, `agent-routing`, `skill`, `tools`, `orchestration`, `harness`, `evaluation`
+
 ---
 
-## 🗺️ Roadmap
+If you are building a flashy demo page, this repo already gives you:
 
-- 📈 Enhanced benchmark coverage & explainability
-- 🔗 Real external tool backends for marketplace skills  
-- 🧠 Online learning from user feedback
+1. The numbers (value KPI)
+2. The narrative (hero cards + storyline)
+3. The motion timeline (event stream)
+4. The visual skeleton (first-screen blueprint)
+5. The proof (multi-scenario comparison + optimizer recommendation)
 
----
-
-## 🎯 Why Agent Harness?
-
-✅ **Multi-Agent Intelligence** — Leverage 8 distinct agent personalities  
-✅ **Smart Skill Selection** — Complementarity engine picks the perfect combination  
-✅ **Full Transparency** — Complete routing traces & reasoning paths  
-✅ **Adaptive Behavior** — Personalities evolve based on context  
-✅ **Safety First** — Built-in guardrails & conflict detection  
-✅ **Extensible** — Bring your own skills via marketplace  
-
----
-
-**Ready to harness the power of coordinated intelligence?** 🚀

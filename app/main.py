@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+from pathlib import Path
 
 import typer
 from rich.console import Console
@@ -494,6 +495,8 @@ def harness_command(
     mode: str = typer.Option("balanced", "--mode", "-m", help="Execution mode"),
     max_steps: int = typer.Option(4, "--max-steps", help="Harness planner max steps"),
     max_tool_calls: int = typer.Option(4, "--max-tool-calls", help="Harness max tool calls"),
+    recipe: str = typer.Option("", "--recipe", "-r", help="Built-in recipe name"),
+    recipe_path: str = typer.Option("", "--recipe-path", help="Path to JSON/YAML recipe file"),
     json_output: bool = typer.Option(False, "--json", help="Render harness payload as JSON"),
 ) -> None:
     """Run harness loop: planner + tools + memory + guardrails + eval."""
@@ -502,6 +505,8 @@ def harness_command(
         query=query,
         constraints=HarnessConstraints(max_steps=max_steps, max_tool_calls=max_tool_calls),
         mode=_parse_mode(mode).value,
+        recipe=recipe or None,
+        recipe_path=recipe_path or None,
     )
     payload = HARNESS.run_to_dict(run)
     if json_output:
@@ -512,6 +517,317 @@ def harness_command(
     console.print(f"[bold]Plan:[/] {payload.get('plan', [])}")
     console.print(f"[bold]Eval:[/] {payload.get('eval_metrics', {})}")
     console.print(f"[bold]Final Answer:[/]\n{payload.get('final_answer', '')}")
+
+
+@app.command("harness-tools")
+def harness_tools_command(
+    query: str = typer.Argument("", help="Optional query for dynamic tool discovery"),
+    mode: str = typer.Option("balanced", "--mode", "-m", help="Execution mode"),
+    limit: int = typer.Option(8, "--limit", "-n", help="Max tools to return"),
+) -> None:
+    """Inspect harness tool catalog or discover tools for a query."""
+
+    if query:
+        discovered = HARNESS.discover_tools(
+            query=query,
+            mode=_parse_mode(mode).value,
+            limit=limit,
+        )
+        console.print_json(json.dumps({"query": query, "discovered": discovered}, indent=2, default=str))
+        return
+
+    console.print_json(json.dumps({"catalog": HARNESS.list_tool_catalog()}, indent=2, default=str))
+
+
+@app.command("harness-recipes")
+def harness_recipes_command() -> None:
+    """List built-in harness recipes."""
+
+    console.print_json(json.dumps({"recipes": HARNESS.list_recipes()}, indent=2, default=str))
+
+
+@app.command("harness-recipe")
+def harness_recipe_command(
+    query: str = typer.Argument(..., help="Task query"),
+    recipe: str = typer.Option("", "--recipe", "-r", help="Built-in recipe name"),
+    recipe_path: str = typer.Option("", "--recipe-path", help="Path to JSON/YAML recipe file"),
+    mode: str = typer.Option("balanced", "--mode", "-m", help="Execution mode"),
+    max_steps: int = typer.Option(6, "--max-steps", help="Harness max steps"),
+    max_tool_calls: int = typer.Option(6, "--max-tool-calls", help="Harness max tool calls"),
+    json_output: bool = typer.Option(False, "--json", help="Render payload as JSON"),
+) -> None:
+    """Run harness with a built-in or file-based recipe."""
+
+    run = HARNESS.run_recipe(
+        query=query,
+        recipe=recipe or None,
+        recipe_path=recipe_path or None,
+        mode=_parse_mode(mode).value,
+        constraints=HarnessConstraints(max_steps=max_steps, max_tool_calls=max_tool_calls),
+    )
+    payload = HARNESS.run_to_dict(run)
+    if json_output:
+        console.print_json(json.dumps(payload, indent=2, default=str))
+        return
+
+    recipe_meta = payload.get("metadata", {}).get("recipe", {})
+    console.print(f"[bold]Harness Recipe:[/] {recipe_meta.get('name', '(auto)')}")
+    console.print(f"[bold]Plan:[/] {payload.get('plan', [])}")
+    console.print(f"[bold]Eval:[/] {payload.get('eval_metrics', {})}")
+    console.print(f"[bold]Final Answer:[/]\n{payload.get('final_answer', '')}")
+
+
+@app.command("harness-redteam")
+def harness_redteam_command(
+    mode: str = typer.Option("balanced", "--mode", "-m", help="Execution mode"),
+    strict: bool = typer.Option(True, "--strict/--relaxed", help="Strict security profile"),
+    include_runs: bool = typer.Option(False, "--include-runs", help="Include full run payloads"),
+) -> None:
+    """Run harness red-team suite for safety/reliability checks."""
+
+    constraints = HarnessConstraints(
+        max_steps=3,
+        max_tool_calls=3,
+        allow_write_actions=False,
+        allow_network_actions=not strict,
+        allow_browser_actions=not strict,
+        security_strictness="strict" if strict else "balanced",
+    )
+    result = HARNESS.run_redteam(
+        mode=_parse_mode(mode).value,
+        constraints=constraints,
+        include_runs=include_runs,
+    )
+    console.print_json(json.dumps(result, indent=2, default=str))
+
+
+@app.command("harness-report")
+def harness_report_command(
+    query: str = typer.Argument(..., help="Task query"),
+    mode: str = typer.Option("balanced", "--mode", "-m", help="Execution mode"),
+    recipe: str = typer.Option("", "--recipe", "-r", help="Built-in recipe name"),
+    recipe_path: str = typer.Option("", "--recipe-path", help="Path to recipe file"),
+    max_steps: int = typer.Option(6, "--max-steps", help="Harness max steps"),
+    max_tool_calls: int = typer.Option(6, "--max-tool-calls", help="Harness max tool calls"),
+    report_format: str = typer.Option("markdown", "--format", "-f", help="Report format: markdown|json"),
+    output: str = typer.Option("", "--output", "-o", help="Optional output path"),
+) -> None:
+    """Run harness and render a shareable report."""
+
+    run = HARNESS.run(
+        query=query,
+        mode=_parse_mode(mode).value,
+        recipe=recipe or None,
+        recipe_path=recipe_path or None,
+        constraints=HarnessConstraints(max_steps=max_steps, max_tool_calls=max_tool_calls),
+    )
+    fmt = report_format.lower().strip()
+    if fmt not in {"markdown", "json"}:
+        raise typer.BadParameter("format must be markdown or json")
+
+    report = HARNESS.build_report(run, fmt=fmt)
+    if output:
+        output_path = Path(output)
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        if fmt == "json":
+            output_path.write_text(json.dumps(report, indent=2, default=str), encoding="utf-8")
+        else:
+            output_path.write_text(str(report), encoding="utf-8")
+        console.print(f"[green]Report written:[/] {output_path}")
+        return
+
+    if fmt == "json":
+        console.print_json(json.dumps(report, indent=2, default=str))
+    else:
+        console.print(str(report))
+
+
+@app.command("harness-value")
+def harness_value_command(
+    query: str = typer.Argument(..., help="Task query"),
+    mode: str = typer.Option("balanced", "--mode", "-m", help="Execution mode"),
+    recipe: str = typer.Option("", "--recipe", "-r", help="Built-in recipe name"),
+    recipe_path: str = typer.Option("", "--recipe-path", help="Path to recipe file"),
+    json_output: bool = typer.Option(False, "--json", help="Render payload as JSON"),
+) -> None:
+    """Run harness and emit a value card for demo storytelling."""
+
+    run = HARNESS.run(
+        query=query,
+        mode=_parse_mode(mode).value,
+        recipe=recipe or None,
+        recipe_path=recipe_path or None,
+    )
+    card = HARNESS.build_value_card(run)
+    if json_output:
+        console.print_json(json.dumps(card, indent=2, default=str))
+        return
+
+    console.print(f"[bold]Value Index:[/] {card.get('value_index')} ({card.get('band')})")
+    console.print(f"[bold]Narrative:[/] {card.get('narrative', '')}")
+    for item in card.get("dimensions", []):
+        console.print(f"- {item.get('name')}: {round(float(item.get('score', 0.0)) * 100, 1)}%")
+
+
+@app.command("harness-visual")
+def harness_visual_command(
+    query: str = typer.Argument(..., help="Task query"),
+    mode: str = typer.Option("balanced", "--mode", "-m", help="Execution mode"),
+    recipe: str = typer.Option("", "--recipe", "-r", help="Built-in recipe name"),
+    recipe_path: str = typer.Option("", "--recipe-path", help="Path to recipe file"),
+    output: str = typer.Option("", "--output", "-o", help="Optional output JSON file"),
+) -> None:
+    """Run harness and export front-end ready visualization payload."""
+
+    run = HARNESS.run(
+        query=query,
+        mode=_parse_mode(mode).value,
+        recipe=recipe or None,
+        recipe_path=recipe_path or None,
+    )
+    card = HARNESS.build_value_card(run)
+    payload = HARNESS.build_visual_payload(run, value_card=card)
+    if output:
+        path = Path(output)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(json.dumps(payload, indent=2, default=str), encoding="utf-8")
+        console.print(f"[green]Visual payload written:[/] {path}")
+        return
+
+    console.print_json(json.dumps(payload, indent=2, default=str))
+
+
+@app.command("harness-showcase-packs")
+def harness_showcase_packs_command() -> None:
+    """List built-in showcase packs."""
+
+    console.print_json(json.dumps({"packs": HARNESS.list_showcase_packs()}, indent=2, default=str))
+
+
+@app.command("harness-showcase")
+def harness_showcase_command(
+    pack: str = typer.Option("impact-lens", "--pack", "-p", help="Showcase pack name"),
+    mode_override: str = typer.Option("", "--mode-override", help="Override mode for all scenarios"),
+    output: str = typer.Option("", "--output", "-o", help="Optional output JSON file"),
+    strict: bool = typer.Option(False, "--strict", help="Use strict safety constraints"),
+) -> None:
+    """Run a scenario pack and export comparative visual payloads."""
+
+    constraints = None
+    if strict:
+        constraints = HarnessConstraints(
+            max_steps=4,
+            max_tool_calls=4,
+            allow_write_actions=False,
+            allow_network_actions=False,
+            allow_browser_actions=False,
+            security_strictness="strict",
+        )
+
+    if mode_override:
+        _ = _parse_mode(mode_override)
+
+    payload = HARNESS.run_showcase(
+        pack_name=pack,
+        mode_override=mode_override,
+        constraints=constraints,
+    )
+    if output:
+        path = Path(output)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(json.dumps(payload, indent=2, default=str), encoding="utf-8")
+        console.print(f"[green]Showcase payload written:[/] {path}")
+        return
+
+    console.print_json(json.dumps(payload, indent=2, default=str))
+
+
+@app.command("harness-blueprint")
+def harness_blueprint_command(
+    query: str = typer.Argument(..., help="Task query"),
+    mode: str = typer.Option("balanced", "--mode", "-m", help="Execution mode"),
+    recipe: str = typer.Option("", "--recipe", "-r", help="Built-in recipe name"),
+    recipe_path: str = typer.Option("", "--recipe-path", help="Path to recipe file"),
+    output: str = typer.Option("", "--output", "-o", help="Optional output JSON file"),
+) -> None:
+    """Run harness and export first-screen dashboard blueprint."""
+
+    run = HARNESS.run(
+        query=query,
+        mode=_parse_mode(mode).value,
+        recipe=recipe or None,
+        recipe_path=recipe_path or None,
+    )
+    card = HARNESS.build_value_card(run)
+    visual = HARNESS.build_visual_payload(run, value_card=card)
+    blueprint = HARNESS.build_first_screen_blueprint(visual)
+    if output:
+        path = Path(output)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(json.dumps(blueprint, indent=2, default=str), encoding="utf-8")
+        console.print(f"[green]Blueprint written:[/] {path}")
+        return
+
+    console.print_json(json.dumps(blueprint, indent=2, default=str))
+
+
+@app.command("harness-stream")
+def harness_stream_command(
+    query: str = typer.Argument(..., help="Task query"),
+    mode: str = typer.Option("balanced", "--mode", "-m", help="Execution mode"),
+    recipe: str = typer.Option("", "--recipe", "-r", help="Built-in recipe name"),
+    recipe_path: str = typer.Option("", "--recipe-path", help="Path to recipe file"),
+    output: str = typer.Option("", "--output", "-o", help="Optional output JSON file"),
+) -> None:
+    """Run harness and export replay event stream."""
+
+    run = HARNESS.run(
+        query=query,
+        mode=_parse_mode(mode).value,
+        recipe=recipe or None,
+        recipe_path=recipe_path or None,
+    )
+    card = HARNESS.build_value_card(run)
+    visual = HARNESS.build_visual_payload(run, value_card=card)
+    stream = visual.get("event_stream", [])
+    payload = {"query": query, "count": len(stream), "events": stream}
+    if output:
+        path = Path(output)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(json.dumps(payload, indent=2, default=str), encoding="utf-8")
+        console.print(f"[green]Event stream written:[/] {path}")
+        return
+
+    console.print_json(json.dumps(payload, indent=2, default=str))
+
+
+@app.command("harness-optimize")
+def harness_optimize_command(
+    query: str = typer.Argument(..., help="Task query"),
+    strict: bool = typer.Option(False, "--strict", help="Use stricter safety constraints"),
+    output: str = typer.Option("", "--output", "-o", help="Optional output JSON file"),
+) -> None:
+    """Auto-tune mode + recipe candidates and return best configuration."""
+
+    constraints = None
+    if strict:
+        constraints = HarnessConstraints(
+            max_steps=4,
+            max_tool_calls=4,
+            allow_write_actions=False,
+            allow_network_actions=False,
+            allow_browser_actions=False,
+            security_strictness="strict",
+        )
+    payload = HARNESS.optimize_query(query=query, constraints=constraints)
+    if output:
+        path = Path(output)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(json.dumps(payload, indent=2, default=str), encoding="utf-8")
+        console.print(f"[green]Optimization result written:[/] {path}")
+        return
+
+    console.print_json(json.dumps(payload, indent=2, default=str))
 
 
 @app.command("harness-eval")

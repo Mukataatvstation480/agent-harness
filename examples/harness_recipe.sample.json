@@ -1,0 +1,49 @@
+{
+  "name": "spotlight-innovation",
+  "version": "1.0.0",
+  "description": "A spotlight workflow: trend scan + provider radar + architecture blueprint.",
+  "tags": ["innovation", "ecosystem", "architecture"],
+  "default_mode": "deep",
+  "steps": [
+    {
+      "id": "trend-scan",
+      "title": "Scan ecosystem trends",
+      "tool": "browser_trending_scan",
+      "args": {
+        "limit": 5
+      }
+    },
+    {
+      "id": "provider-radar",
+      "title": "Aggregate provider signals",
+      "tool": "ecosystem_provider_radar",
+      "args": {
+        "limit": 4
+      }
+    },
+    {
+      "id": "dependency-map",
+      "title": "Build skill dependency graph",
+      "tool": "api_skill_dependency_graph",
+      "args": {
+        "limit": 18
+      }
+    },
+    {
+      "id": "blueprint",
+      "title": "Generate optimized harness blueprint",
+      "tool": "code_router_blueprint",
+      "args": {},
+      "fallback_tools": ["policy_risk_matrix"]
+    },
+    {
+      "id": "resource-pack",
+      "title": "Attach external references",
+      "tool": "external_resource_hub",
+      "args": {
+        "limit": 5
+      },
+      "optional": true
+    }
+  ]
+}

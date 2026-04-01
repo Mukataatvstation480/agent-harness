@@ -22,6 +22,8 @@ class ToolCall:
     name: str
     tool_type: ToolType
     args: dict[str, Any] = field(default_factory=dict)
+    source: str = "planner"
+    score: float = 0.0
 
 
 @dataclass
@@ -33,6 +35,7 @@ class ToolResult:
     output: Any
     latency_ms: float
     error: str = ""
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -42,7 +45,14 @@ class HarnessConstraints:
     max_steps: int = 4
     max_tool_calls: int = 4
     allow_write_actions: bool = False
+    allow_network_actions: bool = True
+    allow_browser_actions: bool = True
+    allow_code_execution: bool = True
     require_approval_on_high_risk: bool = True
+    enable_security_scan: bool = True
+    enable_dynamic_discovery: bool = True
+    auto_recipe: bool = True
+    security_strictness: str = "balanced"
     blocked_tools: list[str] = field(default_factory=lambda: ["unsafe_write", "delete_path"])
 
 
@@ -56,6 +66,8 @@ class HarnessStep:
     tool_call: ToolCall | None = None
     tool_result: ToolResult | None = None
     guardrail_notes: list[str] = field(default_factory=list)
+    discovery_notes: list[str] = field(default_factory=list)
+    security: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
