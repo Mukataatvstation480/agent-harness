@@ -54,27 +54,6 @@ aggregate            (ensemble synthesis + metrics + contract)
 [END]
 ```
 
-## Installation
-
-### Windows (PowerShell)
-
-```powershell
-git clone https://github.com/<your-name>/langgraph-skill-router.git
-cd langgraph-skill-router
-python -m venv .venv
-.\.venv\Scripts\Activate.ps1
-pip install -r requirements.txt
-```
-
-### macOS / Linux (bash)
-
-```bash
-git clone https://github.com/<your-name>/langgraph-skill-router.git
-cd langgraph-skill-router
-python -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-```
 
 ## Quick Start
 
@@ -159,16 +138,4 @@ python -m app.main demo all
 - Real external tool backends for marketplace skills
 - Online learning for routing weights from feedback
 
-## License
 
-MIT
-
-## Citation
-
-```bibtex
-@software{langgraph_skill_router,
-  title = {LangGraph Skill Router},
-  year = {2026},
-  note = {Dynamic multi-agent skill routing with complementarity and traceability}
-}
-```
