@@ -1,0 +1,12 @@
+{
+  "record_id": "fintech-human-override-policy",
+  "title": "Human Override Policy for Regulated Support Copilots",
+  "summary": "Customer-facing copilots in regulated queues need explicit operator takeover conditions, SLA limits, and audit logs for overrides.",
+  "evidence_type": "policy_note",
+  "tags": ["governance", "control", "human-review", "fintech"],
+  "domains": ["risk", "governance", "fintech"],
+  "trust_score": 0.88,
+  "freshness_hint": "stable",
+  "content": "Define override triggers for low-confidence answers, policy-sensitive requests, and disputes. Require review queue ownership and retained audit artifacts.",
+  "url": "internal://fintech/human-override-policy"
+}

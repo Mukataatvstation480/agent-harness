@@ -74,6 +74,11 @@ class HarnessEngine:
             catalog.append(payload)
         return catalog
 
+    def list_evidence_sources(self) -> list[dict[str, Any]]:
+        """Return configured evidence providers for evidence-aware tools."""
+
+        return self.tools.list_evidence_sources()
+
     def discover_tools(
         self,
         query: str,
@@ -485,6 +490,7 @@ class HarnessEngine:
             discovery=discovery_trace,
             active_recipe=active_recipe,
         )
+        evidence_summary = self._collect_evidence_summary(steps)
         live_overrides = dict(live_model or {})
         live_overrides.setdefault("timeout_seconds", constraints.live_agent_timeout_seconds)
         live_overrides.setdefault("temperature", constraints.live_agent_temperature)
@@ -540,6 +546,7 @@ class HarnessEngine:
                     "total_steps": len(active_recipe.steps) if active_recipe else 0,
                     "executed_steps": recipe_executed_steps,
                 },
+                "evidence": evidence_summary,
                 "live_agent": live_result.to_dict() if live_result else {
                     "enabled": False,
                     "configured": False,
@@ -670,6 +677,7 @@ class HarnessEngine:
         tool_name = tool_call.name if tool_call else ""
         tool_score = tool_call.score if tool_call else 0.0
         source = tool_call.source if tool_call else "unknown"
+        metadata = tool_result.metadata if getattr(tool_result, "metadata", None) else {}
         return {
             "step": step,
             "tool": tool_name,
@@ -677,6 +685,7 @@ class HarnessEngine:
             "score": round(float(tool_score), 4),
             "success": bool(tool_result.success),
             "latency_ms": round(float(tool_result.latency_ms), 2),
+            "evidence_count": int(len(metadata.get("evidence_records", []))) if isinstance(metadata, dict) else 0,
         }
 
     @staticmethod
@@ -693,6 +702,7 @@ class HarnessEngine:
             "tool_result": {
                 "success": bool(step.tool_result.success),
                 "latency_ms": round(float(step.tool_result.latency_ms), 2),
+                "metadata": dict(step.tool_result.metadata),
             }
             if step.tool_result
             else {},
@@ -710,6 +720,7 @@ class HarnessEngine:
         active_recipe: HarnessRecipe | None,
     ) -> str:
         tool_summaries = []
+        evidence_notes: list[str] = []
         for step in steps:
             if step.tool_result:
                 tool_summaries.append(
@@ -717,6 +728,10 @@ class HarnessEngine:
                     f"{'OK' if step.tool_result.success else 'ERR'} "
                     f"({step.tool_result.latency_ms:.1f}ms)"
                 )
+                metadata = step.tool_result.metadata if isinstance(step.tool_result.metadata, dict) else {}
+                citations = metadata.get("evidence_citations", [])
+                if isinstance(citations, list) and citations:
+                    evidence_notes.append(f"- {step.tool_result.name}: {', '.join(str(x) for x in citations[:2])}")
 
         top_tools: list[str] = []
         for item in discovery[:3]:
@@ -733,12 +748,42 @@ class HarnessEngine:
             notes.extend(tool_summaries)
         else:
             notes.append("- no harness tools executed")
+        if evidence_notes:
+            notes.append("- evidence highlights:")
+            notes.extend(evidence_notes[:4])
 
         return (
             f"{payload.get('final_output', '')}\n\n"
             "Harness Execution Notes:\n"
             f"{chr(10).join(notes)}"
         )
+
+    @staticmethod
+    def _collect_evidence_summary(steps: list[HarnessStep]) -> dict[str, Any]:
+        records: list[dict[str, Any]] = []
+        citations: list[str] = []
+        sources: dict[str, int] = {}
+        for step in steps:
+            if not step.tool_result or not isinstance(step.tool_result.metadata, dict):
+                continue
+            metadata = step.tool_result.metadata
+            for row in metadata.get("evidence_records", [])[:8]:
+                if isinstance(row, dict):
+                    records.append(row)
+                    source_id = str(row.get("source_id", "")).strip()
+                    if source_id:
+                        sources[source_id] = sources.get(source_id, 0) + 1
+            for citation in metadata.get("evidence_citations", [])[:8]:
+                text = str(citation).strip()
+                if text and text not in citations:
+                    citations.append(text)
+        return {
+            "record_count": len(records),
+            "citation_count": len(citations),
+            "records": records[:8],
+            "citations": citations[:8],
+            "sources": [{"source_id": key, "records": value} for key, value in sorted(sources.items())],
+        }
 
     def _build_preflight_block_run(
         self,

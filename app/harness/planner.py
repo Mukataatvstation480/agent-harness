@@ -37,6 +37,12 @@ class HarnessPlanner:
             )
 
         if step == 2:
+            if any(token in lowered for token in ["risk", "compliance", "audit", "governance", "evidence", "research"]):
+                return ToolCall(
+                    name="evidence_dossier_builder",
+                    tool_type=ToolType.BROWSER,
+                    args={"query": query, "limit": 4},
+                )
             return ToolCall(
                 name="code_skill_search",
                 tool_type=ToolType.CODE,

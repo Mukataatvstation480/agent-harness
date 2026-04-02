@@ -40,6 +40,7 @@ from app.skills.registry import (
 )
 from app.skills.interop import export_interop_all, export_interop_catalog, write_interop_bundle
 from app.studio.flagship import StudioShowcaseBuilder
+from app.studio.proposals import ProposalRegistry
 from app.tracing.analyzer import RoutingAnalyzer
 from app.tracing.store import list_recent_traces, load_trace, save_trace
 from app.tracing.visualizer import render_trace_views
@@ -64,6 +65,7 @@ app = typer.Typer(
     add_completion=False,
 )
 HARNESS = HarnessEngine()
+PROPOSALS = ProposalRegistry()
 STUDIO = StudioShowcaseBuilder(harness=HARNESS)
 
 
@@ -589,6 +591,7 @@ def demo_command(
 def launch_demo_command(
     output_dir: str = typer.Option("reports/launch_demo", "--output-dir", "-o", help="Output directory"),
     tag: str = typer.Option("press", "--tag", help="Output tag"),
+    query: str = typer.Option("", "--query", help="Override the launch demo query/scenario"),
     live_agent: bool = typer.Option(False, "--live-agent", help="Enable real-model generation for the launch story"),
     max_model_calls: int = typer.Option(8, "--max-model-calls", help="Live model call budget per run (<=50)"),
 ) -> None:
@@ -599,8 +602,16 @@ def launch_demo_command(
         tag=tag,
         live_agent=live_agent,
         max_model_calls=max_model_calls,
+        query=query,
     )
     console.print_json(json.dumps(payload, indent=2, default=str))
+
+
+@app.command("proposal-scenarios")
+def proposal_scenarios_command() -> None:
+    """List built-in proposal scenarios for studio/demo generation."""
+
+    console.print_json(json.dumps({"scenarios": PROPOSALS.list_cards()}, indent=2, default=str))
 
 
 @app.command("harness")
@@ -1103,6 +1114,13 @@ def harness_showcase_packs_command() -> None:
     """List built-in showcase packs."""
 
     console.print_json(json.dumps({"packs": HARNESS.list_showcase_packs()}, indent=2, default=str))
+
+
+@app.command("harness-evidence-sources")
+def harness_evidence_sources_command() -> None:
+    """List configured evidence sources backing evidence-aware harness tools."""
+
+    console.print_json(json.dumps({"sources": HARNESS.list_evidence_sources()}, indent=2, default=str))
 
 
 @app.command("harness-showcase")

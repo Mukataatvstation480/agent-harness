@@ -1,11 +1,11 @@
 {
   "schema": "agent-skills-interop/v1",
-  "generated_at": "2026-04-02T14:55:09.393536+00:00",
+  "generated_at": "2026-04-02T16:42:18.554387+00:00",
   "frameworks": {
     "anthropic": {
       "schema": "agent-skills-interop/v1",
       "framework": "anthropic",
-      "generated_at": "2026-04-02T14:55:09.386407+00:00",
+      "generated_at": "2026-04-02T16:42:18.546687+00:00",
       "skill_count": 18,
       "skills": [
         {
@@ -94,11 +94,11 @@
             "ecosystem": "claude-skills"
           },
           "allowed_tools": [
+            "evidence_dossier_builder",
             "external_resource_hub",
-            "code_experiment_design",
-            "code_skill_search"
+            "code_experiment_design"
           ],
-          "skill_md": "---\nname: extract-facts\ndescription: \"Pull out factual statements and data points. Use when task keywords include: fact, data, number, statistic.\"\ncompatibility: \"Designed for Anthropic Claude clients that support the Agent Skills specification.\"\nmetadata:\n  category: \"recall\"\n  ecosystem: \"claude-skills\"\n  framework_target: \"anthropic\"\n  original_name: \"extract_facts\"\n  output_type: \"list\"\n  owner: \"core\"\n  source: \"builtin\"\n  tier: \"basic\"\n  version: \"1.0.0\"\nallowed-tools: external_resource_hub code_experiment_design code_skill_search\n---\n\n# extract_facts\n\n## When To Use\n- Use this skill when the request needs: precision, fact isolation, data extraction.\n- Trigger hints: fact, data, number, statistic.\n\n## Output Contract\n- Output type: list.\n- Tier: basic; category: recall.\n\n## Guardrails\n- Validate critical claims before finalizing responses.\n- Known limitations: ignores opinions and context, can be overly literal.\n\n## Synergies\n- Works well with: validate_claims, build_timeline, synthesize_perspectives.\n\n## Suggested Harness Tools\n- external_resource_hub\n- code_experiment_design\n- code_skill_search\n\n## Execution Notes\n- Keep responses concise, structured, and auditable.\n"
+          "skill_md": "---\nname: extract-facts\ndescription: \"Pull out factual statements and data points. Use when task keywords include: fact, data, number, statistic.\"\ncompatibility: \"Designed for Anthropic Claude clients that support the Agent Skills specification.\"\nmetadata:\n  category: \"recall\"\n  ecosystem: \"claude-skills\"\n  framework_target: \"anthropic\"\n  original_name: \"extract_facts\"\n  output_type: \"list\"\n  owner: \"core\"\n  source: \"builtin\"\n  tier: \"basic\"\n  version: \"1.0.0\"\nallowed-tools: evidence_dossier_builder external_resource_hub code_experiment_design\n---\n\n# extract_facts\n\n## When To Use\n- Use this skill when the request needs: precision, fact isolation, data extraction.\n- Trigger hints: fact, data, number, statistic.\n\n## Output Contract\n- Output type: list.\n- Tier: basic; category: recall.\n\n## Guardrails\n- Validate critical claims before finalizing responses.\n- Known limitations: ignores opinions and context, can be overly literal.\n\n## Synergies\n- Works well with: validate_claims, build_timeline, synthesize_perspectives.\n\n## Suggested Harness Tools\n- evidence_dossier_builder\n- external_resource_hub\n- code_experiment_design\n\n## Execution Notes\n- Keep responses concise, structured, and auditable.\n"
         },
         {
           "name": "generate-recommendations",
@@ -232,11 +232,11 @@
             "ecosystem": "claude-skills"
           },
           "allowed_tools": [
+            "evidence_dossier_builder",
             "external_resource_hub",
-            "code_experiment_design",
-            "code_skill_search"
+            "code_experiment_design"
           ],
-          "skill_md": "---\nname: validate-claims\ndescription: \"Evaluate claims against available evidence and assign confidence levels. Use when task keywords include: claim, verify, evidence, true.\"\ncompatibility: \"Designed for Anthropic Claude clients that support the Agent Skills specification.\"\nmetadata:\n  category: \"reasoning\"\n  ecosystem: \"claude-skills\"\n  framework_target: \"anthropic\"\n  original_name: \"validate_claims\"\n  output_type: \"structured\"\n  owner: \"core\"\n  source: \"builtin\"\n  tier: \"expert\"\n  version: \"1.0.0\"\nallowed-tools: external_resource_hub code_experiment_design code_skill_search\n---\n\n# validate_claims\n\n## When To Use\n- Use this skill when the request needs: evidence evaluation, claim verification, confidence assessment.\n- Trigger hints: claim, verify, evidence, true.\n\n## Output Contract\n- Output type: structured.\n- Tier: expert; category: reasoning.\n\n## Guardrails\n- Validate critical claims before finalizing responses.\n- Known limitations: needs factual content, cannot verify against external sources.\n\n## Synergies\n- Works well with: extract_facts, detect_anomalies.\n\n## Suggested Harness Tools\n- external_resource_hub\n- code_experiment_design\n- code_skill_search\n\n## Execution Notes\n- Keep responses concise, structured, and auditable.\n"
+          "skill_md": "---\nname: validate-claims\ndescription: \"Evaluate claims against available evidence and assign confidence levels. Use when task keywords include: claim, verify, evidence, true.\"\ncompatibility: \"Designed for Anthropic Claude clients that support the Agent Skills specification.\"\nmetadata:\n  category: \"reasoning\"\n  ecosystem: \"claude-skills\"\n  framework_target: \"anthropic\"\n  original_name: \"validate_claims\"\n  output_type: \"structured\"\n  owner: \"core\"\n  source: \"builtin\"\n  tier: \"expert\"\n  version: \"1.0.0\"\nallowed-tools: evidence_dossier_builder external_resource_hub code_experiment_design\n---\n\n# validate_claims\n\n## When To Use\n- Use this skill when the request needs: evidence evaluation, claim verification, confidence assessment.\n- Trigger hints: claim, verify, evidence, true.\n\n## Output Contract\n- Output type: structured.\n- Tier: expert; category: reasoning.\n\n## Guardrails\n- Validate critical claims before finalizing responses.\n- Known limitations: needs factual content, cannot verify against external sources.\n\n## Synergies\n- Works well with: extract_facts, detect_anomalies.\n\n## Suggested Harness Tools\n- evidence_dossier_builder\n- external_resource_hub\n- code_experiment_design\n\n## Execution Notes\n- Keep responses concise, structured, and auditable.\n"
         },
         {
           "name": "generate-analogies",
@@ -324,11 +324,11 @@
             "ecosystem": "claude-skills"
           },
           "allowed_tools": [
+            "evidence_dossier_builder",
             "external_resource_hub",
-            "code_experiment_design",
-            "code_skill_search"
+            "code_experiment_design"
           ],
-          "skill_md": "---\nname: evidence-matrix\ndescription: \"Build claim-evidence-confidence matrix from source text.. Use when task keywords include: evidence, claim, confidence, source.\"\ncompatibility: \"Designed for Anthropic Claude clients that support the Agent Skills specification.\"\nmetadata:\n  category: \"recall\"\n  ecosystem: \"claude-skills\"\n  framework_target: \"anthropic\"\n  original_name: \"evidence_matrix\"\n  output_type: \"structured\"\n  owner: \"research-hub\"\n  source: \"marketplace\"\n  tier: \"expert\"\n  version: \"0.2.1\"\nallowed-tools: external_resource_hub code_experiment_design code_skill_search\n---\n\n# evidence_matrix\n\n## When To Use\n- Use this skill when the request needs: evidence synthesis, fact confidence, traceability.\n- Trigger hints: evidence, claim, confidence, source.\n\n## Output Contract\n- Output type: structured.\n- Tier: expert; category: recall.\n\n## Guardrails\n- Validate critical claims before finalizing responses.\n- Known limitations: creative ideation.\n\n## Synergies\n- Works well with: extract_facts, validate_claims.\n\n## Suggested Harness Tools\n- external_resource_hub\n- code_experiment_design\n- code_skill_search\n\n## Execution Notes\n- Keep responses concise, structured, and auditable.\n"
+          "skill_md": "---\nname: evidence-matrix\ndescription: \"Build claim-evidence-confidence matrix from source text.. Use when task keywords include: evidence, claim, confidence, source.\"\ncompatibility: \"Designed for Anthropic Claude clients that support the Agent Skills specification.\"\nmetadata:\n  category: \"recall\"\n  ecosystem: \"claude-skills\"\n  framework_target: \"anthropic\"\n  original_name: \"evidence_matrix\"\n  output_type: \"structured\"\n  owner: \"research-hub\"\n  source: \"marketplace\"\n  tier: \"expert\"\n  version: \"0.2.1\"\nallowed-tools: evidence_dossier_builder external_resource_hub code_experiment_design\n---\n\n# evidence_matrix\n\n## When To Use\n- Use this skill when the request needs: evidence synthesis, fact confidence, traceability.\n- Trigger hints: evidence, claim, confidence, source.\n\n## Output Contract\n- Output type: structured.\n- Tier: expert; category: recall.\n\n## Guardrails\n- Validate critical claims before finalizing responses.\n- Known limitations: creative ideation.\n\n## Synergies\n- Works well with: extract_facts, validate_claims.\n\n## Suggested Harness Tools\n- evidence_dossier_builder\n- external_resource_hub\n- code_experiment_design\n\n## Execution Notes\n- Keep responses concise, structured, and auditable.\n"
         },
         {
           "name": "board-brief",
@@ -427,7 +427,7 @@
     "openai": {
       "schema": "agent-skills-interop/v1",
       "framework": "openai",
-      "generated_at": "2026-04-02T14:55:09.393503+00:00",
+      "generated_at": "2026-04-02T16:42:18.554364+00:00",
       "skill_count": 18,
       "skills": [
         {
@@ -516,11 +516,11 @@
             "ecosystem": "codex-skills"
           },
           "allowed_tools": [
+            "evidence_dossier_builder",
             "external_resource_hub",
-            "code_experiment_design",
-            "code_skill_search"
+            "code_experiment_design"
           ],
-          "skill_md": "---\nname: extract-facts\ndescription: \"Pull out factual statements and data points. Use when task keywords include: fact, data, number, statistic.\"\ncompatibility: \"Designed for OpenAI agent clients that support the Agent Skills specification.\"\nmetadata:\n  category: \"recall\"\n  ecosystem: \"codex-skills\"\n  framework_target: \"openai\"\n  original_name: \"extract_facts\"\n  output_type: \"list\"\n  owner: \"core\"\n  source: \"builtin\"\n  tier: \"basic\"\n  version: \"1.0.0\"\nallowed-tools: external_resource_hub code_experiment_design code_skill_search\n---\n\n# extract_facts\n\n## When To Use\n- Use this skill when the request needs: precision, fact isolation, data extraction.\n- Trigger hints: fact, data, number, statistic.\n\n## Output Contract\n- Output type: list.\n- Tier: basic; category: recall.\n\n## Guardrails\n- Validate critical claims before finalizing responses.\n- Known limitations: ignores opinions and context, can be overly literal.\n\n## Synergies\n- Works well with: validate_claims, build_timeline, synthesize_perspectives.\n\n## Suggested Harness Tools\n- external_resource_hub\n- code_experiment_design\n- code_skill_search\n\n## Execution Notes\n- Keep responses concise, structured, and auditable.\n"
+          "skill_md": "---\nname: extract-facts\ndescription: \"Pull out factual statements and data points. Use when task keywords include: fact, data, number, statistic.\"\ncompatibility: \"Designed for OpenAI agent clients that support the Agent Skills specification.\"\nmetadata:\n  category: \"recall\"\n  ecosystem: \"codex-skills\"\n  framework_target: \"openai\"\n  original_name: \"extract_facts\"\n  output_type: \"list\"\n  owner: \"core\"\n  source: \"builtin\"\n  tier: \"basic\"\n  version: \"1.0.0\"\nallowed-tools: evidence_dossier_builder external_resource_hub code_experiment_design\n---\n\n# extract_facts\n\n## When To Use\n- Use this skill when the request needs: precision, fact isolation, data extraction.\n- Trigger hints: fact, data, number, statistic.\n\n## Output Contract\n- Output type: list.\n- Tier: basic; category: recall.\n\n## Guardrails\n- Validate critical claims before finalizing responses.\n- Known limitations: ignores opinions and context, can be overly literal.\n\n## Synergies\n- Works well with: validate_claims, build_timeline, synthesize_perspectives.\n\n## Suggested Harness Tools\n- evidence_dossier_builder\n- external_resource_hub\n- code_experiment_design\n\n## Execution Notes\n- Keep responses concise, structured, and auditable.\n"
         },
         {
           "name": "generate-recommendations",
@@ -654,11 +654,11 @@
             "ecosystem": "codex-skills"
           },
           "allowed_tools": [
+            "evidence_dossier_builder",
             "external_resource_hub",
-            "code_experiment_design",
-            "code_skill_search"
+            "code_experiment_design"
           ],
-          "skill_md": "---\nname: validate-claims\ndescription: \"Evaluate claims against available evidence and assign confidence levels. Use when task keywords include: claim, verify, evidence, true.\"\ncompatibility: \"Designed for OpenAI agent clients that support the Agent Skills specification.\"\nmetadata:\n  category: \"reasoning\"\n  ecosystem: \"codex-skills\"\n  framework_target: \"openai\"\n  original_name: \"validate_claims\"\n  output_type: \"structured\"\n  owner: \"core\"\n  source: \"builtin\"\n  tier: \"expert\"\n  version: \"1.0.0\"\nallowed-tools: external_resource_hub code_experiment_design code_skill_search\n---\n\n# validate_claims\n\n## When To Use\n- Use this skill when the request needs: evidence evaluation, claim verification, confidence assessment.\n- Trigger hints: claim, verify, evidence, true.\n\n## Output Contract\n- Output type: structured.\n- Tier: expert; category: reasoning.\n\n## Guardrails\n- Validate critical claims before finalizing responses.\n- Known limitations: needs factual content, cannot verify against external sources.\n\n## Synergies\n- Works well with: extract_facts, detect_anomalies.\n\n## Suggested Harness Tools\n- external_resource_hub\n- code_experiment_design\n- code_skill_search\n\n## Execution Notes\n- Keep responses concise, structured, and auditable.\n"
+          "skill_md": "---\nname: validate-claims\ndescription: \"Evaluate claims against available evidence and assign confidence levels. Use when task keywords include: claim, verify, evidence, true.\"\ncompatibility: \"Designed for OpenAI agent clients that support the Agent Skills specification.\"\nmetadata:\n  category: \"reasoning\"\n  ecosystem: \"codex-skills\"\n  framework_target: \"openai\"\n  original_name: \"validate_claims\"\n  output_type: \"structured\"\n  owner: \"core\"\n  source: \"builtin\"\n  tier: \"expert\"\n  version: \"1.0.0\"\nallowed-tools: evidence_dossier_builder external_resource_hub code_experiment_design\n---\n\n# validate_claims\n\n## When To Use\n- Use this skill when the request needs: evidence evaluation, claim verification, confidence assessment.\n- Trigger hints: claim, verify, evidence, true.\n\n## Output Contract\n- Output type: structured.\n- Tier: expert; category: reasoning.\n\n## Guardrails\n- Validate critical claims before finalizing responses.\n- Known limitations: needs factual content, cannot verify against external sources.\n\n## Synergies\n- Works well with: extract_facts, detect_anomalies.\n\n## Suggested Harness Tools\n- evidence_dossier_builder\n- external_resource_hub\n- code_experiment_design\n\n## Execution Notes\n- Keep responses concise, structured, and auditable.\n"
         },
         {
           "name": "generate-analogies",
@@ -746,11 +746,11 @@
             "ecosystem": "codex-skills"
           },
           "allowed_tools": [
+            "evidence_dossier_builder",
             "external_resource_hub",
-            "code_experiment_design",
-            "code_skill_search"
+            "code_experiment_design"
           ],
-          "skill_md": "---\nname: evidence-matrix\ndescription: \"Build claim-evidence-confidence matrix from source text.. Use when task keywords include: evidence, claim, confidence, source.\"\ncompatibility: \"Designed for OpenAI agent clients that support the Agent Skills specification.\"\nmetadata:\n  category: \"recall\"\n  ecosystem: \"codex-skills\"\n  framework_target: \"openai\"\n  original_name: \"evidence_matrix\"\n  output_type: \"structured\"\n  owner: \"research-hub\"\n  source: \"marketplace\"\n  tier: \"expert\"\n  version: \"0.2.1\"\nallowed-tools: external_resource_hub code_experiment_design code_skill_search\n---\n\n# evidence_matrix\n\n## When To Use\n- Use this skill when the request needs: evidence synthesis, fact confidence, traceability.\n- Trigger hints: evidence, claim, confidence, source.\n\n## Output Contract\n- Output type: structured.\n- Tier: expert; category: recall.\n\n## Guardrails\n- Validate critical claims before finalizing responses.\n- Known limitations: creative ideation.\n\n## Synergies\n- Works well with: extract_facts, validate_claims.\n\n## Suggested Harness Tools\n- external_resource_hub\n- code_experiment_design\n- code_skill_search\n\n## Execution Notes\n- Keep responses concise, structured, and auditable.\n"
+          "skill_md": "---\nname: evidence-matrix\ndescription: \"Build claim-evidence-confidence matrix from source text.. Use when task keywords include: evidence, claim, confidence, source.\"\ncompatibility: \"Designed for OpenAI agent clients that support the Agent Skills specification.\"\nmetadata:\n  category: \"recall\"\n  ecosystem: \"codex-skills\"\n  framework_target: \"openai\"\n  original_name: \"evidence_matrix\"\n  output_type: \"structured\"\n  owner: \"research-hub\"\n  source: \"marketplace\"\n  tier: \"expert\"\n  version: \"0.2.1\"\nallowed-tools: evidence_dossier_builder external_resource_hub code_experiment_design\n---\n\n# evidence_matrix\n\n## When To Use\n- Use this skill when the request needs: evidence synthesis, fact confidence, traceability.\n- Trigger hints: evidence, claim, confidence, source.\n\n## Output Contract\n- Output type: structured.\n- Tier: expert; category: recall.\n\n## Guardrails\n- Validate critical claims before finalizing responses.\n- Known limitations: creative ideation.\n\n## Synergies\n- Works well with: extract_facts, validate_claims.\n\n## Suggested Harness Tools\n- evidence_dossier_builder\n- external_resource_hub\n- code_experiment_design\n\n## Execution Notes\n- Keep responses concise, structured, and auditable.\n"
         },
         {
           "name": "board-brief",

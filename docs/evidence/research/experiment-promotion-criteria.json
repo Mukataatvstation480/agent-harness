@@ -1,0 +1,12 @@
+{
+  "record_id": "research-experiment-promotion-criteria",
+  "title": "Experiment Promotion Criteria",
+  "summary": "Applied research candidates should only be promoted when reproducibility, benchmark stability, and operating constraints are jointly satisfied.",
+  "evidence_type": "research_gate",
+  "tags": ["research", "benchmark", "reproducibility", "promotion"],
+  "domains": ["research", "evidence"],
+  "trust_score": 0.9,
+  "freshness_hint": "stable",
+  "content": "Promotion requires repeatable gains, stable confidence intervals, and a production-facing readout that names risk and rollback assumptions.",
+  "url": "internal://research/experiment-promotion-criteria"
+}

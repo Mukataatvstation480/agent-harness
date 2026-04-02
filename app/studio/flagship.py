@@ -17,6 +17,7 @@ from app.harness import HarnessConstraints
 from app.harness.engine import HarnessEngine
 from app.policy.center import normalize_mode, policy_for_mode
 from app.skills.interop import export_interop_all, write_interop_bundle
+from app.studio.proposals import ProposalRegistry, ProposalScenario
 from app.tracing.analyzer import RoutingAnalyzer
 from app.tracing.visualizer import render_trace_views
 
@@ -128,6 +129,7 @@ class StudioShowcaseBuilder:
 
     def __init__(self, harness: HarnessEngine | None = None) -> None:
         self.harness = harness or HarnessEngine()
+        self.proposals = ProposalRegistry()
 
     def build_showcase(
         self,
@@ -163,6 +165,7 @@ class StudioShowcaseBuilder:
         run_summary = self.harness.reporter.summary(run)
         value_card = self.harness.build_value_card(run)
         visual_payload = self.harness.build_visual_payload(run, value_card=value_card)
+        scenario = self.proposals.infer(query)
 
         active_scenarios = scenario_ids or list(DEFAULT_STUDIO_SCENARIOS)
         lab_payload = self.harness.run_research_lab(
@@ -206,13 +209,27 @@ class StudioShowcaseBuilder:
             lab_payload=lab_payload,
             interop_summary=interop_summary,
             frontier=frontier,
+            scenario=scenario,
         )
-        proposal = self._proposal_frame(run=run, run_summary=run_summary, story=story, lab_payload=lab_payload)
+        proposal = self._proposal_frame(
+            run=run,
+            run_summary=run_summary,
+            story=story,
+            lab_payload=lab_payload,
+            scenario=scenario,
+        )
         agent_comparison = self._agent_comparison(router_payload)
+        delivery_brief_excerpt = self._delivery_brief(
+            query=query,
+            story=story,
+            proposal=proposal,
+            run_summary=run_summary,
+        )
 
         payload: dict[str, Any] = {
             "schema": STUDIO_SCHEMA,
             "generated_at": datetime.now(timezone.utc).isoformat(),
+            "scenario": scenario.to_dict(),
             "identity": {
                 "name": "Agent Harness Studio",
                 "one_liner": FLAGSHIP_ONE_LINER,
@@ -236,6 +253,7 @@ class StudioShowcaseBuilder:
                 "plan": list(run.plan),
                 "final_answer": run.final_answer,
                 "final_answer_excerpt": run.final_answer[:1600],
+                "delivery_brief_excerpt": delivery_brief_excerpt,
                 "generation": self._generation_summary(run),
                 "value_card": value_card,
                 "visual_kpis": visual_payload.get("kpis", {}),
@@ -489,6 +507,7 @@ class StudioShowcaseBuilder:
         lab_payload: dict[str, Any],
         interop_summary: dict[str, Any],
         frontier: dict[str, Any],
+        scenario: ProposalScenario,
     ) -> dict[str, Any]:
         """Build a plain-language narrative so the showcase is immediately understandable."""
 
@@ -497,21 +516,15 @@ class StudioShowcaseBuilder:
         release = lab_payload.get("release_decision", {})
         bottleneck = frontier.get("bottleneck", {})
         dims = StudioShowcaseBuilder._value_dims(value_card)
+        evidence = run_summary.get("evidence", {}) if isinstance(run_summary, dict) else {}
         routing_confidence = _safe_float(
             router_payload.get("routing_trace", {}).get("final_confidence_breakdown", {}).get("routing_confidence", 0.0)
         )
 
         return {
-            "theme": "Launching a flagship AI platform with growth, governance, and research credibility in balance.",
-            "release_need": (
-                "A launch team needs a concrete operating plan that can expand the product, control governance risk, "
-                "and prove the system is credible enough to release."
-            ),
-            "strategy_plan": [
-                "Synthesize competing business, governance, and research perspectives into one operating thesis.",
-                "Map major release risks before launch and make the downside visible.",
-                "Convert the result into a release recommendation backed by measurable gates.",
-            ],
+            "theme": scenario.theme,
+            "release_need": scenario.release_need,
+            "strategy_plan": list(scenario.strategy_plan),
             "execution_recipe": plan,
             "selected_agent": str(router_payload.get("agent_name", "")),
             "selected_skills": selected_skills,
@@ -521,14 +534,13 @@ class StudioShowcaseBuilder:
                 f"Routing confidence: {routing_confidence:.3f}",
                 f"Value index: {_safe_float(value_card.get('value_index', 0.0)):.2f} ({value_card.get('band', '-')})",
                 f"Safety score: {_safe_float(dims.get('safety', 0.0)):.2f}; reliability score: {_safe_float(dims.get('reliability', 0.0)):.2f}",
+                f"Evidence packet: {int(evidence.get('record_count', 0))} records / {int(evidence.get('citation_count', 0))} citations",
                 f"Interop export: {int(interop_summary.get('framework_count', 0))} frameworks / {int(interop_summary.get('total_skill_entries', 0))} skill entries",
             ],
-            "audience_takeaway": (
-                "This is not just a prompt response. It is a release-ready strategy package with routing evidence, "
-                "evaluation results, and ecosystem-portable artifacts."
-            ),
+            "audience_takeaway": scenario.audience_takeaway,
             "mode": mode,
             "query": query,
+            "scenario_name": scenario.name,
         }
 
     @staticmethod
@@ -565,6 +577,7 @@ class StudioShowcaseBuilder:
         run_summary: dict[str, Any],
         story: dict[str, Any],
         lab_payload: dict[str, Any],
+        scenario: ProposalScenario,
     ) -> dict[str, Any]:
         """Build a business-first proposal view for the showcase front page."""
 
@@ -574,23 +587,31 @@ class StudioShowcaseBuilder:
         critique = live.get("critique", {}) if isinstance(live, dict) else {}
         release = lab_payload.get("release_decision", {})
         expected = analysis.get("expected_value", {}) if isinstance(analysis, dict) else {}
-        migration = analysis.get("migration_path", []) if isinstance(analysis, dict) else []
+        migration = analysis.get("launch_phases", []) if isinstance(analysis, dict) else []
+        if not migration:
+            migration = analysis.get("migration_path", []) if isinstance(analysis, dict) else []
         architecture = analysis.get("target_architecture", {}) if isinstance(analysis, dict) else {}
+        proof_points = analysis.get("proof_points", []) if isinstance(analysis, dict) else []
+        target_users = analysis.get("target_users", []) if isinstance(analysis, dict) else []
+        controls = analysis.get("controls", []) if isinstance(analysis, dict) else []
+        winner_hypothesis = _sanitize_business_text(analysis.get("winner_hypothesis", "")) if isinstance(analysis, dict) else ""
+        metrics = run_summary.get("metrics", {}) if isinstance(run_summary, dict) else {}
+        value_card = run_summary.get("value_card", {}) if isinstance(run_summary, dict) else {}
+        security = run_summary.get("security", {}) if isinstance(run_summary, dict) else {}
+        evidence = run_summary.get("evidence", {}) if isinstance(run_summary, dict) else {}
 
         pillars: list[dict[str, Any]] = []
-        for title, key in [
-            ("Growth Engine", "growth_pillar"),
-            ("Governance Core", "governance_pillar"),
-            ("Research Credibility", "research_pillar"),
-        ]:
-            pillar = architecture.get(key, {}) if isinstance(architecture, dict) else {}
+        for blueprint in scenario.pillars:
+            pillar = architecture.get(blueprint.live_key, {}) if isinstance(architecture, dict) and blueprint.live_key else {}
             capabilities = pillar.get("capabilities", []) if isinstance(pillar, dict) else []
             integrations = pillar.get("integration_points", []) if isinstance(pillar, dict) else []
+            summary = _sanitize_business_text(", ".join(capabilities[:3])) or blueprint.summary
+            integration = _sanitize_business_text(", ".join(integrations[:2])) or blueprint.integration
             pillars.append(
                 {
-                    "title": title,
-                    "summary": _sanitize_business_text(", ".join(capabilities[:3])) or "Business capability bundle",
-                    "integration": _sanitize_business_text(", ".join(integrations[:2])) or "Integrated into the release stack",
+                    "title": blueprint.title,
+                    "summary": summary,
+                    "integration": integration,
                 }
             )
 
@@ -605,21 +626,63 @@ class StudioShowcaseBuilder:
                     "success_metrics": [_sanitize_business_text(x) for x in item.get("success_metrics", [])[:3]],
                 }
             )
+        if not phases:
+            plan_chunks = StudioShowcaseBuilder._chunk_plan(run_summary.get("plan", []), max(len(scenario.phases), 1))
+            for index, blueprint in enumerate(scenario.phases):
+                fallback_actions = [_sanitize_business_text(x) for x in plan_chunks[index]] if index < len(plan_chunks) else []
+                merged_actions: list[str] = []
+                for action in list(blueprint.actions[:2]) + fallback_actions[:2]:
+                    clean = _sanitize_business_text(action)
+                    if clean and clean not in merged_actions:
+                        merged_actions.append(clean)
+                phases.append(
+                    {
+                        "phase": blueprint.phase,
+                        "actions": merged_actions[:3] or [_sanitize_business_text(x) for x in blueprint.actions[:3]],
+                        "success_metrics": [_sanitize_business_text(x) for x in blueprint.success_metrics[:3]],
+                    }
+                )
 
-        expected_impact = [
-            {"label": _sanitize_business_text(str(key).replace("_", " ").title()), "value": _sanitize_business_text(value)}
-            for key, value in list(expected.items())[:5]
-        ]
+        expected_impact = StudioShowcaseBuilder._impact_frame(
+            scenario=scenario,
+            expected=expected,
+            metrics=metrics,
+            value_card=value_card,
+            release=release,
+            target_users=target_users,
+        )
         critical_risks = [_sanitize_business_text(x) for x in critique.get("red_flags", [])[:3]] if isinstance(critique, dict) else []
         if not critical_risks:
             critical_risks = [_sanitize_business_text(x) for x in analysis.get("bottlenecks", [])[:3]] if isinstance(analysis, dict) else []
+        if not critical_risks:
+            security_findings = security.get("preflight_findings", []) if isinstance(security, dict) else []
+            critical_risks = [
+                _sanitize_business_text(item.get("title", ""))
+                for item in security_findings[:2]
+                if isinstance(item, dict) and item.get("title")
+            ]
+        if not critical_risks:
+            critical_risks = [_sanitize_business_text(x) for x in scenario.critical_risks[:3]]
 
         thesis = _sanitize_business_text(analysis.get("thesis", "")) if isinstance(analysis, dict) else ""
         if not thesis:
             thesis = _sanitize_business_text(story.get("audience_takeaway", ""))
+        if winner_hypothesis:
+            thesis = f"{thesis} Winning move: {winner_hypothesis}".strip()
+
+        business_summary = list(scenario.business_summary)
+        if proof_points:
+            business_summary.append(f"Proof points: {', '.join(_sanitize_business_text(x) for x in proof_points[:3])}.")
+        if controls:
+            business_summary.append(f"Control focus: {', '.join(_sanitize_business_text(x) for x in controls[:3])}.")
+        if int(evidence.get("record_count", 0)) > 0:
+            business_summary.append(
+                f"Evidence base: {int(evidence.get('record_count', 0))} records and {int(evidence.get('citation_count', 0))} citations were injected into the launch packet."
+            )
+        business_summary = [item for item in business_summary if item][:4]
 
         return {
-            "headline": "Flagship AI Platform Launch Plan",
+            "headline": scenario.headline,
             "subheadline": thesis,
             "decision": {
                 "status": release.get("decision", "block"),
@@ -630,13 +693,99 @@ class StudioShowcaseBuilder:
             "phases": phases,
             "expected_impact": expected_impact,
             "critical_risks": critical_risks,
-            "business_summary": [
-                "Build one operating model that aligns growth, governance, and research instead of optimizing them separately.",
-                "Release in phased checkpoints so the team can prove value before expanding scope.",
-                "Use explicit release gates so launch quality is evidence-backed rather than intuition-backed.",
-            ],
+            "business_summary": business_summary,
             "execution_plan": [_sanitize_business_text(item) for item in run_summary.get("plan", [])],
+            "target_users": [_sanitize_business_text(x) for x in target_users[:4]],
+            "proof_points": [_sanitize_business_text(x) for x in proof_points[:4]],
+            "scenario_name": scenario.name,
         }
+
+    @staticmethod
+    def _chunk_plan(items: list[Any], bucket_count: int) -> list[list[str]]:
+        rows = [str(item).strip() for item in items if str(item).strip()]
+        if bucket_count <= 0:
+            return [rows]
+        chunks: list[list[str]] = [[] for _ in range(bucket_count)]
+        for index, item in enumerate(rows):
+            chunks[index % bucket_count].append(item)
+        return chunks
+
+    @staticmethod
+    def _impact_frame(
+        scenario: ProposalScenario,
+        expected: dict[str, Any],
+        metrics: dict[str, Any],
+        value_card: dict[str, Any],
+        release: dict[str, Any],
+        target_users: list[Any],
+    ) -> list[dict[str, str]]:
+        rows: list[dict[str, str]] = []
+        for key, value in list(expected.items())[:5]:
+            rows.append(
+                {
+                    "label": _sanitize_business_text(str(key).replace("_", " ").title()),
+                    "value": _sanitize_business_text(value),
+                }
+            )
+        if rows:
+            return rows
+        fallback_values = [
+            f"value index {_safe_float(value_card.get('value_index', 0.0)):.1f} and band {value_card.get('band', '-')}",
+            f"release decision {release.get('decision', 'block')} with reason {release.get('reason', '-')}",
+            f"completion score {_safe_float(metrics.get('completion_score', 0.0)):.2f} and tool success {_safe_float(metrics.get('tool_success_rate', 0.0)):.2f}",
+            f"target users {', '.join(_sanitize_business_text(x) for x in target_users[:3])}" if target_users else "stakeholder packet ready for product, operations, and governance review",
+        ]
+        for label, value in zip(scenario.impact_labels, fallback_values):
+            rows.append({"label": label, "value": _sanitize_business_text(value)})
+        return rows[:4]
+
+    @staticmethod
+    def _delivery_brief(
+        query: str,
+        story: dict[str, Any],
+        proposal: dict[str, Any],
+        run_summary: dict[str, Any],
+    ) -> str:
+        phases = proposal.get("phases", [])
+        impact = proposal.get("expected_impact", [])
+        risks = proposal.get("critical_risks", [])
+        evidence = run_summary.get("evidence", {}) if isinstance(run_summary, dict) else {}
+        lines = [
+            proposal.get("headline", "Launch Plan"),
+            "",
+            f"Scenario: {story.get('theme', '')}",
+            f"Decision: {proposal.get('decision', {}).get('status', 'block')} ({proposal.get('decision', {}).get('reason', '-')})",
+            f"Request: {query}",
+            "",
+            "Operating Thesis:",
+            f"- {proposal.get('subheadline', '')}",
+            "",
+            "Business Summary:",
+        ]
+        for item in proposal.get("business_summary", [])[:4]:
+            lines.append(f"- {item}")
+        lines.append("")
+        lines.append("Phased Rollout:")
+        for phase in phases[:3]:
+            lines.append(f"- {phase.get('phase', 'Phase')}: {', '.join(str(x) for x in phase.get('actions', [])[:3])}")
+        lines.append("")
+        lines.append("Expected Impact:")
+        for row in impact[:4]:
+            lines.append(f"- {row.get('label', 'Impact')}: {row.get('value', '')}")
+        lines.append("")
+        lines.append("Critical Risks:")
+        for risk in risks[:4]:
+            lines.append(f"- {risk}")
+        if int(evidence.get("citation_count", 0)) > 0:
+            lines.append("")
+            lines.append("Evidence Citations:")
+            for item in evidence.get("citations", [])[:4]:
+                lines.append(f"- {item}")
+        lines.append("")
+        lines.append("Execution Backbone:")
+        for item in run_summary.get("plan", [])[:6]:
+            lines.append(f"- {item}")
+        return "\n".join(str(item).rstrip() for item in lines if str(item).strip()).strip()
 
     @staticmethod
     def _agent_comparison(router_payload: dict[str, Any]) -> dict[str, Any]:
@@ -706,6 +855,7 @@ class StudioShowcaseBuilder:
         agent_comparison = payload.get("agent_comparison", {})
         delivery = payload.get("harness", {})
         generation = delivery.get("generation", {}) if isinstance(delivery, dict) else {}
+        evidence = delivery.get("run_summary", {}).get("evidence", {}) if isinstance(delivery, dict) else {}
         router_quality = payload.get("router", {}).get("analysis", {}).get("quality", {})
         robust_expected = _safe_float(router_quality.get("robust_expected_utility", 0.0))
         robust_worst_case = _safe_float(router_quality.get("robust_worst_case_utility", 0.0))
@@ -826,6 +976,20 @@ details{{border:1px solid var(--line);border-radius:18px;background:rgba(255,255
     </article>
   </div>
 </section>
+<section class="card glass">
+  <div class="kicker">External Evidence</div>
+  <div class="grid">
+    <article>
+      <h2>Evidence Packet</h2>
+      <p>{int(evidence.get("record_count", 0))} records and {int(evidence.get("citation_count", 0))} citations injected into the run.</p>
+      <ul>{"".join(f"<li>{html.escape(str(item))}</li>" for item in evidence.get("citations", [])[:6])}</ul>
+    </article>
+    <article>
+      <h2>Evidence Sources</h2>
+      <table><thead><tr><th>Source</th><th>Records</th></tr></thead><tbody>{"".join(f"<tr><td>{html.escape(str(row.get('source_id', '')))}</td><td>{int(row.get('records', 0))}</td></tr>" for row in evidence.get('sources', [])[:6]) or '<tr><td colspan=2>No evidence sources.</td></tr>'}</tbody></table>
+    </article>
+  </div>
+</section>
 <section class="grid">
   <article class="card glass">
     <div class="kicker">Framework Comparison</div>
@@ -851,8 +1015,8 @@ details{{border:1px solid var(--line);border-radius:18px;background:rgba(255,255
 <section class="card glass">
   <div class="kicker">Appendix</div>
   <details>
-    <summary>Generated Result</summary>
-    <pre>{html.escape(str(delivery.get("final_answer_excerpt", "")))}</pre>
+    <summary>Generated Business Brief</summary>
+    <pre>{html.escape(str(delivery.get("delivery_brief_excerpt", "")) or str(delivery.get("final_answer_excerpt", "")))}</pre>
   </details>
   <details style="margin-top:12px">
     <summary>Internal Skills And Tools</summary>
@@ -883,6 +1047,7 @@ details{{border:1px solid var(--line);border-radius:18px;background:rgba(255,255
         story = payload.get("story", {})
         delivery = payload.get("harness", {})
         generation = delivery.get("generation", {}) if isinstance(delivery, dict) else {}
+        evidence = delivery.get("run_summary", {}).get("evidence", {}) if isinstance(delivery, dict) else {}
         why_use = payload.get("why_use_this", [])
         return "\n".join(
             [
@@ -911,6 +1076,7 @@ details{{border:1px solid var(--line);border-radius:18px;background:rgba(255,255
                 "## Evidence Bundle",
                 "",
                 *(f"- {item}" for item in story.get("evidence_bundle", [])),
+                *(f"- Citation: {item}" for item in evidence.get("citations", [])[:4]),
                 "",
                 "## Execution Plan",
                 "",
@@ -935,6 +1101,7 @@ details{{border:1px solid var(--line);border-radius:18px;background:rgba(255,255
                 "## Demo Snapshot",
                 "",
                 f"- Query: {query.get('text', '')}",
+                f"- Scenario: {payload.get('scenario', {}).get('name', '-')}",
                 f"- Mode: {query.get('mode', 'balanced')}",
                 f"- Selected agent: {query.get('selected_agent', '-')}",
                 f"- Skills: {', '.join(query.get('selected_skills', [])) or '-'}",
@@ -953,10 +1120,10 @@ details{{border:1px solid var(--line);border-radius:18px;background:rgba(255,255
                 f"- Runner-up: {agent_comparison.get('runner_up', '-')}",
                 f"- Score gap: {_safe_float(agent_comparison.get('score_gap', 0.0)):.4f}",
                 "",
-                "## Generated Result Excerpt",
+                "## Generated Business Brief",
                 "",
                 "```text",
-                str(delivery.get("final_answer_excerpt", "")),
+                str(delivery.get("delivery_brief_excerpt", "")) or str(delivery.get("final_answer_excerpt", "")),
                 "```",
                 "",
                 "## Why This Is Different",

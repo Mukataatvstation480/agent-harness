@@ -13,6 +13,7 @@ from app.ecosystem.marketplace import (
     list_marketplace_skills,
 )
 from app.ecosystem.store import load_marketplace
+from app.harness.evidence import EvidenceProviderRegistry
 from app.skills.registry import list_all_skills
 
 from app.harness.models import ToolCall, ToolResult, ToolType
@@ -22,6 +23,7 @@ class ToolRegistry:
     """Registry for harness-level tool calls."""
 
     def __init__(self) -> None:
+        self._evidence = EvidenceProviderRegistry()
         self._tools: dict[str, Callable[[dict[str, Any]], Any]] = {
             "api_market_discover": self._api_market_discover,
             "browser_trending_scan": self._browser_trending_scan,
@@ -29,6 +31,7 @@ class ToolRegistry:
             "policy_risk_matrix": self._policy_risk_matrix,
             "memory_context_digest": self._memory_context_digest,
             "ecosystem_provider_radar": self._ecosystem_provider_radar,
+            "evidence_dossier_builder": self._evidence_dossier_builder,
             "external_resource_hub": self._external_resource_hub,
             "api_skill_dependency_graph": self._api_skill_dependency_graph,
             "code_router_blueprint": self._code_router_blueprint,
@@ -42,6 +45,7 @@ class ToolRegistry:
             "policy_risk_matrix": ToolType.CODE,
             "memory_context_digest": ToolType.CODE,
             "ecosystem_provider_radar": ToolType.API,
+            "evidence_dossier_builder": ToolType.BROWSER,
             "external_resource_hub": ToolType.BROWSER,
             "api_skill_dependency_graph": ToolType.API,
             "code_router_blueprint": ToolType.CODE,
@@ -53,6 +57,11 @@ class ToolRegistry:
         """List all registered tools."""
 
         return sorted(self._tools.keys())
+
+    def list_evidence_sources(self) -> list[dict[str, Any]]:
+        """List configured evidence sources backing evidence-aware tools."""
+
+        return self._evidence.list_sources()
 
     def infer_tool_type(self, tool_name: str) -> ToolType:
         """Infer tool type from tool name."""
@@ -76,10 +85,15 @@ class ToolRegistry:
 
         try:
             output = fn(tool_call.args)
+            metadata: dict[str, Any] = {}
+            if isinstance(output, dict) and "__tool_metadata__" in output:
+                metadata = dict(output.get("__tool_metadata__", {}))
+                output = {key: value for key, value in output.items() if key != "__tool_metadata__"}
             success = True
             error = ""
         except Exception as exc:  # pragma: no cover - defensive
             output = {}
+            metadata = {}
             success = False
             error = str(exc)
         end = time.time()
@@ -90,6 +104,7 @@ class ToolRegistry:
             output=output,
             latency_ms=(end - start) * 1000.0,
             error=error,
+            metadata=metadata,
         )
 
     @staticmethod
@@ -131,9 +146,13 @@ class ToolRegistry:
             ]
         return {"skills": matches[:limit]}
 
-    @staticmethod
-    def _policy_risk_matrix(args: dict[str, Any]) -> dict[str, Any]:
+    def _policy_risk_matrix(self, args: dict[str, Any]) -> dict[str, Any]:
         query = str(args.get("query", "")).lower()
+        evidence_bundle = self._evidence.collect(
+            query=query,
+            limit=max(1, min(int(args.get("evidence_limit", 4)), 8)),
+            domains=["risk", "governance", "compliance"],
+        )
         dimensions = {
             "security": ["security", "attack", "credential", "secret", "token", "breach"],
             "compliance": ["compliance", "audit", "regulation", "policy", "governance", "legal"],
@@ -151,9 +170,20 @@ class ToolRegistry:
 
         matrix: list[dict[str, Any]] = []
         overall_score = 0.0
+        evidence_records = evidence_bundle.get("records", []) if isinstance(evidence_bundle, dict) else []
         for dim, words in dimensions.items():
             hits = sum(1 for token in words if token in query)
             score = min(1.0, 0.2 + 0.2 * hits) if hits > 0 else 0.2
+            evidence_hits = 0
+            for record in evidence_records:
+                if not isinstance(record, dict):
+                    continue
+                domains = [str(x).lower() for x in record.get("domains", [])]
+                tags = [str(x).lower() for x in record.get("tags", [])]
+                if dim in domains or dim in tags:
+                    evidence_hits += 1
+            if evidence_hits:
+                score = min(1.0, score + min(0.2, 0.05 * evidence_hits))
             if "critical" in query and dim in {"security", "compliance"}:
                 score = min(1.0, score + 0.2)
             level = "low"
@@ -182,6 +212,16 @@ class ToolRegistry:
             "risk_matrix": matrix,
             "overall_score": round(overall_score, 3),
             "overall_level": overall_level,
+            "evidence_packet": {
+                "count": evidence_bundle.get("count", 0),
+                "citations": evidence_bundle.get("citations", []),
+                "records": evidence_records[:4],
+            },
+            "__tool_metadata__": {
+                "evidence_records": evidence_records[:4],
+                "evidence_citations": evidence_bundle.get("citations", [])[:6],
+                "evidence_source_count": len(evidence_bundle.get("providers", [])),
+            },
         }
 
     @staticmethod
@@ -234,8 +274,38 @@ class ToolRegistry:
         stats.sort(key=lambda item: item.get("avg_reputation", 0.0), reverse=True)
         return {"providers": stats[:limit]}
 
-    @staticmethod
-    def _external_resource_hub(args: dict[str, Any]) -> dict[str, Any]:
+    def _evidence_dossier_builder(self, args: dict[str, Any]) -> dict[str, Any]:
+        query = str(args.get("query", "")).strip()
+        limit = max(1, min(int(args.get("limit", 6)), 12))
+        domains = [str(x) for x in args.get("domains", [])] if isinstance(args.get("domains", []), list) else []
+        bundle = self._evidence.collect(query=query, limit=limit, domains=domains or self._infer_domains(query))
+        records = bundle.get("records", []) if isinstance(bundle, dict) else []
+        providers = bundle.get("providers", []) if isinstance(bundle, dict) else []
+        return {
+            "query": query,
+            "record_count": len(records),
+            "providers": providers,
+            "citations": bundle.get("citations", []),
+            "records": records,
+            "dossier_summary": {
+                "source_count": len(providers),
+                "domain_coverage": sorted(
+                    {
+                        str(domain)
+                        for item in records
+                        if isinstance(item, dict)
+                        for domain in item.get("domains", [])
+                    }
+                ),
+            },
+            "__tool_metadata__": {
+                "evidence_records": records[:6],
+                "evidence_citations": bundle.get("citations", [])[:8],
+                "evidence_source_count": len(providers),
+            },
+        }
+
+    def _external_resource_hub(self, args: dict[str, Any]) -> dict[str, Any]:
         query = str(args.get("query", "")).lower()
         limit = int(args.get("limit", 5))
         resources = [
@@ -261,6 +331,8 @@ class ToolRegistry:
             },
         ]
 
+        evidence_bundle = self._evidence.collect(query=query, limit=max(limit, 6), domains=self._infer_domains(query))
+        evidence_records = evidence_bundle.get("records", []) if isinstance(evidence_bundle, dict) else []
         scored: list[tuple[dict[str, Any], float]] = []
         for item in resources:
             score = 0.2
@@ -268,13 +340,40 @@ class ToolRegistry:
                 if tag in query:
                     score += 0.25
             scored.append((item, score))
+        for item in evidence_records:
+            if not isinstance(item, dict):
+                continue
+            scored.append(
+                (
+                    {
+                        "title": item.get("title", ""),
+                        "url": item.get("url", item.get("path", "")),
+                        "tags": item.get("tags", []),
+                        "summary": item.get("summary", ""),
+                        "source_id": item.get("source_id", "evidence"),
+                    },
+                    float(item.get("score", 0.0)),
+                )
+            )
         scored.sort(key=lambda pair: pair[1], reverse=True)
 
         return {
             "resources": [
-                {"title": item["title"], "url": item["url"], "score": round(score, 3), "tags": item["tags"]}
+                {
+                    "title": item["title"],
+                    "url": item["url"],
+                    "score": round(score, 3),
+                    "tags": item["tags"],
+                    "summary": item.get("summary", ""),
+                    "source_id": item.get("source_id", "curated"),
+                }
                 for item, score in scored[:limit]
-            ]
+            ],
+            "__tool_metadata__": {
+                "evidence_records": evidence_records[:6],
+                "evidence_citations": evidence_bundle.get("citations", [])[:8],
+                "evidence_source_count": len(evidence_bundle.get("providers", [])),
+            },
         }
 
     @staticmethod
@@ -495,3 +594,18 @@ class ToolRegistry:
             "threats_to_validity": threats,
             "mitigations": mitigations,
         }
+
+    @staticmethod
+    def _infer_domains(query: str) -> list[str]:
+        lowered = query.lower()
+        domains: list[str] = []
+        mapping = {
+            "risk": ["risk", "security", "audit", "compliance", "governance", "control"],
+            "enterprise": ["enterprise", "workflow", "operations", "stakeholder", "board"],
+            "research": ["research", "benchmark", "experiment", "study", "evaluation"],
+            "fintech": ["fintech", "bank", "payments", "insurance", "customer support"],
+        }
+        for domain, markers in mapping.items():
+            if any(marker in lowered for marker in markers):
+                domains.append(domain)
+        return domains or ["evidence"]

@@ -145,6 +145,7 @@ class LiveAgentResult:
     analysis: dict[str, Any] = field(default_factory=dict)
     critique: dict[str, Any] = field(default_factory=dict)
     strategy: dict[str, Any] = field(default_factory=dict)
+    transport: dict[str, Any] = field(default_factory=dict)
     notes: list[str] = field(default_factory=list)
     errors: list[str] = field(default_factory=list)
 
@@ -161,6 +162,7 @@ class LiveAgentResult:
             "analysis": self.analysis,
             "critique": self.critique,
             "strategy": self.strategy,
+            "transport": self.transport,
             "notes": self.notes,
             "errors": self.errors,
         }
@@ -393,8 +395,11 @@ class LiveAgentOrchestrator:
                 require_json=True,
             )
             result.analysis = _coerce_json(analysis_text)
+            result.transport["analysis"] = analysis_meta
             if analysis_meta.get("finish_reason"):
                 result.notes.append(f"analysis_finish:{analysis_meta['finish_reason']}")
+            if int(analysis_meta.get("retries", 0)) > 0:
+                result.notes.append(f"analysis_retries:{analysis_meta['retries']}")
 
             synth_text = base_answer
             if budget.remaining >= 1:
@@ -413,8 +418,11 @@ class LiveAgentOrchestrator:
                     max_tokens=max(512, 1400 + profile.max_tokens_bias),
                     require_json=False,
                 )
+                result.transport["synthesis"] = synth_meta
                 if synth_meta.get("finish_reason"):
                     result.notes.append(f"synthesis_finish:{synth_meta['finish_reason']}")
+                if int(synth_meta.get("retries", 0)) > 0:
+                    result.notes.append(f"synthesis_retries:{synth_meta['retries']}")
             else:
                 result.notes.append("synthesis_skipped_budget")
 
@@ -428,8 +436,11 @@ class LiveAgentOrchestrator:
                     require_json=True,
                 )
                 critique_payload = _coerce_json(critique_text)
+                result.transport["critique"] = critique_meta
                 if critique_meta.get("finish_reason"):
                     result.notes.append(f"critique_finish:{critique_meta['finish_reason']}")
+                if int(critique_meta.get("retries", 0)) > 0:
+                    result.notes.append(f"critique_retries:{critique_meta['retries']}")
 
             result.critique = critique_payload
             result.enhanced_answer = synth_text.strip() or base_answer

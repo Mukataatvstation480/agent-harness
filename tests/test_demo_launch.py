@@ -17,3 +17,4 @@ def test_demo_press_launch_writes_assets(tmp_path: Path) -> None:
     assert Path(str(paths.get("brief", ""))).exists()
     assert Path(str(paths.get("manifest", ""))).exists()
     assert Path(str(paths.get("interop", {}).get("index", ""))).exists()
+    assert payload.get("generation", {}).get("mode") == "baseline"

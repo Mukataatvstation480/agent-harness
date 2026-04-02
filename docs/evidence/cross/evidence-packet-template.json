@@ -1,0 +1,12 @@
+{
+  "record_id": "cross-evidence-packet-template",
+  "title": "Evidence Packet Template",
+  "summary": "A release packet should combine quantitative metrics, control decisions, citations, unresolved risks, and expansion triggers in one artifact.",
+  "evidence_type": "template",
+  "tags": ["evidence", "release", "packet", "decision"],
+  "domains": ["evidence", "governance", "research", "enterprise"],
+  "trust_score": 0.84,
+  "freshness_hint": "stable",
+  "content": "Decision-makers should not have to collect metrics, controls, and supporting citations from separate systems before approving launch.",
+  "url": "internal://cross/evidence-packet-template"
+}

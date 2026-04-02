@@ -1,0 +1,12 @@
+{
+  "record_id": "enterprise-workflow-rollout-scorecard",
+  "title": "Workflow Rollout Scorecard",
+  "summary": "Enterprise rollouts should track workflow time saved, fallback rate, escalation rate, and team adoption before widening scope.",
+  "evidence_type": "operating_scorecard",
+  "tags": ["enterprise", "workflow", "adoption", "scorecard"],
+  "domains": ["enterprise", "evidence"],
+  "trust_score": 0.82,
+  "freshness_hint": "stable",
+  "content": "Use one scorecard across pilot and expansion phases so workflow value, operator trust, and control friction can be reviewed together.",
+  "url": "internal://enterprise/workflow-rollout-scorecard"
+}

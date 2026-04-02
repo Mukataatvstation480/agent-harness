@@ -170,6 +170,13 @@ class RecipeRegistry:
                         args={"limit": 4},
                     ),
                     RecipeStep(
+                        step_id="evidence-dossier",
+                        title="Build external evidence dossier before controls are scored",
+                        tool="evidence_dossier_builder",
+                        args={"limit": 5},
+                        optional=True,
+                    ),
+                    RecipeStep(
                         step_id="risk-matrix",
                         title="Generate structured risk matrix",
                         tool="policy_risk_matrix",
@@ -306,6 +313,12 @@ class RecipeRegistry:
                         args={"limit": 6},
                     ),
                     RecipeStep(
+                        step_id="evidence-dossier",
+                        title="Collect benchmark anchors and evaluation references",
+                        tool="evidence_dossier_builder",
+                        args={"limit": 6},
+                    ),
+                    RecipeStep(
                         step_id="reference-pack",
                         title="Attach external references and benchmark anchors",
                         tool="external_resource_hub",
@@ -372,6 +385,13 @@ class RecipeRegistry:
                         title="Digest recent execution context and continuity signals",
                         tool="memory_context_digest",
                         args={"limit": 10},
+                    ),
+                    RecipeStep(
+                        step_id="evidence-dossier",
+                        title="Collect controls, policy references, and stakeholder evidence",
+                        tool="evidence_dossier_builder",
+                        args={"limit": 5},
+                        optional=True,
                     ),
                     RecipeStep(
                         step_id="risk-controls",

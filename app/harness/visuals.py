@@ -23,6 +23,7 @@ class HarnessVisualProtocol:
         discovery_board = self._build_discovery_board(run, manifests)
         security_board = self._build_security_board(run)
         live_agent_board = self._build_live_agent_board(run)
+        evidence_board = self._build_evidence_board(run)
         network = self._build_tool_network(run, manifests)
         hero_cards = self._build_hero_cards(run, value_card)
         radar = self._build_value_radar(value_card)
@@ -38,6 +39,7 @@ class HarnessVisualProtocol:
             "discovery_board": discovery_board,
             "security_board": security_board,
             "live_agent_board": live_agent_board,
+            "evidence_board": evidence_board,
             "tool_network": network,
             "hero_cards": hero_cards,
             "narrative": value_card.get("narrative", ""),
@@ -98,6 +100,7 @@ class HarnessVisualProtocol:
             "completion_score": float(metrics.get("completion_score", 0.0)),
             "live_agent_calls": float(metrics.get("live_agent_calls", 0.0)),
             "live_agent_success": float(metrics.get("live_agent_success", 0.0)),
+            "evidence_records": float(run.metadata.get("evidence", {}).get("record_count", 0.0)) if isinstance(run.metadata.get("evidence", {}), dict) else 0.0,
             "reliability": dims.get("reliability", 0.0),
             "observability": dims.get("observability", 0.0),
             "adaptability": dims.get("adaptability", 0.0),
@@ -230,6 +233,19 @@ class HarnessVisualProtocol:
             "critique": critique if isinstance(critique, dict) else {},
             "notes": live.get("notes", []),
             "errors": live.get("errors", []),
+        }
+
+    @staticmethod
+    def _build_evidence_board(run: HarnessRun) -> dict[str, Any]:
+        evidence = run.metadata.get("evidence", {})
+        if not isinstance(evidence, dict):
+            return {"record_count": 0, "citation_count": 0, "records": [], "citations": [], "sources": []}
+        return {
+            "record_count": int(evidence.get("record_count", 0)),
+            "citation_count": int(evidence.get("citation_count", 0)),
+            "records": evidence.get("records", []),
+            "citations": evidence.get("citations", []),
+            "sources": evidence.get("sources", []),
         }
 
     @staticmethod

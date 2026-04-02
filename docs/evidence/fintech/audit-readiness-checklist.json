@@ -1,0 +1,12 @@
+{
+  "record_id": "fintech-audit-readiness-checklist",
+  "title": "Audit Readiness Checklist for AI Service Launches",
+  "summary": "Launch packets need retained traces, policy versioning, evidence retention, and reviewer attribution before expansion.",
+  "evidence_type": "checklist",
+  "tags": ["audit", "traceability", "controls", "release"],
+  "domains": ["risk", "governance", "enterprise"],
+  "trust_score": 0.86,
+  "freshness_hint": "stable",
+  "content": "Capture request trace, model version, control decision, human approver, and exception handling path in the release packet.",
+  "url": "internal://fintech/audit-readiness-checklist"
+}

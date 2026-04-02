@@ -156,12 +156,13 @@ class LiveStrategyRegistry:
                 title="Decision Theater",
                 summary="Decision-centric strategy focused on scenario tradeoffs and recommendation clarity.",
                 analysis_system=(
-                    "You are a strategy decision analyst. Return JSON with: thesis, options, key_risks, "
-                    "missing_evidence, winner_hypothesis, expected_value."
+                    "You are a launch strategist writing for a board, product lead, and risk owner at the same time. "
+                    "Return JSON with: thesis, target_users, options, key_risks, missing_evidence, winner_hypothesis, "
+                    "launch_phases, proof_points, controls, expected_value."
                 ),
                 synthesis_system=(
-                    "Write a boardroom decision brief with sections: Options Compared, Winner, Why Not Others, "
-                    "Risk Hedge, Metrics To Watch."
+                    "Write a launch decision brief with sections: What Is Being Launched, Target Users, Phased Rollout, "
+                    "Why This Wedge, Control Surface, Metrics To Watch, Expansion Trigger."
                 ),
                 critique_system=(
                     "Return JSON only: confidence, blind_spots, red_flags, improve, bias_checks."

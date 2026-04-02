@@ -16,6 +16,7 @@ class HarnessReportBuilder:
         recipe = run.metadata.get("recipe", {})
         value_card = run.metadata.get("value_card", {})
         live_agent = run.metadata.get("live_agent", {})
+        evidence = run.metadata.get("evidence", {})
 
         step_rows: list[dict[str, Any]] = []
         for step in run.steps:
@@ -27,6 +28,7 @@ class HarnessReportBuilder:
                     "score": round(float(step.tool_call.score), 4) if step.tool_call else 0.0,
                     "success": bool(step.tool_result.success) if step.tool_result else False,
                     "latency_ms": round(float(step.tool_result.latency_ms), 2) if step.tool_result else 0.0,
+                    "evidence_count": int(len(step.tool_result.metadata.get("evidence_records", []))) if step.tool_result else 0,
                     "notes": step.guardrail_notes,
                 }
             )
@@ -57,6 +59,7 @@ class HarnessReportBuilder:
             },
             "recipe": recipe,
             "live_agent": live_agent if isinstance(live_agent, dict) else {},
+            "evidence": evidence if isinstance(evidence, dict) else {},
             "top_discovery": top_discovery,
             "steps": step_rows,
             "memory_snapshot_size": len(run.memory_snapshot),
@@ -73,6 +76,7 @@ class HarnessReportBuilder:
             f"- Preflight: `{data['security']['preflight_action']}` (risk={data['security']['preflight_risk_score']})",
             f"- Value Index: `{data.get('value_card', {}).get('value_index', 0.0)}`",
             f"- Live Agent Calls: `{data.get('live_agent', {}).get('calls_used', 0)}`",
+            f"- Evidence Records: `{data.get('evidence', {}).get('record_count', 0)}`",
             "",
             "## Plan",
         ]
@@ -107,6 +111,11 @@ class HarnessReportBuilder:
                 f"- Model: `{live.get('model', '')}`",
                 f"- Calls: `{live.get('calls_used', 0)}` / `{live.get('call_budget', 0)}`",
                 f"- Success: `{live.get('success', False)}`",
+                "",
+                "## Evidence",
+                f"- Records: `{data.get('evidence', {}).get('record_count', 0)}`",
+                f"- Citations: `{data.get('evidence', {}).get('citation_count', 0)}`",
+                *(f"- Citation: `{item}`" for item in data.get("evidence", {}).get("citations", [])[:4]),
                 "",
                 "## Metrics",
             ]

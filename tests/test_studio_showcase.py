@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+from app.demo import PRESS_DEMO_QUERY
 from app.harness.engine import HarnessEngine
 from app.studio.flagship import FLAGSHIP_ONE_LINER, StudioShowcaseBuilder
 
@@ -40,6 +41,14 @@ def test_build_showcase_payload_shape() -> None:
     assert "comparison" in payload
     assert len(payload["comparison"]["archetypes"]) >= 3
     assert "lab" in payload and "leaderboard" in payload["lab"]
+    assert payload["proposal"]["scenario_name"]
+    assert len(payload["proposal"].get("phases", [])) >= 3
+    assert len(payload["proposal"].get("expected_impact", [])) >= 3
+    assert len(payload["proposal"].get("critical_risks", [])) >= 1
+    assert payload["harness"].get("delivery_brief_excerpt", "")
+    assert "scenario" in payload
+    assert payload["scenario"]["name"]
+    assert payload["harness"]["run_summary"].get("evidence", {}).get("record_count", 0) >= 1
 
 
 def test_write_showcase_with_interop_bundle(tmp_path: Path) -> None:
@@ -79,3 +88,23 @@ def test_write_showcase_with_interop_bundle(tmp_path: Path) -> None:
     assert "Three-Phase Rollout" in html_content
     assert "Agent Comparison" in html_content
     assert "Appendix" in html_content
+    assert "Generated Business Brief" in html_content
+
+
+def test_fintech_demo_query_maps_to_regulated_scenario_with_evidence() -> None:
+    builder = StudioShowcaseBuilder(harness=HarnessEngine())
+    payload = builder.build_showcase(
+        query=PRESS_DEMO_QUERY,
+        mode="deep",
+        lab_preset="daily",
+        lab_repeats=1,
+        scenario_ids=["daily-001"],
+        include_marketplace=False,
+        include_external=False,
+        include_harness_tools=False,
+        include_interop_catalog=False,
+    )
+
+    assert payload["scenario"]["name"] == "regulated_copilot_launch"
+    assert payload["proposal"]["headline"] == "90-Day Launch Plan for a Regulated AI Support Copilot"
+    assert payload["harness"]["run_summary"]["evidence"]["record_count"] >= 1

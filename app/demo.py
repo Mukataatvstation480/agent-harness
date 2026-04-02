@@ -28,6 +28,10 @@ from app.utils.display import (
 )
 
 console = Console()
+PRESS_DEMO_QUERY = (
+    "Design a 90-day launch plan for a regulated AI customer-support copilot at a fintech, "
+    "balancing growth targets, auditability, human override policy, and research credibility."
+)
 
 
 def _invoke(query: str, mode: SystemMode = SystemMode.BALANCED) -> dict:
@@ -178,6 +182,7 @@ def demo_press_launch(
     tag: str = "press",
     live_agent: bool = False,
     max_model_calls: int = 8,
+    query: str = "",
 ) -> dict[str, object]:
     """Generate a launch-ready studio bundle for external showcasing."""
 
@@ -204,7 +209,7 @@ def demo_press_launch(
         else None
     )
     payload = builder.build_showcase(
-        query="Design a flagship AI operating plan that balances growth, governance, and research credibility.",
+        query=query.strip() or PRESS_DEMO_QUERY,
         mode="deep",
         lab_preset="broad",
         lab_repeats=1,
