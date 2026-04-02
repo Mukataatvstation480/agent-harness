@@ -91,6 +91,14 @@ class RecipeRegistry:
         lowered = query.lower()
         if any(token in lowered for token in ["risk", "audit", "compliance", "safety"]):
             return self._recipes.get("risk-radar")
+        if any(token in lowered for token in ["enterprise", "stakeholder", "board", "communication", "governance"]):
+            return self._recipes.get("enterprise-ops")
+        if any(token in lowered for token in ["daily", "routine", "todo", "meeting", "workflow", "productivity"]):
+            return self._recipes.get("daily-operator")
+        if any(token in lowered for token in ["benchmark", "ablation", "experiment", "reproducible", "paper"]):
+            return self._recipes.get("research-rig")
+        if any(token in lowered for token in ["creative", "brand", "design", "visual", "campaign", "presentation"]):
+            return self._recipes.get("creative-studio")
         if any(token in lowered for token in ["ecosystem", "market", "provider", "trend"]):
             return self._recipes.get("ecosystem-hunter")
         if any(token in lowered for token in ["code", "architecture", "refactor", "router"]):
@@ -250,5 +258,140 @@ class RecipeRegistry:
                     ),
                 ],
             ),
+            HarnessRecipe(
+                name="daily-operator",
+                version="1.0.0",
+                description="Daily operations workflow for practical planning, prioritization, and controls.",
+                tags=["daily", "operations", "productivity"],
+                default_mode="balanced",
+                steps=[
+                    RecipeStep(
+                        step_id="context-digest",
+                        title="Digest recent context and execution behavior",
+                        tool="memory_context_digest",
+                        args={"limit": 12},
+                    ),
+                    RecipeStep(
+                        step_id="portfolio-plan",
+                        title="Build multi-objective skill portfolio for the current task",
+                        tool="api_skill_portfolio_optimizer",
+                        args={"limit": 5, "risk_tolerance": "medium"},
+                    ),
+                    RecipeStep(
+                        step_id="risk-check",
+                        title="Apply practical risk-control matrix before final recommendation",
+                        tool="policy_risk_matrix",
+                        args={},
+                    ),
+                    RecipeStep(
+                        step_id="execution-blueprint",
+                        title="Generate concise execution blueprint",
+                        tool="code_router_blueprint",
+                        args={},
+                        optional=True,
+                    ),
+                ],
+            ),
+            HarnessRecipe(
+                name="research-rig",
+                version="1.0.0",
+                description="Research-oriented workflow for benchmark design and reproducible experiments.",
+                tags=["research", "benchmark", "ablation"],
+                default_mode="deep",
+                steps=[
+                    RecipeStep(
+                        step_id="trend-scan",
+                        title="Collect ecosystem trend signals for baselines",
+                        tool="browser_trending_scan",
+                        args={"limit": 6},
+                    ),
+                    RecipeStep(
+                        step_id="reference-pack",
+                        title="Attach external references and benchmark anchors",
+                        tool="external_resource_hub",
+                        args={"limit": 6},
+                    ),
+                    RecipeStep(
+                        step_id="experiment-design",
+                        title="Design ablation matrix and evaluation protocol",
+                        tool="code_experiment_design",
+                        args={"max_experiments": 6},
+                    ),
+                    RecipeStep(
+                        step_id="dependency-model",
+                        title="Map dependency graph for candidate skill stacks",
+                        tool="api_skill_dependency_graph",
+                        args={"limit": 20},
+                        optional=True,
+                    ),
+                ],
+            ),
+            HarnessRecipe(
+                name="creative-studio",
+                version="1.0.0",
+                description="Creative workflow for concept shaping and visual storytelling direction.",
+                tags=["creative", "design", "presentation"],
+                default_mode="balanced",
+                steps=[
+                    RecipeStep(
+                        step_id="trend-inspiration",
+                        title="Scan recent trends for inspiration and references",
+                        tool="browser_trending_scan",
+                        args={"limit": 6},
+                    ),
+                    RecipeStep(
+                        step_id="portfolio-ideas",
+                        title="Select best-fit skill portfolio for creative execution",
+                        tool="api_skill_portfolio_optimizer",
+                        args={"limit": 5, "risk_tolerance": "medium"},
+                    ),
+                    RecipeStep(
+                        step_id="concept-blueprint",
+                        title="Generate concept-to-execution blueprint",
+                        tool="code_router_blueprint",
+                        args={},
+                    ),
+                    RecipeStep(
+                        step_id="references",
+                        title="Attach reference links for rationale and reuse",
+                        tool="external_resource_hub",
+                        args={"limit": 4},
+                        optional=True,
+                    ),
+                ],
+            ),
+            HarnessRecipe(
+                name="enterprise-ops",
+                version="1.0.0",
+                description="Enterprise-friendly workflow focused on stakeholder alignment and safety controls.",
+                tags=["enterprise", "governance", "stakeholder"],
+                default_mode="safety_critical",
+                steps=[
+                    RecipeStep(
+                        step_id="context",
+                        title="Digest recent execution context and continuity signals",
+                        tool="memory_context_digest",
+                        args={"limit": 10},
+                    ),
+                    RecipeStep(
+                        step_id="risk-controls",
+                        title="Apply structured enterprise risk-control matrix",
+                        tool="policy_risk_matrix",
+                        args={},
+                    ),
+                    RecipeStep(
+                        step_id="portfolio",
+                        title="Optimize skill portfolio under lower risk tolerance",
+                        tool="api_skill_portfolio_optimizer",
+                        args={"limit": 5, "risk_tolerance": "low"},
+                    ),
+                    RecipeStep(
+                        step_id="dependency",
+                        title="Map dependencies and integration conflicts",
+                        tool="api_skill_dependency_graph",
+                        args={"limit": 16},
+                        optional=True,
+                    ),
+                ],
+            ),
         ]
-

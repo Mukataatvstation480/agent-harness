@@ -1,0 +1,69 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+
+jobs:
+  test-and-gate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+          cache-dependency-path: |
+            requirements.txt
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt pytest
+
+      - name: Run unit tests
+        run: pytest -q
+
+      - name: Run harness-lab CI gate
+        run: |
+          python -m app.harness.ci_gate \
+            --baseline data/harness_lab_ci_baseline.json \
+            --output reports/harness_lab_ci_result.json \
+            --presets core,daily,research,strict,broad \
+            --repeats 1 \
+            --seed 7
+
+      - name: Generate product story bundle
+        run: |
+          python - <<'PY'
+          import json
+          from app.harness.engine import HarnessEngine
+
+          engine = HarnessEngine()
+          lab = engine.run_research_lab(
+              preset="core",
+              repeats=1,
+              seed=7,
+              isolate_memory=True,
+              fresh_memory_per_candidate=True,
+          )
+          bundle = engine.build_lab_product_bundle(lab_payload=lab, tag="ci")
+          paths = engine.write_lab_product_bundle(bundle=bundle, output_dir="reports")
+          print(json.dumps(paths, indent=2))
+          PY
+
+      - name: Upload harness-lab report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: harness-lab-ci-report
+          path: |
+            reports/harness_lab_ci_result.json
+            reports/harness_lab_bundle_ci.json
+            reports/harness_lab_story_ci.md
+            reports/harness_lab_leaderboard_ci.csv

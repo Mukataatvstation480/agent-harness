@@ -257,6 +257,36 @@ def route_to_skills(state: GraphState) -> GraphState:
     marketplace_hits = discover_for_query(state.query, limit=market_limit_map.get(mode, 5))
 
     personality = _reconstruct_personality(state.personality) if state.personality else None
+    personality_engine = PersonalityEngine()
+    personality_strategy = personality_engine.suggest_routing_strategy(personality) if personality else None
+    frontier_preferences = (
+        personality_engine.frontier_preferences(personality)
+        if personality
+        else {
+            "risk_aversion": 0.55,
+            "reliability_floor": 0.45,
+            "uncertainty_tolerance": 0.50,
+        }
+    )
+    robustness_policy = policy.get("robustness", {})
+    risk_aversion = max(
+        float(robustness_policy.get("risk_aversion", frontier_preferences["risk_aversion"])),
+        float(frontier_preferences["risk_aversion"]),
+    )
+    reliability_floor = max(
+        float(robustness_policy.get("reliability_floor", frontier_preferences["reliability_floor"])),
+        float(frontier_preferences["reliability_floor"]),
+    )
+    uncertainty_tolerance = min(
+        float(robustness_policy.get("uncertainty_tolerance", frontier_preferences["uncertainty_tolerance"])),
+        float(frontier_preferences["uncertainty_tolerance"]),
+    )
+    require_downside_guard = bool(robustness_policy.get("require_downside_guard", False))
+    robust_enabled = (
+        require_downside_guard
+        or state.risk_level in {"high", "critical"}
+        or personality_strategy == RoutingStrategy.ROBUST_FRONTIER
+    )
 
     refinement = 0 if mode == SystemMode.FAST else 1 if mode == SystemMode.BALANCED else 2
     engine = ComplementarityEngine(
@@ -266,6 +296,10 @@ def route_to_skills(state: GraphState) -> GraphState:
         enable_synergy=True,
         enable_conflict_avoidance=True,
         refinement_rounds=refinement,
+        enable_robust_selection=robust_enabled,
+        risk_aversion=risk_aversion,
+        reliability_floor=reliability_floor,
+        uncertainty_tolerance=uncertainty_tolerance,
     )
 
     result = engine.select(
@@ -294,6 +328,7 @@ def route_to_skills(state: GraphState) -> GraphState:
         reasons[selected.metadata.name] = (
             f"selected (relevance={selected.relevance:.3f}, diversity={selected.diversity_bonus:.3f}, "
             f"synergy={selected.synergy_bonus:.3f}, cost={selected.budget_cost:.2f}, "
+            f"reliability={selected.reliability_score:.3f}, uncertainty={selected.uncertainty_penalty:.3f}, "
             f"composite={selected.composite_score:.3f})"
         )
 
@@ -322,10 +357,15 @@ def route_to_skills(state: GraphState) -> GraphState:
     state.execution_order = _resolve_execution_order(selected_names)
 
     if personality:
-        strategy = PersonalityEngine().suggest_routing_strategy(personality)
-        state.routing_strategy = strategy.value
+        state.routing_strategy = (
+            RoutingStrategy.ROBUST_FRONTIER.value
+            if robust_enabled
+            else personality_strategy.value if personality_strategy else RoutingStrategy.COMPLEMENTARY.value
+        )
     else:
-        state.routing_strategy = RoutingStrategy.COMPLEMENTARY.value
+        state.routing_strategy = (
+            RoutingStrategy.ROBUST_FRONTIER.value if robust_enabled else RoutingStrategy.COMPLEMENTARY.value
+        )
 
     score_map: dict[str, float] = {}
     for item in all_scored:
@@ -357,6 +397,12 @@ def route_to_skills(state: GraphState) -> GraphState:
             "total_synergy": result.total_synergy,
             "total_budget_used": total_budget_used,
             "selection_rounds": result.selection_rounds,
+            "robust_expected_utility": result.robust_expected_utility,
+            "robust_worst_case_utility": result.robust_worst_case_utility,
+            "avg_uncertainty": result.avg_uncertainty,
+            "risk_aversion": risk_aversion,
+            "reliability_floor": reliability_floor,
+            "uncertainty_tolerance": uncertainty_tolerance,
         },
         "pairwise_scores": result.pairwise_scores,
         "complementarity_matrix": result.synergy_matrix,
@@ -367,6 +413,13 @@ def route_to_skills(state: GraphState) -> GraphState:
         "strategy": state.routing_strategy,
         "portfolio_plan": state.portfolio_plan,
         "required_role_slots": role_slots,
+        "robustness_profile": {
+            "enabled": robust_enabled,
+            "require_downside_guard": require_downside_guard,
+            "risk_aversion": round(risk_aversion, 4),
+            "reliability_floor": round(reliability_floor, 4),
+            "uncertainty_tolerance": round(uncertainty_tolerance, 4),
+        },
     }
     state.routing_trace["skill_candidates"] = [meta.name for meta in candidates]
     state.routing_trace["skill_scores"] = score_map
@@ -382,6 +435,9 @@ def route_to_skills(state: GraphState) -> GraphState:
             "required_role_slots": role_slots,
             "effective_max_skills": effective_max,
             "budget_used": round(total_budget_used, 4),
+            "robust_expected_utility": round(result.robust_expected_utility, 4),
+            "robust_worst_case_utility": round(result.robust_worst_case_utility, 4),
+            "avg_uncertainty": round(result.avg_uncertainty, 4),
         }
     )
 
@@ -395,6 +451,8 @@ def route_to_skills(state: GraphState) -> GraphState:
                 "selected": selected_names,
                 "execution_order": state.execution_order,
                 "strategy": state.routing_strategy,
+                "robust_expected_utility": round(result.robust_expected_utility, 4),
+                "robust_worst_case_utility": round(result.robust_worst_case_utility, 4),
             },
         }
     )

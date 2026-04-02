@@ -11,3 +11,4 @@ dist/
 build/
 reports/
 data/live_experiment_log.json
+data/harness_lab_history.json

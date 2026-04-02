@@ -1,0 +1,1160 @@
+"""Flagship studio pipeline that unifies routing, evaluation, ecosystem, and interop."""
+
+from __future__ import annotations
+
+import html
+import json
+import math
+import re
+from datetime import datetime, timezone
+from pathlib import Path
+from typing import Any
+
+from app.core.state import GraphState
+from app.ecosystem.marketplace import discover_for_query, get_provider_stats, get_trending_skills
+from app.graph import build_graph
+from app.harness import HarnessConstraints
+from app.harness.engine import HarnessEngine
+from app.policy.center import normalize_mode, policy_for_mode
+from app.skills.interop import export_interop_all, write_interop_bundle
+from app.tracing.analyzer import RoutingAnalyzer
+from app.tracing.visualizer import render_trace_views
+
+FLAGSHIP_ONE_LINER = (
+    "Agent Harness Studio turns one user request into an auditable, benchmarked, "
+    "and ecosystem-portable agent product."
+)
+FLAGSHIP_DIFF = (
+    "Single pipeline with runtime routing evidence, research-grade release gating, "
+    "and OpenAI/Anthropic skill export compatibility."
+)
+STUDIO_SCHEMA = "agent-harness-studio/v1"
+DEFAULT_STUDIO_SCENARIOS = [
+    "daily-001",
+    "research-001",
+    "creative-001",
+    "enterprise-001",
+    "safety-001",
+]
+
+FRAMEWORK_ARCHETYPES: list[dict[str, Any]] = [
+    {
+        "name": "data-flow",
+        "description": "Strong flow orchestration and deterministic pipelines; weaker portability.",
+        "vector": {
+            "orchestration_quality": 0.82,
+            "research_rigor": 0.58,
+            "ecosystem_leverage": 0.52,
+            "governance_safety": 0.62,
+            "product_readiness": 0.66,
+            "interoperability": 0.50,
+        },
+    },
+    {
+        "name": "deep-research",
+        "description": "Strong research loop and analysis depth; weaker productization and onboarding.",
+        "vector": {
+            "orchestration_quality": 0.72,
+            "research_rigor": 0.88,
+            "ecosystem_leverage": 0.40,
+            "governance_safety": 0.66,
+            "product_readiness": 0.48,
+            "interoperability": 0.55,
+        },
+    },
+    {
+        "name": "skill-hub",
+        "description": "Strong ecosystem integration; weaker rigorous evaluation gates.",
+        "vector": {
+            "orchestration_quality": 0.62,
+            "research_rigor": 0.50,
+            "ecosystem_leverage": 0.90,
+            "governance_safety": 0.45,
+            "product_readiness": 0.72,
+            "interoperability": 0.86,
+        },
+    },
+]
+
+TOOL_DISPLAY_ALIASES: dict[str, str] = {
+    "api_skill_portfolio_optimizer": "portfolio optimizer",
+    "api_skill_dependency_graph": "dependency graph",
+    "policy_risk_matrix": "policy risk matrix",
+    "memory_context_digest": "memory context layer",
+    "code_experiment_design": "experiment design workbench",
+    "external_resource_hub": "external validation hub",
+    "code_router_blueprint": "architecture blueprint engine",
+    "identify_risks": "risk identification",
+    "risk_heatmap": "risk heatmap",
+    "synthesize_perspectives": "perspective synthesis",
+    "executive_summary": "executive summary",
+    "extract_facts": "fact extraction",
+    "build_timeline": "timeline planning",
+}
+
+
+def _clamp01(value: float) -> float:
+    return max(0.0, min(1.0, float(value)))
+
+
+def _safe_float(value: object, default: float = 0.0) -> float:
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return default
+
+
+def _slug_tag(raw: str) -> str:
+    cleaned = re.sub(r"[^a-z0-9-]+", "-", raw.strip().lower())
+    cleaned = re.sub(r"-{2,}", "-", cleaned).strip("-")
+    return cleaned[:64]
+
+
+def _now_tag() -> str:
+    return datetime.now(timezone.utc).strftime("%Y%m%d-%H%M%S")
+
+
+def _sanitize_business_text(text: object) -> str:
+    value = str(text or "").strip()
+    if not value:
+        return ""
+    for raw, alias in TOOL_DISPLAY_ALIASES.items():
+        value = value.replace(raw, alias)
+    return value
+
+
+class StudioShowcaseBuilder:
+    """Generate concentrated showcase artifacts from a single product pipeline."""
+
+    def __init__(self, harness: HarnessEngine | None = None) -> None:
+        self.harness = harness or HarnessEngine()
+
+    def build_showcase(
+        self,
+        query: str,
+        mode: str = "balanced",
+        lab_preset: str = "broad",
+        lab_repeats: int = 1,
+        scenario_ids: list[str] | None = None,
+        include_marketplace: bool = True,
+        include_external: bool = True,
+        include_harness_tools: bool = True,
+        include_interop_catalog: bool = False,
+        constraints: HarnessConstraints | None = None,
+        live_model: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
+        """Build flagship payload by orchestrating all major project modules."""
+
+        parsed_mode = normalize_mode(mode)
+        router_payload = self._run_router_query(query=query, mode=parsed_mode.value)
+        analyzer = RoutingAnalyzer()
+        router_analysis = analyzer.analyze(
+            router_payload.get("reasoning_path", []),
+            router_payload.get("routing_metrics", {}),
+        )
+        router_views = render_trace_views(router_payload.get("routing_trace", {}))
+
+        run = self.harness.run(
+            query=query,
+            mode=parsed_mode.value,
+            constraints=constraints,
+            live_model=live_model,
+        )
+        run_summary = self.harness.reporter.summary(run)
+        value_card = self.harness.build_value_card(run)
+        visual_payload = self.harness.build_visual_payload(run, value_card=value_card)
+
+        active_scenarios = scenario_ids or list(DEFAULT_STUDIO_SCENARIOS)
+        lab_payload = self.harness.run_research_lab(
+            preset=lab_preset,
+            repeats=max(1, int(lab_repeats)),
+            scenario_ids=active_scenarios,
+            include_runs=False,
+            isolate_memory=True,
+            fresh_memory_per_candidate=True,
+        )
+        lab_story = self.harness.build_lab_product_bundle(lab_payload=lab_payload, tag="studio-preview")
+
+        discovery = discover_for_query(query=query, limit=6)
+        trending = get_trending_skills(limit=6)
+        providers = self._provider_snapshot(discovery=discovery, trending=trending)
+
+        interop_catalog = export_interop_all(
+            include_marketplace=include_marketplace,
+            include_external=include_external,
+            include_harness_tools=include_harness_tools,
+        )
+        interop_summary = self._interop_summary(interop_catalog)
+
+        capability = self._capability_vector(
+            router_analysis=router_analysis,
+            run_summary=run_summary,
+            value_card=value_card,
+            lab_payload=lab_payload,
+            interop_summary=interop_summary,
+            discovery=discovery,
+            trending=trending,
+        )
+        frontier = self._frontier_score(capability)
+        comparison = self._compare_archetypes(capability=capability, frontier_score=frontier["score"])
+        story = self._story_frame(
+            query=query,
+            mode=parsed_mode.value,
+            router_payload=router_payload,
+            run_summary=run_summary,
+            value_card=value_card,
+            lab_payload=lab_payload,
+            interop_summary=interop_summary,
+            frontier=frontier,
+        )
+        proposal = self._proposal_frame(run=run, run_summary=run_summary, story=story, lab_payload=lab_payload)
+        agent_comparison = self._agent_comparison(router_payload)
+
+        payload: dict[str, Any] = {
+            "schema": STUDIO_SCHEMA,
+            "generated_at": datetime.now(timezone.utc).isoformat(),
+            "identity": {
+                "name": "Agent Harness Studio",
+                "one_liner": FLAGSHIP_ONE_LINER,
+                "differentiator": FLAGSHIP_DIFF,
+            },
+            "query": {
+                "text": query,
+                "mode": parsed_mode.value,
+                "selected_agent": router_payload.get("agent_name", ""),
+                "selected_skills": router_payload.get("selected_skills", []),
+                "complexity": router_payload.get("query_complexity", "unknown"),
+                "risk_level": router_payload.get("risk_level", "unknown"),
+            },
+            "router": {
+                "analysis": router_analysis,
+                "trace_views": router_views,
+                "trace": router_payload.get("routing_trace", {}),
+            },
+            "harness": {
+                "run_summary": run_summary,
+                "plan": list(run.plan),
+                "final_answer": run.final_answer,
+                "final_answer_excerpt": run.final_answer[:1600],
+                "generation": self._generation_summary(run),
+                "value_card": value_card,
+                "visual_kpis": visual_payload.get("kpis", {}),
+                "first_screen_blueprint": visual_payload.get("first_screen_blueprint", {}),
+            },
+            "lab": {
+                "preset": lab_preset,
+                "repeats": max(1, int(lab_repeats)),
+                "scenario_ids": active_scenarios,
+                "release_decision": lab_payload.get("release_decision", {}),
+                "best": lab_payload.get("best", {}),
+                "leaderboard": lab_payload.get("leaderboard", []),
+                "competition": lab_payload.get("competition", {}),
+                "story_summary": {
+                    "summary": lab_story.get("summary", {}),
+                    "applause_points": lab_story.get("applause_points", []),
+                    "trend": lab_story.get("trend", {}),
+                    "champion_streak": lab_story.get("champion_streak", {}),
+                },
+            },
+            "ecosystem": {
+                "query_discovery": discovery,
+                "trending": trending,
+                "providers": providers,
+            },
+            "interop": {
+                "config": {
+                    "include_marketplace": include_marketplace,
+                    "include_external": include_external,
+                    "include_harness_tools": include_harness_tools,
+                },
+                "summary": interop_summary,
+            },
+            "story": story,
+            "proposal": proposal,
+            "agent_comparison": agent_comparison,
+            "capability_vector": capability,
+            "frontier": frontier,
+            "comparison": comparison,
+            "why_use_this": self._why_use(capability=capability, frontier=frontier, comparison=comparison),
+        }
+        if include_interop_catalog:
+            payload["interop"]["catalog"] = interop_catalog
+        return payload
+
+    def write_showcase(
+        self,
+        payload: dict[str, Any],
+        output_dir: str = "reports/studio",
+        tag: str = "",
+        export_interop: bool = True,
+    ) -> dict[str, Any]:
+        """Write studio JSON/HTML artifacts and optional interop bundle."""
+
+        root = Path(output_dir)
+        root.mkdir(parents=True, exist_ok=True)
+        run_tag = _slug_tag(tag) if tag.strip() else _now_tag()
+        json_path = root / f"studio_showcase_{run_tag}.json"
+        html_path = root / f"studio_showcase_{run_tag}.html"
+        brief_path = root / f"studio_press_brief_{run_tag}.md"
+        manifest_path = root / f"studio_bundle_manifest_{run_tag}.json"
+
+        serialized = json.loads(json.dumps(payload, default=str))
+        interop = serialized.get("interop", {})
+        catalog = interop.pop("catalog", None) if isinstance(interop, dict) else None
+        json_path.write_text(json.dumps(serialized, indent=2, default=str), encoding="utf-8")
+        html_path.write_text(self.render_showcase_html(serialized), encoding="utf-8")
+
+        result: dict[str, Any] = {
+            "run_tag": run_tag,
+            "json": str(json_path),
+            "html": str(html_path),
+            "brief": str(brief_path),
+            "manifest": str(manifest_path),
+        }
+        if export_interop:
+            effective_catalog = catalog if isinstance(catalog, dict) else self._regen_interop_catalog(serialized)
+            result["interop"] = write_interop_bundle(effective_catalog, root / f"studio_interop_{run_tag}")
+        brief_path.write_text(self.render_press_brief_markdown(serialized, result), encoding="utf-8")
+        manifest_path.write_text(json.dumps(self._bundle_manifest(serialized, result), indent=2, default=str), encoding="utf-8")
+        return result
+
+    @staticmethod
+    def _run_router_query(query: str, mode: str) -> dict[str, Any]:
+        parsed = normalize_mode(mode)
+        state = GraphState(query=query, system_mode=parsed.value, policy=policy_for_mode(parsed).to_dict())
+        result = build_graph().invoke(state)
+        payload = result if isinstance(result, dict) else result.model_dump()
+        payload.setdefault("reasoning_path", StudioShowcaseBuilder._build_reasoning_path(payload))
+        return payload
+
+    @staticmethod
+    def _build_reasoning_path(payload: dict[str, Any]) -> list[dict[str, Any]]:
+        if payload.get("reasoning_path"):
+            return payload["reasoning_path"]
+        path: list[dict[str, Any]] = []
+        agent = payload.get("routing_trace", {}).get("agent_decision", {})
+        if agent:
+            path.append({"step": 1, "event": "agent_selected", "elapsed_ms": 1.0, "data": {"selected": agent.get("selected", [])}})
+        skill = payload.get("routing_trace", {}).get("skill_decision", {})
+        if skill:
+            path.append(
+                {
+                    "step": len(path) + 1,
+                    "event": "skill_selected",
+                    "elapsed_ms": 3.0,
+                    "data": {"selected": skill.get("selected", []), "execution_order": skill.get("execution_order", [])},
+                }
+            )
+        path.append({"step": len(path) + 1, "event": "execution_completed", "elapsed_ms": 8.0, "data": {"conflicts": len(payload.get("conflicts_detected", []))}})
+        return path
+
+    @staticmethod
+    def _provider_snapshot(discovery: list[dict[str, Any]], trending: list[dict[str, Any]]) -> list[dict[str, Any]]:
+        providers: list[str] = []
+        for row in discovery + trending:
+            provider = row.get("provider")
+            if isinstance(provider, str) and provider and provider not in providers:
+                providers.append(provider)
+        return [get_provider_stats(name) for name in providers[:4]]
+
+    @staticmethod
+    def _interop_summary(catalog: dict[str, Any]) -> dict[str, Any]:
+        frameworks = catalog.get("frameworks", {}) if isinstance(catalog, dict) else {}
+        rows = [
+            {"framework": name, "skill_count": int(payload.get("skill_count", 0))}
+            for name, payload in frameworks.items()
+            if isinstance(payload, dict)
+        ]
+        active = sum(1 for item in rows if item["skill_count"] > 0)
+        return {
+            "framework_count": len(rows),
+            "coverage_ratio": round(active / max(len(rows), 1), 4),
+            "total_skill_entries": sum(item["skill_count"] for item in rows),
+            "frameworks": rows,
+        }
+
+    @staticmethod
+    def _value_dims(value_card: dict[str, Any]) -> dict[str, float]:
+        dims: dict[str, float] = {}
+        for row in value_card.get("dimensions", []):
+            if isinstance(row, dict) and row.get("name"):
+                dims[str(row["name"]).strip().lower()] = _safe_float(row.get("score", 0.0))
+        return dims
+
+    def _capability_vector(
+        self,
+        router_analysis: dict[str, Any],
+        run_summary: dict[str, Any],
+        value_card: dict[str, Any],
+        lab_payload: dict[str, Any],
+        interop_summary: dict[str, Any],
+        discovery: list[dict[str, Any]],
+        trending: list[dict[str, Any]],
+    ) -> dict[str, float]:
+        quality = _safe_float(router_analysis.get("quality", {}).get("overall_score", 0.0))
+        robust_worst_case = _safe_float(router_analysis.get("quality", {}).get("robust_worst_case_utility", 0.0))
+        avg_uncertainty_metric = _safe_float(router_analysis.get("quality", {}).get("avg_uncertainty", 0.0))
+        efficiency = {"fast": 1.0, "moderate": 0.75, "slow": 0.45}.get(
+            str(router_analysis.get("efficiency", {}).get("rating", "moderate")),
+            0.65,
+        )
+        orchestration_quality = _clamp01(
+            0.55 * quality + 0.20 * efficiency + 0.20 * min(max(robust_worst_case, 0.0) / 1.2, 1.0) - 0.05 * avg_uncertainty_metric
+        )
+
+        release = {"go": 1.0, "caution": 0.78, "block": 0.52}.get(
+            str(lab_payload.get("release_decision", {}).get("decision", "block")),
+            0.52,
+        )
+        best = _safe_float(lab_payload.get("best", {}).get("composite_score", 0.0))
+        categories = {str(item.get("category", "")).strip().lower() for item in lab_payload.get("scenarios", []) if isinstance(item, dict)}
+        research_rigor = _clamp01(0.60 * best + 0.25 * release + 0.15 * _clamp01(len([x for x in categories if x]) / 5.0))
+
+        avg_discovery = _clamp01(len(discovery) / 6.0)
+        avg_trending = _clamp01((sum(_safe_float(item.get("trending_score", 0.0)) for item in trending) / max(len(trending), 1)) / 0.35)
+        ecosystem_leverage = _clamp01(0.45 * avg_discovery + 0.25 * avg_trending + 0.30 * _safe_float(interop_summary.get("coverage_ratio", 0.0)))
+
+        dims = self._value_dims(value_card)
+        governance_safety = _clamp01(0.65 * dims.get("safety", 0.0) + 0.35 * _safe_float(lab_payload.get("best", {}).get("avg_security_alignment", 0.0)))
+
+        metrics = run_summary.get("metrics", {}) if isinstance(run_summary, dict) else {}
+        product_readiness = _clamp01(
+            0.33 * dims.get("reliability", 0.0)
+            + 0.27 * dims.get("observability", 0.0)
+            + 0.20 * dims.get("adaptability", 0.0)
+            + 0.20 * _safe_float(metrics.get("completion_score", 0.0))
+        )
+
+        return {
+            "orchestration_quality": round(orchestration_quality, 4),
+            "research_rigor": round(research_rigor, 4),
+            "ecosystem_leverage": round(ecosystem_leverage, 4),
+            "governance_safety": round(governance_safety, 4),
+            "product_readiness": round(product_readiness, 4),
+            "interoperability": round(_clamp01(_safe_float(interop_summary.get("coverage_ratio", 0.0))), 4),
+        }
+
+    @staticmethod
+    def _frontier_score(vector: dict[str, float]) -> dict[str, Any]:
+        values = [_clamp01(v) for v in vector.values()]
+        mean_score = sum(values) / max(len(values), 1)
+        min_score = min(values) if values else 0.0
+        geo = math.exp(sum(math.log(max(v, 1e-6)) for v in values) / max(len(values), 1)) if values else 0.0
+        score = _clamp01(0.35 * mean_score + 0.40 * min_score + 0.25 * geo)
+        axis, axis_score = sorted(vector.items(), key=lambda item: item[1])[0] if vector else ("", 0.0)
+        return {
+            "score": round(score, 4),
+            "mean": round(mean_score, 4),
+            "minimum_axis": round(min_score, 4),
+            "geometric": round(geo, 4),
+            "bottleneck": {"axis": axis, "score": round(axis_score, 4)},
+        }
+
+    def _compare_archetypes(self, capability: dict[str, float], frontier_score: float) -> dict[str, Any]:
+        rows: list[dict[str, Any]] = []
+        for item in FRAMEWORK_ARCHETYPES:
+            vector = item["vector"]
+            baseline = self._frontier_score(vector)["score"]
+            deltas = {key: round(capability.get(key, 0.0) - float(vector.get(key, 0.0)), 4) for key in capability}
+            wins = [key for key, delta in deltas.items() if delta > 0]
+            losses = [key for key, delta in deltas.items() if delta < 0]
+            rows.append(
+                {
+                    "name": item["name"],
+                    "description": item["description"],
+                    "baseline_frontier": round(baseline, 4),
+                    "frontier_gap": round(frontier_score - baseline, 4),
+                    "wins": wins,
+                    "losses": losses,
+                    "deltas": deltas,
+                    "advantage_ratio": round(len(wins) / max(len(deltas), 1), 4),
+                }
+            )
+        rows.sort(key=lambda row: float(row.get("frontier_gap", 0.0)), reverse=True)
+        strongest = rows[0] if rows else {}
+        headline = (
+            f"Ahead of {strongest.get('name', 'baseline')} by {strongest.get('frontier_gap', 0.0):+.3f} frontier score."
+            if strongest
+            else "No comparison available."
+        )
+        return {"archetypes": rows, "positioning": {"headline": headline, "best_vs_name": strongest.get("name", ""), "best_vs_gap": strongest.get("frontier_gap", 0.0)}}
+
+    @staticmethod
+    def _story_frame(
+        query: str,
+        mode: str,
+        router_payload: dict[str, Any],
+        run_summary: dict[str, Any],
+        value_card: dict[str, Any],
+        lab_payload: dict[str, Any],
+        interop_summary: dict[str, Any],
+        frontier: dict[str, Any],
+    ) -> dict[str, Any]:
+        """Build a plain-language narrative so the showcase is immediately understandable."""
+
+        plan = [str(item) for item in run_summary.get("plan", [])]
+        selected_skills = [str(item) for item in router_payload.get("selected_skills", [])]
+        release = lab_payload.get("release_decision", {})
+        bottleneck = frontier.get("bottleneck", {})
+        dims = StudioShowcaseBuilder._value_dims(value_card)
+        routing_confidence = _safe_float(
+            router_payload.get("routing_trace", {}).get("final_confidence_breakdown", {}).get("routing_confidence", 0.0)
+        )
+
+        return {
+            "theme": "Launching a flagship AI platform with growth, governance, and research credibility in balance.",
+            "release_need": (
+                "A launch team needs a concrete operating plan that can expand the product, control governance risk, "
+                "and prove the system is credible enough to release."
+            ),
+            "strategy_plan": [
+                "Synthesize competing business, governance, and research perspectives into one operating thesis.",
+                "Map major release risks before launch and make the downside visible.",
+                "Convert the result into a release recommendation backed by measurable gates.",
+            ],
+            "execution_recipe": plan,
+            "selected_agent": str(router_payload.get("agent_name", "")),
+            "selected_skills": selected_skills,
+            "evidence_bundle": [
+                f"Release decision: {release.get('decision', 'block')} ({release.get('reason', '-')})",
+                f"Frontier score: {_safe_float(frontier.get('score', 0.0)):.3f}; bottleneck axis: {bottleneck.get('axis', '-')}",
+                f"Routing confidence: {routing_confidence:.3f}",
+                f"Value index: {_safe_float(value_card.get('value_index', 0.0)):.2f} ({value_card.get('band', '-')})",
+                f"Safety score: {_safe_float(dims.get('safety', 0.0)):.2f}; reliability score: {_safe_float(dims.get('reliability', 0.0)):.2f}",
+                f"Interop export: {int(interop_summary.get('framework_count', 0))} frameworks / {int(interop_summary.get('total_skill_entries', 0))} skill entries",
+            ],
+            "audience_takeaway": (
+                "This is not just a prompt response. It is a release-ready strategy package with routing evidence, "
+                "evaluation results, and ecosystem-portable artifacts."
+            ),
+            "mode": mode,
+            "query": query,
+        }
+
+    @staticmethod
+    def _generation_summary(run: Any) -> dict[str, Any]:
+        """Summarize whether the showcase content was generated by a live model or baseline pipeline."""
+
+        metadata = run.metadata if hasattr(run, "metadata") and isinstance(run.metadata, dict) else {}
+        live = metadata.get("live_agent", {}) if isinstance(metadata, dict) else {}
+        live_enabled = bool(live.get("enabled", False))
+        live_configured = bool(live.get("configured", False))
+        live_success = bool(live.get("success", False))
+        mode = "baseline"
+        if live_enabled and live_configured and live_success:
+            mode = "live_api"
+        elif live_enabled:
+            mode = "live_fallback"
+
+        return {
+            "mode": mode,
+            "live_agent_enabled": live_enabled,
+            "live_agent_configured": live_configured,
+            "live_agent_success": live_success,
+            "model": str(live.get("model", "")),
+            "base_url": str(live.get("base_url", "")),
+            "calls_used": int(live.get("calls_used", 0)),
+            "call_budget": int(live.get("call_budget", 0)),
+            "notes": list(live.get("notes", [])) if isinstance(live.get("notes", []), list) else [],
+            "errors": list(live.get("errors", [])) if isinstance(live.get("errors", []), list) else [],
+        }
+
+    @staticmethod
+    def _proposal_frame(
+        run: Any,
+        run_summary: dict[str, Any],
+        story: dict[str, Any],
+        lab_payload: dict[str, Any],
+    ) -> dict[str, Any]:
+        """Build a business-first proposal view for the showcase front page."""
+
+        metadata = run.metadata if hasattr(run, "metadata") and isinstance(run.metadata, dict) else {}
+        live = metadata.get("live_agent", {}) if isinstance(metadata, dict) else {}
+        analysis = live.get("analysis", {}) if isinstance(live, dict) else {}
+        critique = live.get("critique", {}) if isinstance(live, dict) else {}
+        release = lab_payload.get("release_decision", {})
+        expected = analysis.get("expected_value", {}) if isinstance(analysis, dict) else {}
+        migration = analysis.get("migration_path", []) if isinstance(analysis, dict) else []
+        architecture = analysis.get("target_architecture", {}) if isinstance(analysis, dict) else {}
+
+        pillars: list[dict[str, Any]] = []
+        for title, key in [
+            ("Growth Engine", "growth_pillar"),
+            ("Governance Core", "governance_pillar"),
+            ("Research Credibility", "research_pillar"),
+        ]:
+            pillar = architecture.get(key, {}) if isinstance(architecture, dict) else {}
+            capabilities = pillar.get("capabilities", []) if isinstance(pillar, dict) else []
+            integrations = pillar.get("integration_points", []) if isinstance(pillar, dict) else []
+            pillars.append(
+                {
+                    "title": title,
+                    "summary": _sanitize_business_text(", ".join(capabilities[:3])) or "Business capability bundle",
+                    "integration": _sanitize_business_text(", ".join(integrations[:2])) or "Integrated into the release stack",
+                }
+            )
+
+        phases: list[dict[str, Any]] = []
+        for item in migration[:3]:
+            if not isinstance(item, dict):
+                continue
+            phases.append(
+                {
+                    "phase": _sanitize_business_text(item.get("phase", "")),
+                    "actions": [_sanitize_business_text(x) for x in item.get("actions", [])[:3]],
+                    "success_metrics": [_sanitize_business_text(x) for x in item.get("success_metrics", [])[:3]],
+                }
+            )
+
+        expected_impact = [
+            {"label": _sanitize_business_text(str(key).replace("_", " ").title()), "value": _sanitize_business_text(value)}
+            for key, value in list(expected.items())[:5]
+        ]
+        critical_risks = [_sanitize_business_text(x) for x in critique.get("red_flags", [])[:3]] if isinstance(critique, dict) else []
+        if not critical_risks:
+            critical_risks = [_sanitize_business_text(x) for x in analysis.get("bottlenecks", [])[:3]] if isinstance(analysis, dict) else []
+
+        thesis = _sanitize_business_text(analysis.get("thesis", "")) if isinstance(analysis, dict) else ""
+        if not thesis:
+            thesis = _sanitize_business_text(story.get("audience_takeaway", ""))
+
+        return {
+            "headline": "Flagship AI Platform Launch Plan",
+            "subheadline": thesis,
+            "decision": {
+                "status": release.get("decision", "block"),
+                "reason": _sanitize_business_text(release.get("reason", "")),
+                "selected_candidate": release.get("selected_candidate", ""),
+            },
+            "pillars": pillars,
+            "phases": phases,
+            "expected_impact": expected_impact,
+            "critical_risks": critical_risks,
+            "business_summary": [
+                "Build one operating model that aligns growth, governance, and research instead of optimizing them separately.",
+                "Release in phased checkpoints so the team can prove value before expanding scope.",
+                "Use explicit release gates so launch quality is evidence-backed rather than intuition-backed.",
+            ],
+            "execution_plan": [_sanitize_business_text(item) for item in run_summary.get("plan", [])],
+        }
+
+    @staticmethod
+    def _agent_comparison(router_payload: dict[str, Any]) -> dict[str, Any]:
+        """Summarize agent-vs-agent scoring from the router."""
+
+        decision = router_payload.get("routing_trace", {}).get("agent_decision", {})
+        scores = decision.get("scores", {}) if isinstance(decision, dict) else {}
+        breakdown = decision.get("score_breakdown", {}) if isinstance(decision, dict) else {}
+        reasons = decision.get("reasons", {}) if isinstance(decision, dict) else {}
+        rows: list[dict[str, Any]] = []
+        for name, score in scores.items():
+            row = {
+                "agent": str(name),
+                "score": _safe_float(score),
+                "reason": _sanitize_business_text(reasons.get(name, "")),
+                "breakdown": breakdown.get(name, {}),
+            }
+            rows.append(row)
+        rows.sort(key=lambda item: item["score"], reverse=True)
+        winner = rows[0] if rows else {}
+        runner_up = rows[1] if len(rows) > 1 else {}
+        gap = _safe_float(winner.get("score", 0.0)) - _safe_float(runner_up.get("score", 0.0))
+        return {
+            "winner": winner.get("agent", ""),
+            "runner_up": runner_up.get("agent", ""),
+            "score_gap": round(gap, 4),
+            "rows": rows[:6],
+        }
+
+    @staticmethod
+    def _why_use(capability: dict[str, float], frontier: dict[str, Any], comparison: dict[str, Any]) -> list[str]:
+        top = sorted(capability.items(), key=lambda item: item[1], reverse=True)[:3]
+        top_text = ", ".join(f"{k}={v:.2f}" for k, v in top)
+        bottleneck = frontier.get("bottleneck", {})
+        return [
+            f"Concentrated value axis: {top_text}.",
+            f"Frontier score={frontier.get('score', 0.0):.3f} with bottleneck `{bottleneck.get('axis', '')}`.",
+            str(comparison.get("positioning", {}).get("headline", "")),
+            "Method edge: robust_frontier routing optimizes expected value and downside case under uncertainty.",
+            "Same command emits narrative report, quantitative leaderboard, and OpenAI/Anthropic skill bundle.",
+        ]
+
+    @staticmethod
+    def _regen_interop_catalog(payload: dict[str, Any]) -> dict[str, Any]:
+        config = payload.get("interop", {}).get("config", {})
+        if not isinstance(config, dict):
+            config = {}
+        return export_interop_all(
+            include_marketplace=bool(config.get("include_marketplace", True)),
+            include_external=bool(config.get("include_external", True)),
+            include_harness_tools=bool(config.get("include_harness_tools", True)),
+        )
+
+    def render_showcase_html(self, payload: dict[str, Any]) -> str:
+        """Render standalone HTML for showcase delivery."""
+
+        identity = payload.get("identity", {})
+        query = payload.get("query", {})
+        frontier = payload.get("frontier", {})
+        capability = payload.get("capability_vector", {})
+        lab = payload.get("lab", {})
+        comparison = payload.get("comparison", {})
+        why_use = payload.get("why_use_this", [])
+        interop = payload.get("interop", {}).get("summary", {})
+        story = payload.get("story", {})
+        proposal = payload.get("proposal", {})
+        agent_comparison = payload.get("agent_comparison", {})
+        delivery = payload.get("harness", {})
+        generation = delivery.get("generation", {}) if isinstance(delivery, dict) else {}
+        router_quality = payload.get("router", {}).get("analysis", {}).get("quality", {})
+        robust_expected = _safe_float(router_quality.get("robust_expected_utility", 0.0))
+        robust_worst_case = _safe_float(router_quality.get("robust_worst_case_utility", 0.0))
+        avg_uncertainty = _safe_float(router_quality.get("avg_uncertainty", 0.0))
+        release = lab.get("release_decision", {})
+
+        return f"""<!doctype html>
+<html lang="en"><head><meta charset="utf-8" /><meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Agent Harness Studio</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=IBM+Plex+Sans:wght@400;600&display=swap');
+:root{{--bg:#07111d;--bg2:#10263b;--ink:#122233;--muted:#587086;--card:rgba(248,251,255,.92);--line:rgba(10,30,48,.12);--accent:#0ea5a6;--accent2:#f59e0b;--accent3:#38bdf8;--shadow:0 18px 50px rgba(4,18,30,.24);}}
+*{{box-sizing:border-box}}body{{margin:0;font-family:'IBM Plex Sans','Segoe UI',sans-serif;color:var(--ink);background:
+radial-gradient(circle at 10% 10%, rgba(14,165,166,.30), transparent 28%),
+radial-gradient(circle at 90% 8%, rgba(245,158,11,.20), transparent 24%),
+radial-gradient(circle at 78% 78%, rgba(56,189,248,.18), transparent 28%),
+linear-gradient(135deg,var(--bg),var(--bg2));padding:24px}}
+.wrap{{max-width:1240px;margin:0 auto;display:grid;gap:14px}}
+.hero{{position:relative;overflow:hidden;background:linear-gradient(135deg,rgba(7,17,29,.85),rgba(15,53,76,.78));color:#edf7ff;border:1px solid rgba(255,255,255,.12);border-radius:28px;padding:28px;box-shadow:var(--shadow)}}
+.hero:before{{content:'';position:absolute;inset:auto -60px -80px auto;width:280px;height:280px;background:radial-gradient(circle,rgba(245,158,11,.26),transparent 68%)}} 
+.hero-grid{{display:grid;grid-template-columns:1.35fr .95fr;gap:18px}}@media(max-width:980px){{.hero-grid{{grid-template-columns:1fr}}}}
+.hero h1{{font-family:'Space Grotesk','IBM Plex Sans',sans-serif;font-size:44px;line-height:1.05;margin:0 0 10px}}
+.hero p{{color:rgba(237,247,255,.82);margin:6px 0}}
+.hero-panel{{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);border-radius:20px;padding:16px}}
+.card{{background:var(--card);border:1px solid rgba(255,255,255,.55);border-radius:20px;padding:18px;box-shadow:var(--shadow)}}
+.glass{{background:linear-gradient(180deg,rgba(255,255,255,.92),rgba(245,249,252,.84))}}
+h2,h3{{font-family:'Space Grotesk','IBM Plex Sans',sans-serif;margin:0 0 10px}}p{{margin:5px 0;color:var(--muted)}}ul{{margin:8px 0 0;padding-left:18px}}li{{margin:6px 0}}
+.grid{{display:grid;grid-template-columns:1.2fr 1fr;gap:14px}}@media(max-width:980px){{.grid{{grid-template-columns:1fr}}}}
+.grid3{{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}}@media(max-width:980px){{.grid3{{grid-template-columns:1fr}}}}
+.grid4{{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}}@media(max-width:980px){{.grid4{{grid-template-columns:repeat(2,1fr)}}}}@media(max-width:700px){{.grid4{{grid-template-columns:1fr}}}}
+.badge{{display:inline-block;padding:6px 11px;border-radius:999px;background:rgba(255,255,255,.10);border:1px solid rgba(255,255,255,.16);font-size:12px;margin:0 8px 8px 0;color:#edf7ff}}
+.signal{{padding:14px;border-radius:18px;background:linear-gradient(180deg,rgba(255,255,255,.72),rgba(255,255,255,.55));border:1px solid var(--line)}}
+.signal .label{{font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}}.signal .value{{font-size:28px;font-family:'Space Grotesk';margin-top:6px}}
+.metric{{margin:8px 0;padding:8px 10px;border:1px solid var(--line);border-radius:12px;background:rgba(255,255,255,.72)}}
+.row{{display:flex;justify-content:space-between;gap:12px;font-size:13px;color:var(--muted);margin-bottom:6px}}.bar{{height:8px;background:rgba(13,36,56,.10);border-radius:999px;overflow:hidden}}
+.fill{{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent3),var(--accent2))}}
+.phase{{position:relative;padding:16px 16px 16px 18px;border-radius:18px;background:linear-gradient(180deg,rgba(255,255,255,.90),rgba(246,250,252,.84));border:1px solid var(--line)}}
+.phase:before{{content:'';position:absolute;left:0;top:14px;bottom:14px;width:4px;border-radius:999px;background:linear-gradient(180deg,var(--accent),var(--accent2))}}
+.kicker{{font-size:12px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);margin-bottom:8px}}
+table{{width:100%;border-collapse:collapse;font-size:13px}}th,td{{padding:8px 6px;text-align:left;border-bottom:1px solid var(--line);vertical-align:top}}
+pre{{margin:0;font-size:12px;white-space:pre-wrap;background:rgba(6,24,38,.96);color:#e7f7ff;border:1px solid rgba(255,255,255,.12);border-radius:14px;padding:12px;max-height:320px;overflow:auto}}
+details{{border:1px solid var(--line);border-radius:18px;background:rgba(255,255,255,.7);padding:14px}}summary{{cursor:pointer;font-weight:600}}
+.muted{{color:var(--muted)}}
+</style></head><body><div class="wrap">
+<section class="hero">
+  <div class="hero-grid">
+    <div>
+      <div class="kicker">Launch Strategy Demo</div>
+      <h1>{html.escape(str(proposal.get("headline", "Flagship AI Platform Launch Plan")))}</h1>
+      <p><strong>{html.escape(str(story.get("theme", "")))}</strong></p>
+      <p>{html.escape(str(story.get("release_need", "")))}</p>
+      <div style="margin-top:14px">
+        <span class="badge">Release {html.escape(str(release.get("decision", "block"))).upper()}</span>
+        <span class="badge">Generation {html.escape(str(generation.get("mode", "baseline"))).upper()}</span>
+        <span class="badge">Model {html.escape(str(generation.get("model", "")) or "-")}</span>
+        <span class="badge">Frontier {float(frontier.get("score", 0.0)):.3f}</span>
+      </div>
+      <div style="margin-top:14px" class="hero-panel">
+        <div class="kicker">Executive Thesis</div>
+        <p>{html.escape(str(proposal.get("subheadline", "")))}</p>
+      </div>
+    </div>
+    <div class="hero-panel">
+      <div class="kicker">Board Decision</div>
+      <div class="signal"><div class="label">Recommendation</div><div class="value">{html.escape(str(proposal.get("decision", {}).get("status", "block"))).upper()}</div><p>{html.escape(str(proposal.get("decision", {}).get("reason", "")))}</p></div>
+      <div class="grid4" style="margin-top:12px">
+        <div class="signal"><div class="label">Value Index</div><div class="value">{_safe_float(delivery.get("value_card", {}).get("value_index", 0.0)):.1f}</div></div>
+        <div class="signal"><div class="label">Expected</div><div class="value">{robust_expected:.2f}</div></div>
+        <div class="signal"><div class="label">Worst Case</div><div class="value">{robust_worst_case:.2f}</div></div>
+        <div class="signal"><div class="label">Uncertainty</div><div class="value">{avg_uncertainty:.2f}</div></div>
+      </div>
+    </div>
+  </div>
+</section>
+<section class="card glass">
+  <div class="kicker">Plan Summary</div>
+  <div class="grid">
+    <article>
+      <h2>What Is Being Launched</h2>
+      <p>{html.escape(str(story.get("audience_takeaway", "")))}</p>
+      <ul>{"".join(f"<li>{html.escape(str(item))}</li>" for item in proposal.get("business_summary", []))}</ul>
+    </article>
+    <article>
+      <h2>Release Criteria</h2>
+      <ul>{"".join(f"<li>{html.escape(str(item))}</li>" for item in story.get("evidence_bundle", []))}</ul>
+    </article>
+  </div>
+</section>
+<section class="grid3">
+  {self._pillar_cards(proposal.get("pillars", []))}
+</section>
+<section class="card glass">
+  <div class="kicker">Three-Phase Rollout</div>
+  <div class="grid3">{self._phase_cards(proposal.get("phases", []))}</div>
+</section>
+<section class="grid">
+  <article class="card glass">
+    <div class="kicker">Expected Impact</div>
+    {self._impact_rows(proposal.get("expected_impact", []))}
+  </article>
+  <article class="card glass">
+    <div class="kicker">Critical Risks To Watch</div>
+    <ul>{"".join(f"<li>{html.escape(str(item))}</li>" for item in proposal.get("critical_risks", []))}</ul>
+  </article>
+</section>
+<section class="card glass">
+  <div class="kicker">Evidence And Scores</div>
+  <div class="grid">
+    <article>
+      <h2>Evidence Bundle</h2>
+      <ul>{"".join(f"<li>{html.escape(str(item))}</li>" for item in story.get("evidence_bundle", []))}</ul>
+      <h3 style="margin-top:14px">Execution Plan</h3>
+      <ul>{"".join(f"<li>{html.escape(str(item))}</li>" for item in delivery.get("plan", []))}</ul>
+    </article>
+    <article>
+      <h2>Capability Vector</h2>
+      {self._metric_rows(capability)}
+    </article>
+  </div>
+</section>
+<section class="grid">
+  <article class="card glass">
+    <div class="kicker">Framework Comparison</div>
+    <h2>{html.escape(str(comparison.get("positioning", {}).get("headline", "")))}</h2>
+    <table><thead><tr><th>Archetype</th><th>Gap</th><th>Advantage</th><th>Wins</th></tr></thead><tbody>{self._compare_rows(comparison.get("archetypes", []), compact=True)}</tbody></table>
+  </article>
+  <article class="card glass">
+    <div class="kicker">Agent Comparison</div>
+    <h2>{html.escape(str(agent_comparison.get("winner", "")))} won the route</h2>
+    <p class="muted">Runner-up: {html.escape(str(agent_comparison.get("runner_up", "-")))} | score gap {float(agent_comparison.get("score_gap", 0.0)):.4f}</p>
+    <table><thead><tr><th>Agent</th><th>Score</th><th>Reason</th></tr></thead><tbody>{self._agent_rows(agent_comparison.get("rows", []))}</tbody></table>
+  </article>
+</section>
+<section class="card glass">
+  <div class="kicker">Research Lab Leaderboard</div>
+  <table><thead><tr><th>Candidate</th><th>Composite</th><th>Value</th><th>Pass</th><th>Safety</th><th>Pareto</th></tr></thead><tbody>
+  {self._leaderboard_rows(lab.get("leaderboard", []))}</tbody></table>
+</section>
+<section class="card glass">
+  <div class="kicker">Why This System Wins</div>
+  <ul>{"".join(f"<li>{html.escape(str(x))}</li>" for x in why_use)}</ul>
+</section>
+<section class="card glass">
+  <div class="kicker">Appendix</div>
+  <details>
+    <summary>Generated Result</summary>
+    <pre>{html.escape(str(delivery.get("final_answer_excerpt", "")))}</pre>
+  </details>
+  <details style="margin-top:12px">
+    <summary>Internal Skills And Tools</summary>
+    <table><thead><tr><th>Type</th><th>Name</th><th>Purpose</th></tr></thead><tbody>{self._appendix_rows(query.get("selected_skills", []), delivery.get("run_summary", {}).get("top_discovery", []), delivery.get("run_summary", {}).get("steps", []))}</tbody></table>
+  </details>
+  <details style="margin-top:12px">
+    <summary>Trace Snapshot</summary>
+    <pre>{html.escape(str(payload.get("router", {}).get("trace_views", "")))}</pre>
+  </details>
+</section>
+<section class="card"><small>Generated at {html.escape(str(payload.get("generated_at", "")))} | schema {html.escape(str(payload.get("schema", STUDIO_SCHEMA)))} | query {html.escape(str(query.get("text", "")))}</small></section>
+</div></body></html>"""
+
+    @staticmethod
+    def render_press_brief_markdown(payload: dict[str, Any], paths: dict[str, Any]) -> str:
+        """Render a launch-style markdown brief for humans."""
+
+        identity = payload.get("identity", {})
+        query = payload.get("query", {})
+        frontier = payload.get("frontier", {})
+        comparison = payload.get("comparison", {}).get("positioning", {})
+        proposal = payload.get("proposal", {})
+        agent_comparison = payload.get("agent_comparison", {})
+        lab = payload.get("lab", {})
+        release = lab.get("release_decision", {})
+        router_quality = payload.get("router", {}).get("analysis", {}).get("quality", {})
+        interop = payload.get("interop", {}).get("summary", {})
+        story = payload.get("story", {})
+        delivery = payload.get("harness", {})
+        generation = delivery.get("generation", {}) if isinstance(delivery, dict) else {}
+        why_use = payload.get("why_use_this", [])
+        return "\n".join(
+            [
+                f"# {identity.get('name', 'Agent Harness Studio')}",
+                "",
+                str(identity.get("one_liner", "")),
+                "",
+                "## Demo Theme",
+                "",
+                str(story.get("theme", "")),
+                "",
+                "## Proposal Headline",
+                "",
+                str(proposal.get("headline", "")),
+                "",
+                str(proposal.get("subheadline", "")),
+                "",
+                "## Release Need",
+                "",
+                str(story.get("release_need", "")),
+                "",
+                "## Strategy Plan",
+                "",
+                *(f"- {item}" for item in story.get("strategy_plan", [])),
+                "",
+                "## Evidence Bundle",
+                "",
+                *(f"- {item}" for item in story.get("evidence_bundle", [])),
+                "",
+                "## Execution Plan",
+                "",
+                *(f"- {item}" for item in delivery.get("plan", [])),
+                "",
+                "## Proposal Summary",
+                "",
+                *(f"- {item}" for item in proposal.get("business_summary", [])),
+                "",
+                "## Generation Mode",
+                "",
+                f"- Mode: {generation.get('mode', 'baseline')}",
+                f"- Live agent enabled: {generation.get('live_agent_enabled', False)}",
+                f"- Live agent configured: {generation.get('live_agent_configured', False)}",
+                f"- Live agent success: {generation.get('live_agent_success', False)}",
+                f"- Model: {generation.get('model', '') or '-'}",
+                "",
+                "## Launch Claim",
+                "",
+                str(identity.get("differentiator", "")),
+                "",
+                "## Demo Snapshot",
+                "",
+                f"- Query: {query.get('text', '')}",
+                f"- Mode: {query.get('mode', 'balanced')}",
+                f"- Selected agent: {query.get('selected_agent', '-')}",
+                f"- Skills: {', '.join(query.get('selected_skills', [])) or '-'}",
+                f"- Frontier score: {float(frontier.get('score', 0.0)):.3f}",
+                f"- Bottleneck axis: {frontier.get('bottleneck', {}).get('axis', '-')}",
+                f"- Release decision: {release.get('decision', 'block')} ({release.get('reason', '-')})",
+                f"- Robust expected utility: {_safe_float(router_quality.get('robust_expected_utility', 0.0)):.3f}",
+                f"- Robust worst case: {_safe_float(router_quality.get('robust_worst_case_utility', 0.0)):.3f}",
+                f"- Avg uncertainty: {_safe_float(router_quality.get('avg_uncertainty', 0.0)):.3f}",
+                f"- Interop frameworks: {int(interop.get('framework_count', 0))}",
+                f"- Exported skill entries: {int(interop.get('total_skill_entries', 0))}",
+                "",
+                "## Agent Comparison",
+                "",
+                f"- Winner: {agent_comparison.get('winner', '-')}",
+                f"- Runner-up: {agent_comparison.get('runner_up', '-')}",
+                f"- Score gap: {_safe_float(agent_comparison.get('score_gap', 0.0)):.4f}",
+                "",
+                "## Generated Result Excerpt",
+                "",
+                "```text",
+                str(delivery.get("final_answer_excerpt", "")),
+                "```",
+                "",
+                "## Why This Is Different",
+                "",
+                *(f"- {item}" for item in why_use),
+                "",
+                "## Competitive Positioning",
+                "",
+                f"- Headline: {comparison.get('headline', '')}",
+                f"- Best-vs archetype: {comparison.get('best_vs_name', '-')}",
+                f"- Frontier gap: {_safe_float(comparison.get('best_vs_gap', 0.0)):+.3f}",
+                "",
+                "## Artifact Bundle",
+                "",
+                f"- JSON payload: {paths.get('json', '')}",
+                f"- HTML showcase: {paths.get('html', '')}",
+                f"- Press brief: {paths.get('brief', '')}",
+                f"- Bundle manifest: {paths.get('manifest', '')}",
+                f"- Interop bundle index: {paths.get('interop', {}).get('index', '-') if isinstance(paths.get('interop'), dict) else '-'}",
+                "",
+                f"_Generated at {payload.get('generated_at', '')}_",
+                "",
+            ]
+        )
+
+    @staticmethod
+    def _bundle_manifest(payload: dict[str, Any], paths: dict[str, Any]) -> dict[str, Any]:
+        """Build a compact manifest for downstream consumers."""
+
+        comparison = payload.get("comparison", {}).get("positioning", {})
+        release = payload.get("lab", {}).get("release_decision", {})
+        return {
+            "schema": "agent-harness-studio-bundle/v1",
+            "generated_at": payload.get("generated_at", ""),
+            "identity": payload.get("identity", {}),
+            "headline": comparison.get("headline", ""),
+            "release_decision": release,
+            "frontier": payload.get("frontier", {}),
+            "query": payload.get("query", {}),
+            "artifacts": paths,
+        }
+
+    @staticmethod
+    def _metric_rows(capability: dict[str, float]) -> str:
+        blocks: list[str] = []
+        for name, value in capability.items():
+            pct = round(_clamp01(value) * 100.0, 1)
+            label = html.escape(name.replace("_", " ").title())
+            blocks.append(
+                "<div class='metric'>"
+                f"<div class='row'><span>{label}</span><strong>{pct:.1f}%</strong></div>"
+                f"<div class='bar'><div class='fill' style='width:{pct:.1f}%'></div></div>"
+                "</div>"
+            )
+        return "".join(blocks)
+
+    @staticmethod
+    def _leaderboard_rows(rows: list[dict[str, Any]]) -> str:
+        if not rows:
+            return "<tr><td colspan='6'>No leaderboard data.</td></tr>"
+        parts: list[str] = []
+        for row in rows[:8]:
+            parts.append(
+                "<tr>"
+                f"<td>{html.escape(str(row.get('candidate', '')))}</td>"
+                f"<td>{_safe_float(row.get('composite_score', 0.0)):.4f}</td>"
+                f"<td>{_safe_float(row.get('avg_value_index', 0.0)):.2f}</td>"
+                f"<td>{_safe_float(row.get('pass_rate', 0.0)):.3f}</td>"
+                f"<td>{_safe_float(row.get('avg_security_alignment', 0.0)):.3f}</td>"
+                f"<td>{'yes' if bool(row.get('pareto_frontier', False)) else 'no'}</td>"
+                "</tr>"
+            )
+        return "".join(parts)
+
+    @staticmethod
+    def _compare_rows(rows: list[dict[str, Any]], compact: bool = False) -> str:
+        if not rows:
+            return "<tr><td colspan='5'>No comparison data.</td></tr>"
+        parts: list[str] = []
+        for row in rows:
+            wins = html.escape(", ".join(row.get("wins", [])) or "-")
+            losses = html.escape(", ".join(row.get("losses", [])) or "-")
+            if compact:
+                parts.append(
+                    "<tr>"
+                    f"<td>{html.escape(str(row.get('name', '')))}</td>"
+                    f"<td>{_safe_float(row.get('frontier_gap', 0.0)):+.4f}</td>"
+                    f"<td>{_safe_float(row.get('advantage_ratio', 0.0)):.2f}</td>"
+                    f"<td>{wins}</td>"
+                    "</tr>"
+                )
+            else:
+                parts.append(
+                    "<tr>"
+                    f"<td>{html.escape(str(row.get('name', '')))}</td>"
+                    f"<td>{_safe_float(row.get('frontier_gap', 0.0)):+.4f}</td>"
+                    f"<td>{_safe_float(row.get('advantage_ratio', 0.0)):.2f}</td>"
+                    f"<td>{wins}</td>"
+                    f"<td>{losses}</td>"
+                    "</tr>"
+                )
+        return "".join(parts)
+
+    @staticmethod
+    def _pillar_cards(rows: list[dict[str, Any]]) -> str:
+        if not rows:
+            return ""
+        parts: list[str] = []
+        for row in rows:
+            parts.append(
+                "<article class='card glass'>"
+                f"<div class='kicker'>{html.escape(str(row.get('title', 'Pillar')))}</div>"
+                f"<h2>{html.escape(str(row.get('title', '')))}</h2>"
+                f"<p>{html.escape(str(row.get('summary', '')))}</p>"
+                f"<p><strong>Integration:</strong> {html.escape(str(row.get('integration', '')))}</p>"
+                "</article>"
+            )
+        return "".join(parts)
+
+    @staticmethod
+    def _phase_cards(rows: list[dict[str, Any]]) -> str:
+        if not rows:
+            return ""
+        parts: list[str] = []
+        for row in rows:
+            parts.append(
+                "<article class='phase'>"
+                f"<div class='kicker'>{html.escape(str(row.get('phase', 'Phase')))}</div>"
+                f"<h3>{html.escape(str(row.get('phase', '')))}</h3>"
+                f"<ul>{''.join(f'<li>{html.escape(str(item))}</li>' for item in row.get('actions', []))}</ul>"
+                f"<p><strong>Success:</strong> {html.escape(', '.join(row.get('success_metrics', [])) or '-')}</p>"
+                "</article>"
+            )
+        return "".join(parts)
+
+    @staticmethod
+    def _impact_rows(rows: list[dict[str, Any]]) -> str:
+        if not rows:
+            return "<p>No expected impact recorded.</p>"
+        parts: list[str] = []
+        for row in rows:
+            parts.append(
+                "<div class='metric'>"
+                f"<div class='row'><span>{html.escape(str(row.get('label', 'Impact')))}</span></div>"
+                f"<strong>{html.escape(str(row.get('value', '')))}</strong>"
+                "</div>"
+            )
+        return "".join(parts)
+
+    @staticmethod
+    def _agent_rows(rows: list[dict[str, Any]]) -> str:
+        if not rows:
+            return "<tr><td colspan='3'>No agent comparison data.</td></tr>"
+        parts: list[str] = []
+        for row in rows:
+            parts.append(
+                "<tr>"
+                f"<td>{html.escape(str(row.get('agent', '')))}</td>"
+                f"<td>{_safe_float(row.get('score', 0.0)):.4f}</td>"
+                f"<td>{html.escape(str(row.get('reason', '')))}</td>"
+                "</tr>"
+            )
+        return "".join(parts)
+
+    @staticmethod
+    def _appendix_rows(
+        selected_skills: list[Any],
+        discovery: list[dict[str, Any]],
+        steps: list[dict[str, Any]],
+    ) -> str:
+        parts: list[str] = []
+        for name in selected_skills[:6]:
+            raw = str(name)
+            parts.append(
+                "<tr>"
+                "<td>Skill</td>"
+                f"<td>{html.escape(raw)}</td>"
+                f"<td>{html.escape(TOOL_DISPLAY_ALIASES.get(raw, _sanitize_business_text(raw.replace('_', ' '))))}</td>"
+                "</tr>"
+            )
+        for item in discovery[:5]:
+            raw = str(item.get("name", ""))
+            parts.append(
+                "<tr>"
+                "<td>Discovery</td>"
+                f"<td>{html.escape(raw)}</td>"
+                f"<td>{html.escape(', '.join(item.get('reasons', [])) or '-')}</td>"
+                "</tr>"
+            )
+        for row in steps[:6]:
+            raw = str(row.get("tool", ""))
+            parts.append(
+                "<tr>"
+                "<td>Executed Tool</td>"
+                f"<td>{html.escape(raw)}</td>"
+                f"<td>{html.escape(TOOL_DISPLAY_ALIASES.get(raw, _sanitize_business_text(raw.replace('_', ' '))))}</td>"
+                "</tr>"
+            )
+        if not parts:
+            return "<tr><td colspan='3'>No appendix rows.</td></tr>"
+        return "".join(parts)

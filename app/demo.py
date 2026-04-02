@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from rich.console import Console
+import json
 
 from app.benchmark.evaluate import run_benchmark
 from app.coordination.conflicts import ConflictDetector
@@ -10,10 +10,15 @@ from app.coordination.consensus import ConsensusBuilder
 from app.core.state import GraphState
 from app.ecosystem.marketplace import discover_for_query, get_trending_skills
 from app.graph import build_graph
+from app.harness import HarnessConstraints
+from app.harness.engine import HarnessEngine
+from app.harness.live_agent import LiveModelConfig
 from app.policy.center import SystemMode, policy_for_mode
 from app.personality.profiles import get_profile
 from app.skills.registry import get_skill_card
+from app.studio.flagship import StudioShowcaseBuilder
 from app.tracing.visualizer import render_trace_views
+from app.utils.console import Console
 from app.utils.display import (
     print_benchmark_results,
     print_conflict_report,
@@ -168,6 +173,63 @@ def demo_dissent_rescue() -> None:
     print_contract(result.get("response_contract", {}))
 
 
+def demo_press_launch(
+    output_dir: str = "reports/launch_demo",
+    tag: str = "press",
+    live_agent: bool = False,
+    max_model_calls: int = 8,
+) -> dict[str, object]:
+    """Generate a launch-ready studio bundle for external showcasing."""
+
+    builder = StudioShowcaseBuilder(harness=HarnessEngine())
+    live_config = LiveModelConfig.from_env() if live_agent else None
+    constraints = (
+        HarnessConstraints(
+            enable_live_agent=True,
+            max_live_agent_calls=max(1, min(max_model_calls, 50)),
+        )
+        if live_agent
+        else None
+    )
+    live_model = (
+        {
+            "base_url": live_config.base_url,
+            "api_key": live_config.api_key,
+            "model_name": live_config.model_name,
+            "timeout_seconds": live_config.timeout_seconds,
+            "temperature": live_config.temperature,
+            "max_tokens": live_config.max_tokens,
+        }
+        if live_config
+        else None
+    )
+    payload = builder.build_showcase(
+        query="Design a flagship AI operating plan that balances growth, governance, and research credibility.",
+        mode="deep",
+        lab_preset="broad",
+        lab_repeats=1,
+        include_interop_catalog=True,
+        constraints=constraints,
+        live_model=live_model,
+    )
+    paths = builder.write_showcase(
+        payload=payload,
+        output_dir=output_dir,
+        tag=tag,
+        export_interop=True,
+    )
+    summary = {
+        "identity": payload.get("identity", {}),
+        "frontier": payload.get("frontier", {}),
+        "positioning": payload.get("comparison", {}).get("positioning", {}),
+        "release_decision": payload.get("lab", {}).get("release_decision", {}),
+        "generation": payload.get("harness", {}).get("generation", {}),
+        "paths": paths,
+    }
+    console.print(json.dumps(summary, indent=2, default=str))
+    return summary
+
+
 def run_all_demos() -> None:
     """Run all demo scenarios in sequence."""
 
@@ -181,6 +243,7 @@ def run_all_demos() -> None:
         ("SkillCard Lifecycle", demo_skill_card_lifecycle),
         ("Mode Comparison", demo_mode_comparison),
         ("DISSENT Rescue", demo_dissent_rescue),
+        ("Press Launch", demo_press_launch),
     ]
 
     for title, fn in demos:

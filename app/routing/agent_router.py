@@ -94,6 +94,34 @@ def _detect_collaboration_need(
     return collaborators, reason
 
 
+def _agent_council_skills(best_agent: AgentProfile, collaborator_names: list[str]) -> tuple[list[str], list[dict[str, object]]]:
+    """Build unified skill pool from primary agent plus active collaborators."""
+
+    combined: list[str] = []
+    council: list[dict[str, object]] = []
+
+    def _append_agent(profile: AgentProfile, role: str) -> None:
+        for skill in profile.preferred_skills:
+            if skill not in combined:
+                combined.append(skill)
+        council.append(
+            {
+                "agent": profile.name,
+                "role": role,
+                "skills": list(profile.preferred_skills),
+                "style": profile.style.value,
+            }
+        )
+
+    _append_agent(best_agent, "primary")
+    for name in collaborator_names:
+        profile = get_agent(name)
+        if profile:
+            _append_agent(profile, "collaborator")
+
+    return combined, council
+
+
 def _score_agent(agent: AgentProfile, query: str, signals: dict[str, float], risk_level: RiskLevel) -> tuple[float, dict[str, float]]:
     """Score how suitable an agent is for this query (0-1) with AURORA-like components."""
 
@@ -253,6 +281,8 @@ def route_to_agent(state: GraphState) -> GraphState:
     for agent, score, _ in scored[1:]:
         reasons[agent.name] = f"rejected (score={score:.3f}): lower relevance"
 
+    available_skills, council = _agent_council_skills(best_agent, collaborators)
+
     decision = RoutingDecision(
         selected=selected_names,
         rejected=rejected_names,
@@ -273,6 +303,7 @@ def route_to_agent(state: GraphState) -> GraphState:
             "agents": collaborators,
             "reason": collaboration_reason,
         },
+        "agent_council": council,
         "personality": state.personality,
         "policy": {
             "allow_secondary_agent": allow_secondary,
@@ -314,6 +345,6 @@ def route_to_agent(state: GraphState) -> GraphState:
 
     state.agent_name = best_agent.name
     state.agent_style = state.forced_style or best_agent.style
-    state.available_skills = best_agent.preferred_skills
+    state.available_skills = available_skills
 
     return state

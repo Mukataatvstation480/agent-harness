@@ -11,6 +11,8 @@ class PersonalityEngine:
     def suggest_routing_strategy(self, personality: AgentPersonality) -> RoutingStrategy:
         """Recommend a routing strategy from personality profile."""
 
+        if personality.risk_tolerance < 0.35 and personality.confidence_threshold > 0.25:
+            return RoutingStrategy.ROBUST_FRONTIER
         if personality.risk_tolerance > 0.8 and personality.diversity_preference < 0.3:
             return RoutingStrategy.GREEDY
         if personality.diversity_preference > 0.7:
@@ -41,6 +43,36 @@ class PersonalityEngine:
 
         return personality.risk_tolerance > 0.5 or personality.collaboration_tendency > 0.6
 
+    def frontier_preferences(self, personality: AgentPersonality) -> dict[str, float]:
+        """Translate personality vector into robust-routing controls."""
+
+        risk_aversion = max(0.05, min(0.95, 1.0 - personality.risk_tolerance))
+        reliability_floor = max(
+            0.20,
+            min(
+                0.85,
+                0.35
+                + 0.30 * personality.confidence_threshold
+                + 0.20 * (1.0 - personality.risk_tolerance)
+                + 0.10 * personality.collaboration_tendency,
+            ),
+        )
+        uncertainty_tolerance = max(
+            0.10,
+            min(
+                0.90,
+                0.65
+                - 0.30 * personality.confidence_threshold
+                - 0.20 * (1.0 - personality.risk_tolerance)
+                + 0.10 * personality.creativity_bias,
+            ),
+        )
+        return {
+            "risk_aversion": risk_aversion,
+            "reliability_floor": reliability_floor,
+            "uncertainty_tolerance": uncertainty_tolerance,
+        }
+
     def describe_strategy(self, personality: AgentPersonality) -> str:
         """Describe strategy implied by personality in plain language."""
 
@@ -60,6 +92,9 @@ class PersonalityEngine:
             parts.append("maximizes skill diversity")
         elif personality.diversity_preference < 0.3:
             parts.append("focuses on a few highly relevant skills")
+
+        if personality.risk_tolerance < 0.35 and personality.confidence_threshold > 0.25:
+            parts.append("optimizes for downside-robust skill portfolios")
 
         if personality.depth_vs_breadth < 0.3:
             parts.append("goes deep with fewer skills")

@@ -25,9 +25,10 @@ class PersonalityAdaptor:
             adapted.depth_vs_breadth = max(0.0, adapted.depth_vs_breadth - 0.2)
         elif complexity in (QueryComplexity.COMPLEX, QueryComplexity.EXPERT):
             adapted.diversity_preference = min(1.0, adapted.diversity_preference + 0.15)
-            adapted.confidence_threshold = max(0.05, adapted.confidence_threshold - 0.1)
+            adapted.confidence_threshold = min(0.85, adapted.confidence_threshold + 0.05)
             adapted.depth_vs_breadth = min(1.0, adapted.depth_vs_breadth + 0.1)
             adapted.collaboration_tendency = min(1.0, adapted.collaboration_tendency + 0.1)
+            adapted.risk_tolerance = max(0.0, adapted.risk_tolerance - 0.05)
 
         return adapted
 
@@ -48,6 +49,7 @@ class PersonalityAdaptor:
         if conflict_rate > 0.3:
             adapted.diversity_preference = max(0.1, adapted.diversity_preference - 0.1)
             adapted.creativity_bias = max(0.1, adapted.creativity_bias - 0.1)
+            adapted.confidence_threshold = min(0.85, adapted.confidence_threshold + 0.05)
 
         return adapted
 

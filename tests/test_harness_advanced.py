@@ -18,6 +18,8 @@ def test_manifest_catalog_includes_innovative_tools() -> None:
     assert "policy_risk_matrix" in names
     assert "external_resource_hub" in names
     assert "api_skill_dependency_graph" in names
+    assert "api_skill_portfolio_optimizer" in names
+    assert "code_experiment_design" in names
 
 
 def test_discovery_prioritizes_risk_tools_for_audit_queries() -> None:
@@ -96,3 +98,37 @@ def test_report_builder_generates_markdown() -> None:
     assert isinstance(report, str)
     assert "# Harness Run Report" in report
     assert "## Metrics" in report
+
+
+def test_recipe_registry_suggests_daily_and_research_workflows() -> None:
+    engine = HarnessEngine()
+    recipes = engine.list_recipes()
+    names = {item["name"] for item in recipes}
+    assert "daily-operator" in names
+    assert "research-rig" in names
+    assert "creative-studio" in names
+    assert "enterprise-ops" in names
+
+    daily_run = engine.run(
+        query="Plan my daily workflow and prioritize today's tasks.",
+        constraints=HarnessConstraints(max_steps=4, max_tool_calls=4, auto_recipe=True),
+    )
+    assert daily_run.metadata.get("recipe", {}).get("name") == "daily-operator"
+
+    research_run = engine.run(
+        query="Design an ablation benchmark and reproducible experiment plan.",
+        constraints=HarnessConstraints(max_steps=4, max_tool_calls=4, auto_recipe=True),
+    )
+    assert research_run.metadata.get("recipe", {}).get("name") == "research-rig"
+
+    creative_run = engine.run(
+        query="Design a creative presentation concept with a bold visual direction.",
+        constraints=HarnessConstraints(max_steps=4, max_tool_calls=4, auto_recipe=True),
+    )
+    assert creative_run.metadata.get("recipe", {}).get("name") == "creative-studio"
+
+    enterprise_run = engine.run(
+        query="Create an enterprise stakeholder communication plan with governance controls.",
+        constraints=HarnessConstraints(max_steps=4, max_tool_calls=4, auto_recipe=True),
+    )
+    assert enterprise_run.metadata.get("recipe", {}).get("name") == "enterprise-ops"

@@ -10,18 +10,32 @@ from app.core.state import GraphState
 DATA_FILE = Path(__file__).resolve().parents[2] / "data" / "learning_stats.json"
 
 
+def _default_payload() -> dict:
+    return {"skills": {}, "agents": {}, "pairs": {}}
+
+
 def _ensure_file() -> None:
     DATA_FILE.parent.mkdir(parents=True, exist_ok=True)
     if not DATA_FILE.exists():
-        DATA_FILE.write_text(
-            json.dumps({"skills": {}, "agents": {}, "pairs": {}}, indent=2),
-            encoding="utf-8",
-        )
+        DATA_FILE.write_text(json.dumps(_default_payload(), indent=2), encoding="utf-8")
 
 
 def _load() -> dict:
     _ensure_file()
-    return json.loads(DATA_FILE.read_text(encoding="utf-8"))
+    try:
+        payload = json.loads(DATA_FILE.read_text(encoding="utf-8"))
+    except json.JSONDecodeError:
+        # Guard against file corruption from interrupted writes.
+        payload = _default_payload()
+        _save(payload)
+        return payload
+
+    if not isinstance(payload, dict):
+        payload = _default_payload()
+    payload.setdefault("skills", {})
+    payload.setdefault("agents", {})
+    payload.setdefault("pairs", {})
+    return payload
 
 
 def _save(payload: dict) -> None:

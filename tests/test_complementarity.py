@@ -132,3 +132,32 @@ class TestComplementarityEngine:
         refined_score = sum(item.composite_score for item in refined.selected)
 
         assert refined_score >= base_score - 0.05
+
+    def test_robust_metrics_are_emitted(self) -> None:
+        result = self.engine.select(self.skills, "analyze risks and recommend safe actions")
+        assert result.robust_expected_utility >= 0.0
+        assert result.avg_uncertainty >= 0.0
+        assert result.avg_uncertainty <= 1.0
+
+    def test_reliability_floor_filters_unreliable_skills(self) -> None:
+        skills = [
+            _make_skill("high_conf", SkillCategory.REASONING, ["risk"], tier=SkillTier.EXPERT),
+            _make_skill("mid_conf", SkillCategory.COMMUNICATION, ["summary"], tier=SkillTier.ADVANCED),
+        ]
+        skills[0].calibration_score = 0.9
+        skills[0].interpretability_score = 0.9
+        skills[0].reputation_score = 0.9
+        skills[1].calibration_score = 0.1
+        skills[1].interpretability_score = 0.1
+        skills[1].reputation_score = 0.1
+
+        engine = ComplementarityEngine(
+            max_skills=3,
+            reliability_floor=0.6,
+            uncertainty_tolerance=0.4,
+            enable_robust_selection=True,
+        )
+        result = engine.select(skills, "risk summary")
+        selected = [item.metadata.name for item in result.selected]
+        assert "high_conf" in selected
+        assert "mid_conf" not in selected

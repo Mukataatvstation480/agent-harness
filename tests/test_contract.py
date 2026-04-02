@@ -11,6 +11,7 @@ def test_response_contract_exists() -> None:
     assert "user" in contract
     assert "debug" in contract
     assert "evaluation" in contract
+    assert "robustness_confidence" in contract.get("evaluation", {}).get("confidence_components", {})
 
 
 def test_dissent_field_present() -> None:
@@ -23,3 +24,4 @@ def test_dissent_field_present() -> None:
     )
     assert "disagreement_triggered" in result
     assert "verification_findings" in result
+    assert "robust_worst_case_utility" in result.get("response_contract", {}).get("evaluation", {})

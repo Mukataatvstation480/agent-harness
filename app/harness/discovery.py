@@ -38,6 +38,10 @@ class ToolDiscoveryEngine:
         "planning": ["plan", "schedule", "roadmap", "milestone", "sequence"],
         "context": ["memory", "history", "context", "state", "previous"],
         "design": ["design", "architecture", "blueprint", "pattern"],
+        "operations": ["daily", "routine", "meeting", "todo", "task", "workflow", "productivity"],
+        "evaluation": ["benchmark", "evaluate", "experiment", "ablation", "reproducible", "study", "paper"],
+        "creative": ["creative", "design", "ui", "ux", "brand", "visual", "campaign", "presentation"],
+        "enterprise": ["enterprise", "stakeholder", "board", "communication", "governance", "compliance"],
     }
 
     def __init__(self, manifests: ToolManifestRegistry) -> None:
@@ -213,4 +217,3 @@ class ToolDiscoveryEngine:
             )
 
         return None
-

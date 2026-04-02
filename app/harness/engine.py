@@ -15,6 +15,7 @@ from app.harness.guardrails import GuardrailEngine
 from app.harness.iteration import LiveIterationTracker
 from app.harness.live_agent import LiveAgentOrchestrator
 from app.harness.live_experiment import HarnessLiveExperiment, LiveExperimentConfig
+from app.harness.lab_product import LabProductBuilder
 from app.harness.manifest import ToolManifestRegistry
 from app.harness.models import HarnessConstraints, HarnessRun, HarnessStep, ToolCall
 from app.harness.optimizer import HarnessOptimizer
@@ -22,6 +23,7 @@ from app.harness.planner import HarnessPlanner
 from app.harness.presentation import PresentationBlueprintBuilder
 from app.harness.recipes import HarnessRecipe, RecipeRegistry
 from app.harness.redteam import HarnessRedTeam
+from app.harness.research_lab import HarnessResearchLab
 from app.harness.report import HarnessReportBuilder
 from app.harness.security import SecurityAction, SecurityDecision, SecurityEngine
 from app.harness.showcase import HarnessShowcaseBuilder
@@ -45,6 +47,7 @@ class HarnessEngine:
         self.live_agent = LiveAgentOrchestrator()
         self.live_experiment = HarnessLiveExperiment()
         self.iteration = LiveIterationTracker()
+        self.lab_product = LabProductBuilder()
 
         self.manifests = ToolManifestRegistry()
         self.discovery = ToolDiscoveryEngine(self.manifests)
@@ -58,6 +61,7 @@ class HarnessEngine:
         self.presentation = PresentationBlueprintBuilder()
         self.stream = HarnessEventStreamBuilder()
         self.optimizer = HarnessOptimizer()
+        self.research_lab = HarnessResearchLab()
 
     def list_tool_catalog(self) -> list[dict[str, Any]]:
         """Return tool manifest catalog and runtime availability."""
@@ -161,6 +165,16 @@ class HarnessEngine:
 
         return self.showcase.list_packs()
 
+    def list_research_scenarios(self) -> list[dict[str, Any]]:
+        """List reproducible research-lab scenarios."""
+
+        return self.research_lab.list_scenarios()
+
+    def list_research_presets(self) -> list[dict[str, Any]]:
+        """List candidate presets for research-lab experiments."""
+
+        return self.research_lab.list_candidate_presets()
+
     def run_showcase(
         self,
         pack_name: str = "impact-lens",
@@ -192,6 +206,59 @@ class HarnessEngine:
             constraints=constraints,
             live_model=live_model,
         )
+
+    def run_research_lab(
+        self,
+        preset: str = "core",
+        constraints: HarnessConstraints | None = None,
+        candidates: list[dict[str, Any]] | None = None,
+        scenario_ids: list[str] | None = None,
+        repeats: int = 1,
+        seed: int = 7,
+        include_runs: bool = False,
+        live_model: dict[str, Any] | None = None,
+        isolate_memory: bool = True,
+        fresh_memory_per_candidate: bool = True,
+    ) -> dict[str, Any]:
+        """Run research-grade multi-scenario evaluation with reproducible presets."""
+
+        return self.research_lab.run(
+            engine=self,
+            preset=preset,
+            constraints=constraints,
+            candidates=candidates,
+            scenario_ids=scenario_ids,
+            repeats=repeats,
+            seed=seed,
+            include_runs=include_runs,
+            live_model=live_model,
+            isolate_memory=isolate_memory,
+            fresh_memory_per_candidate=fresh_memory_per_candidate,
+        )
+
+    def build_lab_product_bundle(
+        self,
+        lab_payload: dict[str, Any],
+        tag: str = "",
+    ) -> dict[str, Any]:
+        """Build productized bundle (story/scoreboard/trend) from lab payload."""
+
+        return self.lab_product.build_bundle(lab_payload=lab_payload, tag=tag)
+
+    def write_lab_product_bundle(
+        self,
+        bundle: dict[str, Any],
+        output_dir: str = "reports",
+    ) -> dict[str, str]:
+        """Write product bundle artifacts to disk."""
+
+        paths = self.lab_product.write_bundle(bundle=bundle, output_dir=Path(output_dir))
+        return paths.to_dict()
+
+    def list_lab_product_history(self, limit: int = 12) -> list[dict[str, Any]]:
+        """List recent productized lab runs."""
+
+        return self.lab_product.list_history(limit=limit)
 
     def run_live_experiment(
         self,

@@ -27,6 +27,8 @@ class DissentEngine:
         high_risk = state.risk_level in {"high", "critical"}
         query_requires_dissent = any(k in state.query.lower() for k in self.dissent_keywords)
         weak_quality = float(state.routing_metrics.get("avg_quality_score", 0.0)) < 0.55
+        high_uncertainty = float(state.routing_metrics.get("avg_uncertainty", 0.0)) > 0.45
+        fragile_downside = float(state.routing_metrics.get("robust_worst_case_utility", 0.0)) < 0.30
 
         if low_consensus:
             reasons.append("low_consensus")
@@ -38,6 +40,10 @@ class DissentEngine:
             reasons.append("query_requests_critical_review")
         if weak_quality:
             reasons.append("weak_output_quality")
+        if high_uncertainty:
+            reasons.append("high_uncertainty_exposure")
+        if fragile_downside:
+            reasons.append("fragile_downside_case")
 
         triggered = len(reasons) > 0
 
@@ -61,7 +67,7 @@ class DissentEngine:
         if "synthesize_perspectives" not in state.selected_skills:
             alternatives.append("Add synthesize_perspectives to test alternative interpretations")
 
-        needs_human = high_risk and (low_consensus or has_conflict)
+        needs_human = high_risk and (low_consensus or has_conflict or high_uncertainty or fragile_downside)
 
         return {
             "triggered": triggered,

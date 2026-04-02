@@ -1,274 +1,388 @@
-<p align="center">
-  <img src="https://capsule-render.vercel.app/api?type=waving&color=0:0B1020,35:0EA5E9,70:22C55E,100:F59E0B&height=230&section=header&text=Agent%20Harness&fontSize=56&fontColor=ffffff&desc=Agents%20think.%20Skills%20act.%20The%20harness%20decides.&descAlignY=68&animation=fadeIn" alt="Agent Harness banner"/>
+<p align="right">
+  <a href="./README.md"><img alt="English" src="https://img.shields.io/badge/Language-English-0f766e?style=for-the-badge"></a>
+  <a href="./README.zh-CN.md"><img alt="简体中文" src="https://img.shields.io/badge/%E8%AF%AD%E8%A8%80-%E7%AE%80%E4%BD%93%E4%B8%AD%E6%96%87-2563eb?style=for-the-badge"></a>
 </p>
 
 <p align="center">
-  <b>A multi-agent system where each agent dynamically selects complementary skills with full routing trace.</b>
+  <img src="https://capsule-render.vercel.app/api?type=waving&color=0:081826,35:0F766E,70:2563EB,100:F59E0B&height=220&section=header&text=Agent%20Harness&fontSize=54&fontColor=ffffff&desc=Turn%20one%20request%20into%20an%20auditable%20agent%20product.&descAlignY=68&animation=fadeIn" alt="Agent Harness banner"/>
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Harness-Engineering-0ea5e9?style=for-the-badge"/>
-  <img src="https://img.shields.io/badge/Visual-Demo%20Ready-22c55e?style=for-the-badge"/>
-  <img src="https://img.shields.io/badge/Security-Allow%20%7C%20Challenge%20%7C%20Block-f59e0b?style=for-the-badge"/>
-  <img src="https://img.shields.io/badge/Showcase-Impact%20Lens-9333ea?style=for-the-badge"/>
+  <b>Agent Harness is an agent operating system for routing, executing, benchmarking, and shipping agent work as a product-grade bundle.</b>
+</p>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/Routing-robust_frontier-0f766e?style=for-the-badge"/>
+  <img src="https://img.shields.io/badge/Execution-Harness%20Engine-2563eb?style=for-the-badge"/>
+  <img src="https://img.shields.io/badge/Eval-harness--lab-f59e0b?style=for-the-badge"/>
+  <img src="https://img.shields.io/badge/Interop-OpenAI%20%7C%20Anthropic-111827?style=for-the-badge"/>
 </p>
 
 <p align="center">
   <img src="https://img.shields.io/badge/Python-3.11%2B-3776AB?logo=python&logoColor=white"/>
-  <img src="https://img.shields.io/badge/LangGraph-Orchestrated-121D33"/>
-  <img src="https://img.shields.io/badge/CLI-Typer-black"/>
-  <img src="https://img.shields.io/badge/Output-JSON%20Protocol-brightgreen"/>
+  <img src="https://img.shields.io/badge/LangGraph-Orchestrated-0B1020"/>
+  <img src="https://img.shields.io/badge/CLI-Typer-111827"/>
+  <img src="https://img.shields.io/badge/Tests-81%20passed-16a34a"/>
 </p>
 
 ---
 
-## 🚀 What Makes Agent Harness Legendary?
+## Framework Diagram
 
-<table align="center">
-<tr>
-<td align="center" width="25%">
-⚡<br/><strong>Smart Routing</strong><br/>Dynamic agent + skill selection
-</td>
-<td align="center" width="25%">
-📊<br/><strong>Visual First</strong><br/>Built-in dashboards & charts
-</td>
-<td align="center" width="25%">
-🛡️<br/><strong>Security Core</strong><br/>Preflight + guardrails
-</td>
-<td align="center" width="25%">
-🎯<br/><strong>Value Driven</strong><br/>KPI scoring system
-</td>
-</tr>
+![Agent Harness Framework Diagram](docs/d5_260402_5995__QakBh2Z.jpg)
+
+Agent Harness is built around one thesis:
+
+`User Request -> Agent Router -> Agent Council -> Skill Router -> Harness Engine -> Evidence / Lab / Showcase / Interop`
+
+This repo is not just a router and not just a skill list. It is a system that:
+
+1. chooses better
+2. executes with evidence
+3. benchmarks before release
+4. packages outputs for launch
+5. exports capabilities into external ecosystems
+
+---
+
+## Why This Exists
+
+Most projects in this space are strong in only one direction:
+
+- flow-first systems are good at orchestration, weak at proof
+- research-first systems are deep, weak at packaging
+- skill hubs are broad, weak at governance and release gating
+
+Agent Harness is designed to unify all three.
+
+It turns one request into:
+
+- a routing decision
+- an execution plan
+- an evidence bundle
+- a research-lab benchmark result
+- a launch-ready showcase
+- an interop export for outside ecosystems
+
+---
+
+## Launch Demo
+
+### Demo Gallery
+
+<table>
+  <tr>
+    <td width="33%" valign="top">
+      <h3>Live Proposal Showcase</h3>
+      <p>Front-page launch style HTML with proposal summary, rollout phases, evidence, framework comparison, and agent comparison.</p>
+      <p><a href="./reports/live_launch_demo/studio_showcase_deepseek-live.html">Open HTML</a></p>
+      <p><a href="./reports/live_launch_demo/studio_press_brief_deepseek-live.md">Open Press Brief</a></p>
+    </td>
+    <td width="33%" valign="top">
+      <h3>Baseline Launch Bundle</h3>
+      <p>Deterministic showcase bundle for reproducible demos and CI-safe product packaging.</p>
+      <p><a href="./reports/launch_demo/studio_showcase_press.html">Open HTML</a></p>
+      <p><a href="./reports/launch_demo/studio_showcase_press.json">Open JSON</a></p>
+    </td>
+    <td width="33%" valign="top">
+      <h3>Ecosystem Export</h3>
+      <p>Interop bundle for OpenAI and Anthropic skill ecosystems, generated from the same project capabilities.</p>
+      <p><a href="./reports/live_launch_demo/studio_interop_deepseek-live/interop_bundle.json">Open Interop Bundle</a></p>
+    </td>
+  </tr>
 </table>
 
----
+### What The Demo Shows
 
-## 🎨 Visual Magic Inside
+The current showcase UI is intentionally front-loaded with:
 
-This isn't just another agent framework—it's a **complete visual data engine** baked in from day one:
+1. proposal summary
+2. phased rollout
+3. evidence bundle
+4. framework comparison
+5. agent comparison
+6. appendix for internal skills and tools
 
-| Feature | Power | Wow Factor |
-|---------|-------|-----------|
-| 📈 **Value Scoring** | `reliability + observability + adaptability + safety + innovation` | Real-time KPI dashboard |
-| 🎯 **Hero Cards** | Radar, timeline, discovery board, security lane, network graph | Enterprise-grade visuals |
-| 📐 **First-Screen Blueprint** | Panel layout + motion hints + refs | Ready for frontend |
-| ⏱️ **Event Stream** | Replay-ready timeline for animated storytelling | Live replay capability |
-| 🏆 **Scenario Packs** | One-click multi-run comparison | Prove ROI instantly |
-| 🤖 **Auto Optimizer** | Find best `mode + recipe` config per query | Adaptive learning |
-| 🔄 **Real Agent Loop** | analyze → synthesize → critique (budget-aware) | True reasoning flow |
+One recent route comparison surfaced:
 
----
+- Winner: `PlannerAgent`
+- Runner-up: `ResearchAgent`
+- Score gap: `0.0019`
 
-## 🏗️ Architecture Flow
-
-```mermaid
-flowchart LR
-    A["🔍 User Query"] --> B["🔐 Security Preflight"]
-    B --> C["🤖 Agent + Skill Routing"]
-    C --> D["🔧 Tool Discovery + Recipe"]
-    D --> E["🛡️ Guardrails + Execution"]
-    E --> F["⚙️ Live Agent Loop"]
-    F --> G["💎 Value Card"]
-    G --> H["📊 Visual Payload"]
-    H --> I["🎨 First Screen Blueprint"]
-    H --> J["⏮️ Event Stream Playback"]
-    H --> K["🏅 Showcase Comparison"]
-    
-    style A fill:#0EA5E9,stroke:#333,stroke-width:2px,color:#fff
-    style B fill:#F59E0B,stroke:#333,stroke-width:2px,color:#fff
-    style C fill:#22C55E,stroke:#333,stroke-width:2px,color:#fff
-    style H fill:#9333EA,stroke:#333,stroke-width:2px,color:#fff
-```
+That is important because it shows the framework does not hide near-tie decisions. It exposes them.
 
 ---
 
-## 🎯 Visual Export Power Map
+## Feature Highlights
 
-| You Need to Show | Already Exported | Data Source |
+<table>
+  <tr>
+    <td width="50%" valign="top">
+      <h3>What Typical Repos Stop At</h3>
+      <ul>
+        <li>single-agent selection</li>
+        <li>top-k or relevance-only skill choice</li>
+        <li>answer generation without formal evidence</li>
+        <li>ad hoc evaluation</li>
+        <li>closed internal ecosystem</li>
+      </ul>
+    </td>
+    <td width="50%" valign="top">
+      <h3>What Agent Harness Adds</h3>
+      <ul>
+        <li>agent council and collaboration-aware routing</li>
+        <li><code>robust_frontier</code> skill selection under uncertainty</li>
+        <li>trace, response contract, and routing analysis</li>
+        <li><code>harness-lab</code> leaderboard and release gate</li>
+        <li>studio showcase and OpenAI / Anthropic interop export</li>
+      </ul>
+    </td>
+  </tr>
+</table>
+
+### Capability Matrix
+
+| Capability | Typical Repo | Agent Harness |
 |---|---|---|
-| 💰 KPI Hero Strip | `kpis` + `value_index` | `harness-value` / `harness-visual` |
-| 🕷️ Radar Chart | `radar.labels` + `radar.values` | `harness-visual` |
-| 📅 Gantt Timeline | `timeline[]` with step status | `harness-visual` |
-| 🎲 Discovery Scatter | `discovery_board[]` (score/novelty/risk) | `harness-visual` |
-| 🚨 Security Lane | `security_board` (preflight + actions) | `harness-visual` |
-| 🕸️ Force Graph | `tool_network.nodes/links` | `harness-visual` |
-| 🎬 Animated Replay | `event_stream[]` with timestamps | `harness-stream` |
-| 🤖 Real-Agent Panel | `live_agent_board` | `harness-live` / `harness-visual --live-agent` |
-| 🏆 Multi-Scenario Leaderboard | `comparison.rows` + `best` | `harness-showcase` |
-| 🎯 Best Strategy Recommendation | `best + recommendation` | `harness-optimize` |
+| Agent routing | single winner | primary agent + agent council |
+| Skill routing | relevance/top-k | `robust_frontier` over reliability, uncertainty, downside |
+| Execution | tool loop | harness engine with tools, memory, guardrails, live API |
+| Evidence | partial logs | trace + response contract + routing analysis |
+| Evaluation | ad hoc | `harness-lab` with leaderboard + release gate |
+| Product output | answer only | HTML + JSON + press brief + manifest |
+| Ecosystem | closed | OpenAI / Anthropic skill interop |
 
 ---
 
-## ⚙️ Real Agent Setup
+## Architecture
 
-The live loop uses an OpenAI-compatible endpoint.
+### Routing Layer
 
-```bash
-# 🔑 Environment variables (recommended)
-set AGENT_HARNESS_MODEL_BASE_URL=https://your-endpoint/v1
-set AGENT_HARNESS_MODEL_API_KEY=your_api_key
-set AGENT_HARNESS_MODEL_NAME=your_model
+- `Agent Router`: scores candidate agents against intent, complexity, and risk
+- `Agent Council`: expands available capabilities when collaboration is useful
+- `Skill Router`: chooses the final skill portfolio using `robust_frontier`
 
-# 🔍 Inspect masked config
-python -m app.main harness-live-config
-```
+### Skill Layer
 
-### 🛡️ Hard Safety Rules
+A `skill` is the atomic capability unit of the framework. It carries:
 
-- 📊 Each experiment run is capped (`--max-total-calls <= 50`)
-- 💬 Each query run is capped (`--max-model-calls <= 50`)
-- 📝 Live summaries are logged to `data/live_experiment_log.json`
+- metadata
+- strengths / weaknesses
+- cost
+- reliability
+- uncertainty signals
+- category / tier / synergies / conflicts
+
+Skills can come from:
+
+- built-in local registry
+- marketplace-style ecosystem sources
+- runtime external skill loading
+- OpenAI / Anthropic compatible exported bundles
+
+### Harness Layer
+
+`harness` is the execution operating system around routing. It is responsible for:
+
+- tool discovery
+- recipe selection
+- memory reuse
+- guardrails
+- live API enhancement
+- evaluation
+- value scoring
+- visual payload generation
+- report generation
+- research lab benchmarking
+
+This is why the repo is not just a router.
+
+### Studio Layer
+
+`studio-showcase` turns runtime evidence into a launch-style visual product:
+
+- proposal page
+- benchmark comparison
+- agent comparison
+- generated result excerpt
+- appendix for internal skills and tools
+
+### Interop Layer
+
+The framework can export skills for outside ecosystems so the project is not locked inside its own runtime.
 
 ---
 
-## 🚀 Quick Start (30 seconds)
+## Core Method
+
+### Risk-Calibrated Frontier Routing
+
+The skill selector does not optimize only relevance. It jointly considers:
+
+- relevance
+- diversity
+- redundancy penalty
+- synergy
+- empirical reliability
+- uncertainty penalty
+- downside risk
+
+The main exposed objectives are:
+
+- `robust_expected_utility`
+- `robust_worst_case_utility`
+- `avg_uncertainty`
+
+### Research-Grade Release Gating
+
+`harness-lab` runs repeatable scenario suites and returns:
+
+- leaderboard
+- pass rate
+- value index
+- security alignment
+- release decision: `go / caution / block`
+
+---
+
+## Quick Start
+
+### 1. Install
 
 ```bash
 pip install -r requirements.txt
-python -m app.main run "Compare two rollout plans and highlight compliance risk"
 ```
 
----
-
-## ✨ One-Liners That Generate "Wow" Data
+### 2. Run the core router
 
 ```bash
-# 💎 Value card (headline KPI section)
-python -m app.main harness-value "compare safe rollout strategies" --json
-
-# 📊 Full visual payload (single-run dashboard)
-python -m app.main harness-visual "map ecosystem opportunities" --output reports/visual.json
-
-# 🎨 First-screen blueprint (layout + motion hints)
-python -m app.main harness-blueprint "audit governance posture" --output reports/blueprint.json
-
-# 🎬 Event playback stream (animation timeline)
-python -m app.main harness-stream "audit governance posture" --output reports/stream.json
-
-# 🏆 Multi-scenario showcase (side-by-side comparison)
-python -m app.main harness-showcase --pack impact-lens --output reports/showcase.json
-
-# 🤖 Auto-select best mode + recipe
-python -m app.main harness-optimize "design a safe and innovative rollout strategy" --output reports/optimize.json
-
-# 🔄 Real-agent run (analyze → synthesize → critique)
-python -m app.main harness-live "audit governance posture and propose decision memo" --max-model-calls 10
-
-# ⚖️ Baseline vs live A/B experiment
-python -m app.main harness-live-experiment --max-total-calls 40 --max-calls-per-query 8 --output reports/live_ab.json
-
-# 📈 Real-agent visual payload in one shot
-python -m app.main harness-visual "map safe growth strategy" --live-agent --max-model-calls 8 --output reports/live_visual.json
-
-# 📜 Inspect iteration history
-python -m app.main harness-live-history --limit 20
-
-# 🔌 Explicit provider override
-python -m app.main harness-live "evaluate launch risk" --model-base-url https://yunwu.ai/v1 --model-name gemini-3-flash-preview
+python -m app.main run "Compare two rollout plans and highlight governance risk" --mode deep --contract
 ```
 
-# 📦 Real Payload Glimpse
+### 3. Run the harness engine
 
-```json
-{
-  "kpis": {
-    "value_index": 86.63,
-    "reliability": 0.85,
-    "safety": 0.72,
-    "innovation": 0.91
-  },
-  "radar": {
-    "labels": ["reliability", "observability", "adaptability", "safety", "innovation"],
-    "values": [85.0, 84.0, 88.0, 72.0, 91.0]
-  },
-  "hero_cards": [
-    {"title": "🔧 Reliability Signal", "headline": "85% reliable execution"},
-    {"title": "🛡️ Safety Signal", "headline": "72% safety posture"},
-    {"title": "💡 Innovation Signal", "headline": "91% innovation density"}
-  ]
-}
-```
-
----
-
-## 🎭 Showcase Packs
-
-| Pack | Storyline | Best For |
-|---|---|---|
-| 🎯 `impact-lens` | governance + ecosystem + architecture evolution | investor/demo first screen |
-| 🔐 `security-first` | attack defense + constrained audit flow | enterprise/security buyers |
-
-### List all packs:
 ```bash
-python -m app.main harness-showcase-packs
+python -m app.main harness "Prepare a governance-ready execution memo" --mode balanced
+```
+
+### 4. Generate a showcase
+
+```bash
+python -m app.main studio-showcase "Design a flagship AI operating plan" --mode deep --lab-preset broad --tag flagship
+```
+
+### 5. Generate a launch demo
+
+```bash
+python -m app.main launch-demo --output-dir reports/launch_demo --tag press
+```
+
+### 6. Generate a live API launch demo
+
+Set environment variables first:
+
+```bash
+set AGENT_HARNESS_MODEL_BASE_URL=https://your-endpoint/v1
+set AGENT_HARNESS_MODEL_API_KEY=your_api_key
+set AGENT_HARNESS_MODEL_NAME=your_model
+```
+
+Then run:
+
+```bash
+python -m app.main launch-demo --output-dir reports/live_launch_demo --tag live --live-agent --max-model-calls 6
+```
+
+### 7. Run research lab
+
+```bash
+python -m app.main harness-lab --preset broad --repeats 2 --output reports/lab.json
+python -m app.main harness-lab-product --preset broad --repeats 2 --tag release --output-dir reports
+```
+
+### 8. Export interop bundles
+
+```bash
+python -m app.main skills-interop-export --framework all --output-dir reports/skills_interop
+```
+
+### 9. Run tests
+
+```bash
+pytest -q
 ```
 
 ---
 
-## 📁 Core Harness Files
+## Command Map
 
+| Goal | Command |
+|---|---|
+| basic routing | `python -m app.main run "<query>"` |
+| trace and reasoning | `python -m app.main trace "<query>" --views` |
+| harness execution | `python -m app.main harness "<query>"` |
+| value card | `python -m app.main harness-value "<query>"` |
+| visual payload | `python -m app.main harness-visual "<query>" --output reports/visual.json` |
+| showcase | `python -m app.main studio-showcase "<query>" --tag demo` |
+| launch demo | `python -m app.main launch-demo --tag press` |
+| research lab | `python -m app.main harness-lab --preset broad` |
+| interop export | `python -m app.main skills-interop-export --framework all` |
+
+---
+
+## Repository Map
+
+### Core runtime
+
+- `app/routing/` - agent routing, skill routing, complementarity, robust frontier
+- `app/policy/` - system modes, governance, robustness policy
+- `app/personality/` - profiles and adaptation
+- `app/coordination/` - conflict, dissent, consensus
+- `app/core/` - state, contracts, shared protocol
+
+### Execution and productization
+
+- `app/harness/` - execution engine, manifests, tools, reports, lab, value, visuals
+- `app/studio/` - flagship showcase builder and launch packaging
+- `app/tracing/` - trace rendering and quality analysis
+- `app/utils/` - console and display helpers
+
+### Skills and ecosystem
+
+- `app/skills/` - built-in and external skill registry
+- `app/ecosystem/` - marketplace signals, providers, imports
+- `app/skills/interop.py` - OpenAI / Anthropic compatibility export
+
+### Assets and artifacts
+
+- `docs/` - architecture prompts and images
+- `reports/` - generated demos, lab bundles, showcases
+- `tests/` - regression coverage
+
+---
+
+## Current Status
+
+- `robust_frontier` routing is implemented
+- agent council routing is implemented
+- harness engine and research lab are implemented
+- studio showcase and launch demo are implemented
+- OpenAI / Anthropic interop export is implemented
+- current local test result: `81 passed`
+
+---
+
+## Recommended First Experience
+
+```bash
+python -m app.main launch-demo --output-dir reports/launch_demo --tag press
+python -m app.main studio-showcase "Design a flagship AI operating plan" --mode deep --lab-preset broad --tag studio
 ```
-app/harness/
-├── 🎯 manifest.py         (entry point)
-├── 🔍 discovery.py        (tool discovery)
-├── 🔐 security.py         (security preflight)
-├── 📋 recipes.py          (execution recipes)
-├── 💎 value.py            (KPI scoring)
-├── 🎨 visuals.py          (visual exports)
-├── 🎭 presentation.py     (UI layout)
-├── ⏱️ stream.py            (event stream)
-├── 🏆 showcase.py         (scenario comparison)
-├── 🤖 optimizer.py        (auto selection)
-├── 🔄 live_agent.py       (real agent loop)
-├── ⚖️ live_experiment.py   (A/B testing)
-├── 📜 iteration.py        (history tracking)
-└── ⚙️ engine.py           (core engine)
-```
 
-### Documentation & Examples:
-- 📖 `examples/visual_payload_contract.md`
-- 📋 `examples/harness_recipe.sample.json`
+Then open:
 
----
+- `reports/launch_demo/studio_showcase_press.html`
+- `reports/live_launch_demo/studio_showcase_deepseek-live.html`
+- `reports/live_launch_demo/studio_press_brief_deepseek-live.md`
 
-## 🏷️ GitHub Topics
-
-`ai` • `llm` • `agent` • `multi-agent` • `langchain` • `agent-framework` • `agent-routing` • `skill` • `tools` • `orchestration` • `harness` • `evaluation`
-
----
-
-## 💡 Why Build Your Demo with Agent Harness?
-
-<table>
-<tr>
-<td>
-<h3>✅ You Get Everything</h3>
-
-1. 📊 **The Numbers** — Value KPI scores
-2. 📖 **The Narrative** — Hero cards + storyline
-3. 🎬 **The Motion** — Event stream + replay
-4. 🎨 **The Skeleton** — First-screen blueprint
-5. 🏆 **The Proof** — Multi-scenario comparison + recommendation
-
-</td>
-<td>
-<h3>🚀 Deploy Today</h3>
-
-No need to build dashboards from scratch. This repo gives you:
-
-- ✨ **Production-ready visuals**
-- 🎯 **KPI calculations**
-- 🔐 **Security best practices**
-- 📈 **Comparison framework**
-- 🤖 **Agent orchestration**
-
-</td>
-</tr>
-</table>
-
----
-
-<p align="center">
-  <strong>🌟 Build once. Ship visuals that matter. 🌟</strong><br/>
-  <a href="https://github.com/haorui-harry/agent-harness/stargazers">⭐ Star this repo if it helped!</a>
-</p>
+These communicate the project better than a plain CLI trace.

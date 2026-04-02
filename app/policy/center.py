@@ -55,6 +55,14 @@ class TracePolicy:
 
 
 @dataclass
+class RobustnessPolicy:
+    risk_aversion: float
+    reliability_floor: float
+    uncertainty_tolerance: float
+    require_downside_guard: bool
+
+
+@dataclass
 class GovernancePolicy:
     interrupt_for_external_actions: bool
     redact_trace: bool
@@ -69,6 +77,7 @@ class PolicyBundle:
     risk: RiskPolicy
     diversity: DiversityPolicy
     trace: TracePolicy
+    robustness: RobustnessPolicy
     governance: GovernancePolicy
 
     def to_dict(self) -> dict[str, Any]:
@@ -128,6 +137,12 @@ def policy_for_mode(mode: SystemMode) -> PolicyBundle:
                 record_state_diff=False,
                 output_user_trace_summary=True,
             ),
+            robustness=RobustnessPolicy(
+                risk_aversion=0.35,
+                reliability_floor=0.40,
+                uncertainty_tolerance=0.65,
+                require_downside_guard=False,
+            ),
             governance=GovernancePolicy(
                 interrupt_for_external_actions=False,
                 redact_trace=False,
@@ -163,6 +178,12 @@ def policy_for_mode(mode: SystemMode) -> PolicyBundle:
                 show_reject_reasons=True,
                 record_state_diff=True,
                 output_user_trace_summary=True,
+            ),
+            robustness=RobustnessPolicy(
+                risk_aversion=0.65,
+                reliability_floor=0.50,
+                uncertainty_tolerance=0.45,
+                require_downside_guard=True,
             ),
             governance=GovernancePolicy(
                 interrupt_for_external_actions=True,
@@ -200,6 +221,12 @@ def policy_for_mode(mode: SystemMode) -> PolicyBundle:
                 record_state_diff=True,
                 output_user_trace_summary=True,
             ),
+            robustness=RobustnessPolicy(
+                risk_aversion=0.85,
+                reliability_floor=0.62,
+                uncertainty_tolerance=0.30,
+                require_downside_guard=True,
+            ),
             governance=GovernancePolicy(
                 interrupt_for_external_actions=True,
                 redact_trace=True,
@@ -234,6 +261,12 @@ def policy_for_mode(mode: SystemMode) -> PolicyBundle:
             show_reject_reasons=True,
             record_state_diff=False,
             output_user_trace_summary=True,
+        ),
+        robustness=RobustnessPolicy(
+            risk_aversion=0.55,
+            reliability_floor=0.48,
+            uncertainty_tolerance=0.50,
+            require_downside_guard=False,
         ),
         governance=GovernancePolicy(
             interrupt_for_external_actions=False,

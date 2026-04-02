@@ -55,6 +55,8 @@ class TestGraphE2E:
             "final_confidence_breakdown",
         ]:
             assert key in trace
+        assert "robustness_profile" in trace["skill_decision"]
+        assert "robust_worst_case_utility" in trace["skill_decision"]["complementarity_metrics"]
 
     def test_selected_and_rejected_do_not_overlap(self) -> None:
         result = self.graph.invoke(

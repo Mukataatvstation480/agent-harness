@@ -204,6 +204,21 @@ def _bootstrap_payload() -> dict:
     }
 
 
+def _safe_load_current() -> dict:
+    if not MARKETPLACE_FILE.exists():
+        return _bootstrap_payload()
+    try:
+        payload = json.loads(MARKETPLACE_FILE.read_text(encoding="utf-8"))
+    except json.JSONDecodeError:
+        payload = _bootstrap_payload()
+        MARKETPLACE_FILE.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+        return payload
+    if not isinstance(payload, dict):
+        payload = _bootstrap_payload()
+    payload.setdefault("skills", [])
+    return payload
+
+
 def ensure_store() -> None:
     """Ensure marketplace file exists and contains baseline skills."""
 
@@ -214,7 +229,7 @@ def ensure_store() -> None:
         MARKETPLACE_FILE.write_text(json.dumps(seed, indent=2), encoding="utf-8")
         return
 
-    current = json.loads(MARKETPLACE_FILE.read_text(encoding="utf-8"))
+    current = _safe_load_current()
     current_skills = current.get("skills", [])
     current_ids = {row.get("skill_id") for row in current_skills}
 
@@ -233,7 +248,7 @@ def load_marketplace() -> list[MarketplaceSkill]:
     """Load marketplace skills from disk."""
 
     ensure_store()
-    payload = json.loads(MARKETPLACE_FILE.read_text(encoding="utf-8"))
+    payload = _safe_load_current()
     return [from_dict(item) for item in payload.get("skills", [])]
 
 
@@ -256,7 +271,7 @@ def import_marketplace_from_file(path: str) -> int:
     external_payload = json.loads(source.read_text(encoding="utf-8"))
     external_rows = external_payload.get("skills", [])
 
-    current_payload = json.loads(MARKETPLACE_FILE.read_text(encoding="utf-8"))
+    current_payload = _safe_load_current()
     current_rows = current_payload.get("skills", [])
     index = {row.get("skill_id"): row for row in current_rows}
 

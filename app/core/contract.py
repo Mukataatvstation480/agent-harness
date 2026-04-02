@@ -27,6 +27,14 @@ def _build_confidence_components(state: GraphState) -> dict[str, float]:
         "consistency_confidence": max(0.0, 1.0 - float(state.routing_metrics.get("conflict_count", 0.0)) / 3.0),
         "verification_confidence": float(state.consensus_result.get("strength_score", 0.0)),
         "calibration_adjusted_confidence": float(state.routing_metrics.get("avg_quality_score", 0.0)),
+        "robustness_confidence": max(
+            0.0,
+            min(
+                1.0,
+                float(state.routing_metrics.get("robust_worst_case_utility", 0.0))
+                * (1.0 - float(state.routing_metrics.get("avg_uncertainty", 0.0))),
+            ),
+        ),
     }
 
 
@@ -94,6 +102,9 @@ def build_response_contract(state: GraphState) -> dict[str, Any]:
             "route_regret_estimate": round(route_regret, 4),
             "coverage_score": float(state.routing_metrics.get("coverage", 0.0)),
             "redundancy_score": float(state.routing_metrics.get("redundancy", 0.0)),
+            "robust_expected_utility": float(state.routing_metrics.get("robust_expected_utility", 0.0)),
+            "robust_worst_case_utility": float(state.routing_metrics.get("robust_worst_case_utility", 0.0)),
+            "avg_uncertainty": float(state.routing_metrics.get("avg_uncertainty", 0.0)),
             "disagreement_triggered": state.disagreement_triggered,
             "approval_required": state.approval_required,
             "confidence_components": components,

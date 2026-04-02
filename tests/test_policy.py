@@ -9,12 +9,16 @@ def test_policy_modes_exist() -> None:
         payload = bundle.to_dict()
         assert payload["mode"] == mode.value
         assert payload["budget"]["max_skills"] >= 1
+        assert "robustness" in payload
+        assert payload["robustness"]["risk_aversion"] >= 0.0
+        assert payload["robustness"]["risk_aversion"] <= 1.0
 
 
 def test_safety_mode_requires_verifier() -> None:
     bundle = policy_for_mode(SystemMode.SAFETY_CRITICAL)
     assert bundle.risk.require_verifier is True
     assert bundle.risk.require_human_approval is True
+    assert bundle.robustness.require_downside_guard is True
 
 
 def test_risk_inference() -> None:

@@ -4,12 +4,8 @@ from __future__ import annotations
 
 from typing import Any
 
-from rich.console import Console
-from rich.panel import Panel
-from rich.table import Table
-from rich.tree import Tree
-
 from app.tracing.visualizer import render_reasoning_tree
+from app.utils.console import Console, Panel, Table, Tree
 
 console = Console()
 
@@ -74,9 +70,21 @@ def print_routing_trace(trace: dict[str, Any], query: str) -> None:
                 "ensemble_coherence",
                 "total_synergy",
                 "total_budget_used",
+                "robust_expected_utility",
+                "robust_worst_case_utility",
+                "avg_uncertainty",
             ]:
                 if key in metrics:
                     branch.add(f"{key}: {metrics.get(key):.3f}")
+
+        robustness = skill.get("robustness_profile", {})
+        if robustness:
+            tree.add(
+                f"[dim]Robustness:[/] enabled={robustness.get('enabled', False)}, "
+                f"risk_aversion={robustness.get('risk_aversion', 0.0)}, "
+                f"reliability_floor={robustness.get('reliability_floor', 0.0)}, "
+                f"uncertainty_tolerance={robustness.get('uncertainty_tolerance', 0.0)}"
+            )
 
         discovery = skill.get("marketplace_discovery", [])
         if discovery:
@@ -340,6 +348,9 @@ def print_contract(contract: dict[str, Any]) -> None:
         "route_regret_estimate",
         "coverage_score",
         "redundancy_score",
+        "robust_expected_utility",
+        "robust_worst_case_utility",
+        "avg_uncertainty",
         "disagreement_triggered",
         "approval_required",
     ]:

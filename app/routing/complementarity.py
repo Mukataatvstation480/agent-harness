@@ -7,6 +7,7 @@ from dataclasses import dataclass, field
 from itertools import combinations
 
 from app.core.state import AgentPersonality, AgentStyle, SkillCategory, SkillMetadata, SkillTier
+from app.memory.learning import get_skill_reliability
 
 
 @dataclass
@@ -21,6 +22,9 @@ class ScoredSkill:
     synergy_bonus: float = 0.0
     budget_cost: float = 1.0
     tier_bonus: float = 0.0
+    reliability_score: float = 0.5
+    uncertainty_penalty: float = 0.5
+    downside_risk: float = 0.5
 
     @property
     def composite_score(self) -> float:
@@ -31,6 +35,9 @@ class ScoredSkill:
             + self.synergy_bonus * 0.15
             - self.redundancy_penalty * 0.10
             + self.tier_bonus * 0.05
+            + self.reliability_score * 0.06
+            - self.uncertainty_penalty * 0.04
+            - self.downside_risk * 0.02
         )
 
 
@@ -50,6 +57,9 @@ class ComplementarityResult:
     total_synergy: float = 0.0
     total_budget_used: float = 0.0
     selection_rounds: int = 0
+    robust_expected_utility: float = 0.0
+    robust_worst_case_utility: float = 0.0
+    avg_uncertainty: float = 0.0
 
     @property
     def diversity_index(self) -> float:
@@ -69,6 +79,10 @@ class ComplementarityEngine:
         enable_synergy: bool = True,
         enable_conflict_avoidance: bool = True,
         refinement_rounds: int = 1,
+        enable_robust_selection: bool = True,
+        risk_aversion: float = 0.65,
+        reliability_floor: float = 0.45,
+        uncertainty_tolerance: float = 0.50,
     ):
         self.max_skills = max_skills
         self.redundancy_threshold = redundancy_threshold
@@ -76,6 +90,10 @@ class ComplementarityEngine:
         self.enable_synergy = enable_synergy
         self.enable_conflict_avoidance = enable_conflict_avoidance
         self.refinement_rounds = refinement_rounds
+        self.enable_robust_selection = enable_robust_selection
+        self.risk_aversion = max(0.0, min(float(risk_aversion), 1.0))
+        self.reliability_floor = max(0.0, min(float(reliability_floor), 1.0))
+        self.uncertainty_tolerance = max(0.0, min(float(uncertainty_tolerance), 1.0))
 
     def _score_relevance(self, skill: SkillMetadata, query: str) -> float:
         """Score how relevant a skill is to the query (0-1)."""
@@ -137,6 +155,65 @@ class ComplementarityEngine:
         output_complement = 0.0 if a.output_type == b.output_type else 0.5
         return 0.5 * declared + 0.3 * cat_complement + 0.2 * output_complement
 
+    @staticmethod
+    def _risk_profile_score(skill: SkillMetadata) -> float:
+        """Map textual risk profile into [0,1] risk score."""
+
+        risk_map = {
+            "very_low": 0.1,
+            "low": 0.2,
+            "medium": 0.5,
+            "high": 0.8,
+            "critical": 1.0,
+        }
+        key = str(skill.risk_profile or "medium").strip().lower()
+        return max(0.0, min(1.0, risk_map.get(key, 0.5)))
+
+    def _skill_uncertainty_signals(self, skill: SkillMetadata) -> tuple[float, float, float]:
+        """Return reliability, uncertainty, and downside risk signals.
+
+        reliability: empirical + metadata confidence estimate.
+        uncertainty: 1 - reliability.
+        downside risk: risk-profile and cost pressure proxy.
+        """
+
+        runtime = max(0.0, min(1.0, get_skill_reliability(skill.name)))
+        calibration = max(0.0, min(1.0, float(skill.calibration_score)))
+        interpretability = max(0.0, min(1.0, float(skill.interpretability_score)))
+        reputation = max(0.0, min(1.0, float(skill.reputation_score)))
+
+        reliability = (
+            0.45 * runtime
+            + 0.25 * calibration
+            + 0.20 * interpretability
+            + 0.10 * reputation
+        )
+        reliability = max(0.0, min(1.0, reliability))
+        uncertainty = 1.0 - reliability
+
+        cost_pressure = max(0.0, min(1.0, float(skill.compute_cost) / max(self.budget_limit, 1.0)))
+        risk_profile = self._risk_profile_score(skill)
+        downside = max(0.0, min(1.0, 0.55 * risk_profile + 0.45 * cost_pressure))
+        return reliability, uncertainty, downside
+
+    def _robust_set_utility(self, selected: list[ScoredSkill]) -> tuple[float, float, float]:
+        """Expected and lower-tail utility under independent failure approximation."""
+
+        if not selected:
+            return 0.0, 0.0, 0.0
+
+        expected = sum(skill.composite_score * skill.reliability_score for skill in selected)
+        variance = sum(
+            (skill.composite_score ** 2) * skill.reliability_score * (1.0 - skill.reliability_score)
+            for skill in selected
+        )
+        sigma = math.sqrt(max(variance, 0.0))
+
+        # Approximate 10th percentile (z ~= 1.28) to capture downside risk.
+        worst_case = expected - 1.2816 * sigma
+        avg_uncertainty = sum(skill.uncertainty_penalty for skill in selected) / len(selected)
+        return expected, worst_case, avg_uncertainty
+
     def _has_conflict(self, a: SkillMetadata, b: SkillMetadata) -> bool:
         """Check whether a skill pair has an explicit conflict."""
 
@@ -147,9 +224,20 @@ class ComplementarityEngine:
 
         if candidate.budget_cost > self.budget_limit:
             return 0.0
+        if self.enable_robust_selection and candidate.reliability_score < self.reliability_floor:
+            return 0.0
+        if self.enable_robust_selection and candidate.uncertainty_penalty > self.uncertainty_tolerance:
+            return 0.0
 
         if not already_selected:
-            return candidate.relevance
+            if not self.enable_robust_selection:
+                return candidate.relevance
+            solo_gain = (
+                candidate.composite_score
+                - self.risk_aversion * candidate.downside_risk
+                - max(0.0, candidate.uncertainty_penalty - self.uncertainty_tolerance)
+            )
+            return max(solo_gain, 0.0)
 
         current_budget = sum(skill.budget_cost for skill in already_selected)
         if current_budget + candidate.budget_cost > self.budget_limit:
@@ -179,12 +267,19 @@ class ComplementarityEngine:
         new_output_bonus = 0.15 if candidate.metadata.output_type not in existing_output_types else 0.0
 
         gain = (
-            candidate.relevance
+            candidate.composite_score
             + new_category_bonus
             + new_output_bonus
             + synergy_bonus * 0.3
             - max_redundancy * 0.6
         )
+        if self.enable_robust_selection:
+            expected_before, worst_before, _ = self._robust_set_utility(already_selected)
+            expected_after, worst_after, _ = self._robust_set_utility(already_selected + [candidate])
+            gain += (expected_after - expected_before) * 0.35
+            gain += (worst_after - worst_before) * (0.55 + 0.25 * self.risk_aversion)
+            gain -= max(0.0, candidate.uncertainty_penalty - self.uncertainty_tolerance) * 0.4
+            gain -= candidate.downside_risk * self.risk_aversion * 0.3
         return max(gain, 0.0)
 
     def _apply_style(
@@ -307,6 +402,11 @@ class ComplementarityEngine:
             score -= self._pairwise_similarity(left.metadata, right.metadata) * 0.2
             if self.enable_synergy:
                 score += self._compute_synergy(left.metadata, right.metadata) * 0.2
+        if self.enable_robust_selection:
+            expected, worst_case, avg_uncertainty = self._robust_set_utility(selected)
+            score += expected * 0.25
+            score += worst_case * (0.35 + 0.20 * self.risk_aversion)
+            score -= avg_uncertainty * 0.25
         return score
 
     def _refine_selection(
@@ -391,6 +491,7 @@ class ComplementarityEngine:
         for skill in skills:
             relevance = self._score_relevance(skill, query)
             category_value = 1.0 - (cat_counts[skill.category] / total_cats) if total_cats else 0.5
+            reliability, uncertainty, downside = self._skill_uncertainty_signals(skill)
             scored.append(
                 ScoredSkill(
                     metadata=skill,
@@ -398,6 +499,9 @@ class ComplementarityEngine:
                     category_value=category_value,
                     budget_cost=skill.compute_cost,
                     tier_bonus=tier_bonus_map.get(skill.tier, 0.1),
+                    reliability_score=reliability,
+                    uncertainty_penalty=uncertainty,
+                    downside_risk=downside,
                 )
             )
 
@@ -457,6 +561,10 @@ class ComplementarityEngine:
         for item in selected:
             if item.metadata.name in seen_names:
                 continue
+            if self.enable_robust_selection and item.reliability_score < self.reliability_floor:
+                continue
+            if self.enable_robust_selection and item.uncertainty_penalty > self.uncertainty_tolerance:
+                continue
             if self.enable_conflict_avoidance and any(
                 self._has_conflict(item.metadata, chosen.metadata) for chosen in dedup_selected
             ):
@@ -509,6 +617,7 @@ class ComplementarityEngine:
                 + 0.20 * (total_synergy / max(len(synergy_pairs), 1)),
             ),
         )
+        robust_expected, robust_worst_case, avg_uncertainty = self._robust_set_utility(selected)
 
         return ComplementarityResult(
             selected=selected,
@@ -523,4 +632,7 @@ class ComplementarityEngine:
             total_synergy=total_synergy,
             total_budget_used=sum(skill.budget_cost for skill in selected),
             selection_rounds=rounds,
+            robust_expected_utility=robust_expected,
+            robust_worst_case_utility=robust_worst_case,
+            avg_uncertainty=avg_uncertainty,
         )

@@ -46,6 +46,7 @@ class RoutingStrategy(str, Enum):
     ENSEMBLE = "ensemble"
     BUDGET_AWARE = "budget_aware"
     DIVERSITY_FIRST = "diversity_first"
+    ROBUST_FRONTIER = "robust_frontier"
 
 
 class ConflictPolicy(str, Enum):

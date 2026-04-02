@@ -6,7 +6,6 @@ import json
 from pathlib import Path
 
 import typer
-from rich.console import Console
 
 from app.benchmark.evaluate import run_benchmark
 from app.core.state import AgentStyle, GraphState
@@ -16,6 +15,7 @@ from app.demo import (
     demo_full_trace,
     demo_marketplace,
     demo_personality_comparison,
+    demo_press_launch,
     run_all_demos,
 )
 from app.ecosystem.marketplace import (
@@ -38,9 +38,12 @@ from app.skills.registry import (
     list_external_skills,
     load_external_skills_from_file,
 )
+from app.skills.interop import export_interop_all, export_interop_catalog, write_interop_bundle
+from app.studio.flagship import StudioShowcaseBuilder
 from app.tracing.analyzer import RoutingAnalyzer
 from app.tracing.store import list_recent_traces, load_trace, save_trace
 from app.tracing.visualizer import render_trace_views
+from app.utils.console import Console
 from app.utils.display import (
     print_benchmark_results,
     print_conflict_report,
@@ -61,6 +64,7 @@ app = typer.Typer(
     add_completion=False,
 )
 HARNESS = HarnessEngine()
+STUDIO = StudioShowcaseBuilder(harness=HARNESS)
 
 
 def _parse_style(style: str) -> AgentStyle | None:
@@ -436,6 +440,49 @@ def skill_card_command(
     console.print_json(json.dumps(card, indent=2, default=str))
 
 
+@app.command("skills-interop-export")
+def skills_interop_export_command(
+    framework: str = typer.Option("all", "--framework", "-f", help="Target: all|openai|anthropic"),
+    output_dir: str = typer.Option("reports/skills_interop", "--output-dir", "-o", help="Output directory"),
+    include_marketplace: bool = typer.Option(True, "--marketplace/--no-marketplace", help="Include marketplace skills"),
+    include_external: bool = typer.Option(True, "--external/--no-external", help="Include external runtime skills"),
+    include_harness_tools: bool = typer.Option(
+        True,
+        "--harness-tools/--no-harness-tools",
+        help="Suggest harness tools in exported skill metadata",
+    ),
+) -> None:
+    """Export compatibility bundles for OpenAI/Anthropic skill ecosystems."""
+
+    target = framework.strip().lower()
+    if target == "all":
+        payload = export_interop_all(
+            include_marketplace=include_marketplace,
+            include_external=include_external,
+            include_harness_tools=include_harness_tools,
+        )
+    elif target in {"openai", "anthropic"}:
+        payload = export_interop_catalog(
+            framework=target,
+            include_marketplace=include_marketplace,
+            include_external=include_external,
+            include_harness_tools=include_harness_tools,
+        )
+    else:
+        raise typer.BadParameter("framework must be one of: all|openai|anthropic")
+
+    written = write_interop_bundle(payload, output_dir=output_dir)
+    result = {
+        "framework": target,
+        "output_dir": output_dir,
+        "include_marketplace": include_marketplace,
+        "include_external": include_external,
+        "include_harness_tools": include_harness_tools,
+        "written": written,
+    }
+    console.print_json(json.dumps(result, indent=2, default=str))
+
+
 @app.command("analyze")
 def analyze_command(query: str = typer.Argument(..., help="Query to analyze")) -> None:
     """Run a query and produce routing quality analysis."""
@@ -504,7 +551,10 @@ def mode_compare_command(
 
 @app.command("demo")
 def demo_command(
-    scenario: str = typer.Argument("all", help="Scenario: all, personality, conflict, benchmark, marketplace, trace"),
+    scenario: str = typer.Argument(
+        "all",
+        help="Scenario: all, personality, conflict, benchmark, marketplace, trace, launch",
+    ),
 ) -> None:
     """Run demo scenarios showcasing system capabilities."""
 
@@ -526,8 +576,31 @@ def demo_command(
     if scenario == "trace":
         demo_full_trace()
         return
+    if scenario == "launch":
+        demo_press_launch()
+        return
 
-    raise typer.BadParameter("Scenario must be one of: all, personality, conflict, benchmark, marketplace, trace")
+    raise typer.BadParameter(
+        "Scenario must be one of: all, personality, conflict, benchmark, marketplace, trace, launch"
+    )
+
+
+@app.command("launch-demo")
+def launch_demo_command(
+    output_dir: str = typer.Option("reports/launch_demo", "--output-dir", "-o", help="Output directory"),
+    tag: str = typer.Option("press", "--tag", help="Output tag"),
+    live_agent: bool = typer.Option(False, "--live-agent", help="Enable real-model generation for the launch story"),
+    max_model_calls: int = typer.Option(8, "--max-model-calls", help="Live model call budget per run (<=50)"),
+) -> None:
+    """Generate launch-ready showcase assets for external presentation."""
+
+    payload = demo_press_launch(
+        output_dir=output_dir,
+        tag=tag,
+        live_agent=live_agent,
+        max_model_calls=max_model_calls,
+    )
+    console.print_json(json.dumps(payload, indent=2, default=str))
 
 
 @app.command("harness")
@@ -1305,6 +1378,219 @@ def harness_eval_command(
         "Audit this compliance proposal and challenge weak assumptions",
     ]
     result = HARNESS.eval_suite(queries=queries, mode=_parse_mode(mode).value)
+    console.print_json(json.dumps(result, indent=2, default=str))
+
+
+@app.command("harness-lab")
+def harness_lab_command(
+    preset: str = typer.Option("core", "--preset", "-p", help="Preset: core|daily|research|strict|broad"),
+    repeats: int = typer.Option(1, "--repeats", "-r", help="Repeat each scenario N times"),
+    seed: int = typer.Option(7, "--seed", help="Random seed used for bootstrap CI"),
+    scenarios: str = typer.Option(
+        "",
+        "--scenarios",
+        help="Optional comma-separated scenario IDs to run (default: all)",
+    ),
+    strict: bool = typer.Option(False, "--strict", help="Apply strict safety constraints"),
+    include_runs: bool = typer.Option(False, "--include-runs", help="Include full run payloads"),
+    isolate_memory: bool = typer.Option(
+        True,
+        "--isolate-memory/--shared-memory",
+        help="Isolate harness memory state for reproducible lab runs",
+    ),
+    fresh_memory_per_candidate: bool = typer.Option(
+        True,
+        "--fresh-memory-per-candidate/--carry-memory-between-candidates",
+        help="Reset memory before each candidate to avoid cross-candidate contamination",
+    ),
+    list_scenarios: bool = typer.Option(False, "--list-scenarios", help="List available lab scenarios"),
+    list_presets: bool = typer.Option(False, "--list-presets", help="List candidate presets"),
+    output: str = typer.Option("", "--output", "-o", help="Optional output JSON file"),
+) -> None:
+    """Run research-grade reproducible harness experiments."""
+
+    if list_scenarios:
+        console.print_json(json.dumps({"scenarios": HARNESS.list_research_scenarios()}, indent=2, default=str))
+        return
+
+    if list_presets:
+        console.print_json(json.dumps({"presets": HARNESS.list_research_presets()}, indent=2, default=str))
+        return
+
+    preset_key = preset.strip().lower()
+    allowed = {"core", "daily", "research", "strict", "broad"}
+    if preset_key not in allowed:
+        raise typer.BadParameter("preset must be one of: core|daily|research|strict|broad")
+
+    scenario_ids = [item.strip() for item in scenarios.split(",") if item.strip()] if scenarios else None
+
+    constraints = None
+    if strict:
+        constraints = HarnessConstraints(
+            max_steps=4,
+            max_tool_calls=4,
+            allow_write_actions=False,
+            allow_network_actions=False,
+            allow_browser_actions=False,
+            security_strictness="strict",
+        )
+
+    payload = HARNESS.run_research_lab(
+        preset=preset_key,
+        constraints=constraints,
+        scenario_ids=scenario_ids,
+        repeats=max(1, repeats),
+        seed=seed,
+        include_runs=include_runs,
+        isolate_memory=isolate_memory,
+        fresh_memory_per_candidate=fresh_memory_per_candidate,
+    )
+
+    if output:
+        path = Path(output)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(json.dumps(payload, indent=2, default=str), encoding="utf-8")
+        console.print(f"[green]Research lab result written:[/] {path}")
+        return
+
+    console.print_json(json.dumps(payload, indent=2, default=str))
+
+
+@app.command("harness-lab-product")
+def harness_lab_product_command(
+    preset: str = typer.Option("core", "--preset", "-p", help="Preset: core|daily|research|strict|broad"),
+    repeats: int = typer.Option(1, "--repeats", "-r", help="Repeat each scenario N times"),
+    seed: int = typer.Option(7, "--seed", help="Random seed"),
+    scenarios: str = typer.Option(
+        "",
+        "--scenarios",
+        help="Optional comma-separated scenario IDs to run (default: all)",
+    ),
+    tag: str = typer.Option("", "--tag", help="Optional run tag for output file names"),
+    output_dir: str = typer.Option("reports", "--output-dir", help="Output directory for bundle artifacts"),
+    strict: bool = typer.Option(False, "--strict", help="Apply strict safety constraints"),
+) -> None:
+    """Generate productized harness-lab assets: JSON + Markdown + CSV + history."""
+
+    preset_key = preset.strip().lower()
+    allowed = {"core", "daily", "research", "strict", "broad"}
+    if preset_key not in allowed:
+        raise typer.BadParameter("preset must be one of: core|daily|research|strict|broad")
+
+    scenario_ids = [item.strip() for item in scenarios.split(",") if item.strip()] if scenarios else None
+    constraints = None
+    if strict:
+        constraints = HarnessConstraints(
+            max_steps=4,
+            max_tool_calls=4,
+            allow_write_actions=False,
+            allow_network_actions=False,
+            allow_browser_actions=False,
+            security_strictness="strict",
+        )
+
+    lab = HARNESS.run_research_lab(
+        preset=preset_key,
+        constraints=constraints,
+        scenario_ids=scenario_ids,
+        repeats=max(1, repeats),
+        seed=seed,
+        include_runs=False,
+        isolate_memory=True,
+        fresh_memory_per_candidate=True,
+    )
+    bundle = HARNESS.build_lab_product_bundle(lab_payload=lab, tag=tag)
+    paths = HARNESS.write_lab_product_bundle(bundle=bundle, output_dir=output_dir)
+    payload = {
+        "summary": bundle.get("summary", {}),
+        "applause_points": bundle.get("applause_points", []),
+        "paths": paths,
+    }
+    console.print_json(json.dumps(payload, indent=2, default=str))
+
+
+@app.command("harness-lab-history")
+def harness_lab_history_command(
+    limit: int = typer.Option(12, "--limit", "-n", help="Max history items"),
+) -> None:
+    """Show recent productized harness-lab runs."""
+
+    payload = {"history": HARNESS.list_lab_product_history(limit=max(1, limit))}
+    console.print_json(json.dumps(payload, indent=2, default=str))
+
+
+@app.command("studio-showcase")
+def studio_showcase_command(
+    query: str = typer.Argument(..., help="Task/query to showcase"),
+    mode: str = typer.Option("balanced", "--mode", "-m", help="Execution mode"),
+    lab_preset: str = typer.Option("broad", "--lab-preset", help="Preset: core|daily|research|strict|broad"),
+    lab_repeats: int = typer.Option(1, "--lab-repeats", help="Repeat each scenario N times"),
+    scenarios: str = typer.Option(
+        "",
+        "--scenarios",
+        help="Optional comma-separated scenario IDs (default: studio curated set)",
+    ),
+    output_dir: str = typer.Option("reports/studio", "--output-dir", "-o", help="Output directory"),
+    tag: str = typer.Option("", "--tag", help="Optional output tag"),
+    export_interop: bool = typer.Option(
+        True,
+        "--export-interop/--no-export-interop",
+        help="Write OpenAI/Anthropic interop bundle",
+    ),
+    include_marketplace: bool = typer.Option(
+        True,
+        "--marketplace/--no-marketplace",
+        help="Include marketplace skills in interop catalog",
+    ),
+    include_external: bool = typer.Option(
+        True,
+        "--external/--no-external",
+        help="Include external runtime skills in interop catalog",
+    ),
+    include_harness_tools: bool = typer.Option(
+        True,
+        "--harness-tools/--no-harness-tools",
+        help="Suggest harness tools in interop skill metadata",
+    ),
+    json_output: bool = typer.Option(False, "--json", "-j", help="Include full payload in CLI output"),
+) -> None:
+    """Build flagship showcase artifact that unifies routing, lab, ecosystem, and interop."""
+
+    preset_key = lab_preset.strip().lower()
+    allowed = {"core", "daily", "research", "strict", "broad"}
+    if preset_key not in allowed:
+        raise typer.BadParameter("lab_preset must be one of: core|daily|research|strict|broad")
+
+    parsed_mode = _parse_mode(mode).value
+    scenario_ids = [item.strip() for item in scenarios.split(",") if item.strip()] if scenarios else None
+    payload = STUDIO.build_showcase(
+        query=query,
+        mode=parsed_mode,
+        lab_preset=preset_key,
+        lab_repeats=max(1, lab_repeats),
+        scenario_ids=scenario_ids,
+        include_marketplace=include_marketplace,
+        include_external=include_external,
+        include_harness_tools=include_harness_tools,
+        include_interop_catalog=export_interop,
+    )
+    paths = STUDIO.write_showcase(
+        payload=payload,
+        output_dir=output_dir,
+        tag=tag,
+        export_interop=export_interop,
+    )
+    result = {
+        "identity": payload.get("identity", {}),
+        "query": payload.get("query", {}),
+        "frontier": payload.get("frontier", {}),
+        "release_decision": payload.get("lab", {}).get("release_decision", {}),
+        "positioning": payload.get("comparison", {}).get("positioning", {}),
+        "why_use_this": payload.get("why_use_this", []),
+        "paths": paths,
+    }
+    if json_output:
+        result["payload"] = payload
     console.print_json(json.dumps(result, indent=2, default=str))
 
 

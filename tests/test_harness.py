@@ -36,6 +36,14 @@ def test_memory_store_roundtrip(tmp_path: Path) -> None:
     assert len(recent) == 1
     assert recent[0]["event"] == "x"
 
+    snapshot = store.snapshot()
+    assert "sessions" in snapshot
+    store.clear()
+    assert store.read_recent("session-a") == []
+    store.restore(snapshot)
+    restored = store.read_recent("session-a")
+    assert len(restored) == 1
+
 
 def test_harness_engine_run_outputs_eval() -> None:
     engine = HarnessEngine()

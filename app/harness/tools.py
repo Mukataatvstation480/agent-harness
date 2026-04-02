@@ -12,6 +12,7 @@ from app.ecosystem.marketplace import (
     get_trending_skills,
     list_marketplace_skills,
 )
+from app.ecosystem.store import load_marketplace
 from app.skills.registry import list_all_skills
 
 from app.harness.models import ToolCall, ToolResult, ToolType
@@ -31,6 +32,8 @@ class ToolRegistry:
             "external_resource_hub": self._external_resource_hub,
             "api_skill_dependency_graph": self._api_skill_dependency_graph,
             "code_router_blueprint": self._code_router_blueprint,
+            "api_skill_portfolio_optimizer": self._api_skill_portfolio_optimizer,
+            "code_experiment_design": self._code_experiment_design,
         }
         self._tool_types: dict[str, ToolType] = {
             "api_market_discover": ToolType.API,
@@ -42,6 +45,8 @@ class ToolRegistry:
             "external_resource_hub": ToolType.BROWSER,
             "api_skill_dependency_graph": ToolType.API,
             "code_router_blueprint": ToolType.CODE,
+            "api_skill_portfolio_optimizer": ToolType.API,
+            "code_experiment_design": ToolType.CODE,
         }
 
     def available_tools(self) -> list[str]:
@@ -327,4 +332,166 @@ class ToolRegistry:
                 "Treat security checks as executable policy, not static docs.",
                 "Keep each loop step explainable with source + score + constraints.",
             ],
+        }
+
+    @staticmethod
+    def _api_skill_portfolio_optimizer(args: dict[str, Any]) -> dict[str, Any]:
+        query = str(args.get("query", "")).strip()
+        limit = max(1, min(int(args.get("limit", 5)), 10))
+        tolerance = str(args.get("risk_tolerance", "medium")).strip().lower()
+        risk_budget = {"low": 0.25, "medium": 0.5, "high": 0.8}.get(tolerance, 0.5)
+
+        discovered = discover_for_query(query=query, limit=25)
+        market_map = {item.metadata.name: item for item in load_marketplace()}
+
+        ranked: list[dict[str, Any]] = []
+        for item in discovered:
+            name = str(item.get("name", ""))
+            market_skill = market_map.get(name)
+            if not market_skill:
+                continue
+
+            relevance = float(item.get("score", 0.0))
+            reputation = float(item.get("reputation", 0.0))
+            trending = float(item.get("trending_score", 0.0))
+            cost = float(market_skill.metadata.compute_cost or 1.0)
+            risk_profile = str(market_skill.metadata.risk_profile).lower()
+            risk_score = {"low": 0.2, "medium": 0.5, "high": 0.8}.get(risk_profile, 0.5)
+
+            cost_term = max(0.0, 1.0 - min(cost / 3.0, 1.0))
+            risk_penalty = max(0.0, risk_score - risk_budget) * 0.28
+            objective = (
+                0.46 * relevance
+                + 0.26 * reputation
+                + 0.13 * trending
+                + 0.15 * cost_term
+                - risk_penalty
+            )
+
+            ranked.append(
+                {
+                    "name": name,
+                    "provider": market_skill.provider,
+                    "objective_score": round(objective, 4),
+                    "signals": {
+                        "relevance": round(relevance, 4),
+                        "reputation": round(reputation, 4),
+                        "trending": round(trending, 4),
+                        "risk_score": round(risk_score, 4),
+                        "cost_score": round(cost_term, 4),
+                    },
+                    "rationale": [
+                        f"risk_tolerance={tolerance}",
+                        f"risk_profile={risk_profile}",
+                        f"compute_cost={cost:.2f}",
+                        f"tags={','.join(item.get('tags', [])[:3])}",
+                    ],
+                }
+            )
+
+        ranked.sort(key=lambda item: float(item.get("objective_score", 0.0)), reverse=True)
+        selected = ranked[:limit]
+
+        providers = sorted({item.get("provider", "") for item in selected if item.get("provider")})
+        avg_objective = sum(float(item.get("objective_score", 0.0)) for item in selected) / max(len(selected), 1)
+        avg_risk = (
+            sum(float(item.get("signals", {}).get("risk_score", 0.0)) for item in selected)
+            / max(len(selected), 1)
+        )
+
+        return {
+            "query": query,
+            "risk_tolerance": tolerance,
+            "count": len(selected),
+            "portfolio": selected,
+            "portfolio_summary": {
+                "provider_diversity": len(providers),
+                "providers": providers,
+                "avg_objective_score": round(avg_objective, 4),
+                "avg_risk_score": round(avg_risk, 4),
+            },
+        }
+
+    @staticmethod
+    def _code_experiment_design(args: dict[str, Any]) -> dict[str, Any]:
+        query = str(args.get("query", "")).strip()
+        objective = str(args.get("objective", "maximize value while preserving safety")).strip()
+        max_experiments = max(2, min(int(args.get("max_experiments", 6)), 12))
+        lowered = query.lower()
+
+        base_metrics = [
+            "value_index",
+            "tool_success_rate",
+            "completion_score",
+            "security_block_count",
+            "discovery_utilization",
+        ]
+        if "latency" in lowered or "fast" in lowered:
+            base_metrics.append("avg_latency_ms")
+        if "innovation" in lowered or "novel" in lowered:
+            base_metrics.append("innovation")
+
+        experiments = [
+            {
+                "experiment_id": "exp-00-baseline",
+                "change": "Balanced mode with auto recipe",
+                "hypothesis": "Provides stable baseline for value and completion.",
+                "controls": ["fixed query set", "fixed random seed", "same tool catalog"],
+            },
+            {
+                "experiment_id": "exp-01-no-discovery",
+                "change": "Disable dynamic discovery (planner fallback only)",
+                "hypothesis": "Expected to reduce innovation and discovery utilization.",
+                "controls": ["same constraints", "same queries"],
+            },
+            {
+                "experiment_id": "exp-02-strict-security",
+                "change": "Enable strict security profile with reduced network/browser actions",
+                "hypothesis": "Expected to improve safety but may reduce completion.",
+                "controls": ["same candidate modes", "same run budget"],
+            },
+            {
+                "experiment_id": "exp-03-research-recipe",
+                "change": "Use research-rig recipe for trend + experiment design tasks",
+                "hypothesis": "Expected to improve observability and innovation in research category.",
+                "controls": ["same metrics", "same evaluation set"],
+            },
+            {
+                "experiment_id": "exp-04-daily-recipe",
+                "change": "Use daily-operator recipe for daily operations tasks",
+                "hypothesis": "Expected to improve decision quality and tool relevance on daily workloads.",
+                "controls": ["same daily scenarios", "same budget limits"],
+            },
+            {
+                "experiment_id": "exp-05-live-agent-on",
+                "change": "Enable live agent enhancement with bounded call budget",
+                "hypothesis": "Potentially improves answer quality; monitor cost and latency tradeoff.",
+                "controls": ["call budget <= 8", "same prompt set"],
+            },
+        ][:max_experiments]
+
+        threats = [
+            "Heuristic labels for expected tools may bias coverage scoring.",
+            "Synthetic scenario mix can differ from real production traffic.",
+            "Shared memory history across repeated runs may affect independence.",
+        ]
+        mitigations = [
+            "Add held-out scenario set and report by category.",
+            "Track confidence interval and effect size, not only mean scores.",
+            "Reset memory state for strict reproducibility studies when required.",
+        ]
+
+        return {
+            "query": query,
+            "objective": objective,
+            "metrics": base_metrics,
+            "experiment_matrix": experiments,
+            "analysis_protocol": {
+                "primary_metric": "value_index",
+                "secondary_metrics": ["completion_score", "tool_success_rate", "security_alignment"],
+                "recommended_repeats": 3,
+                "statistical_checks": ["bootstrap_95ci", "category-wise comparison", "pass_rate >= 0.67"],
+            },
+            "threats_to_validity": threats,
+            "mitigations": mitigations,
         }

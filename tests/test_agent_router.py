@@ -48,3 +48,10 @@ class TestAgentRouter:
         state = GraphState(query="Analyze the data and brainstorm solutions and plan the implementation")
         result = route_to_agent(state)
         assert len(result.detected_intents) >= 2
+
+    def test_collaboration_enriches_available_skills(self) -> None:
+        state = GraphState(query="Analyze the data, challenge assumptions, and plan the implementation")
+        result = route_to_agent(state)
+        if result.collaborating_agents:
+            assert len(result.available_skills) >= 5
+            assert "agent_council" in result.routing_trace["agent_decision"]

@@ -108,6 +108,27 @@ def render_confidence_waterfall(trace: dict) -> str:
     return "\n".join(lines)
 
 
+def render_robustness_profile(trace: dict) -> str:
+    """Render robust routing profile and downside metrics."""
+
+    skill = trace.get("skill_decision", {})
+    robustness = skill.get("robustness_profile", {})
+    metrics = skill.get("complementarity_metrics", {})
+    if not robustness and not metrics:
+        return "Robustness Profile\n========================================\n(no robustness data)"
+
+    lines = ["Robustness Profile", "=" * 40]
+    if robustness:
+        lines.append(f"enabled: {robustness.get('enabled', False)}")
+        lines.append(f"risk_aversion: {float(robustness.get('risk_aversion', 0.0)):.3f}")
+        lines.append(f"reliability_floor: {float(robustness.get('reliability_floor', 0.0)):.3f}")
+        lines.append(f"uncertainty_tolerance: {float(robustness.get('uncertainty_tolerance', 0.0)):.3f}")
+    for key in ["robust_expected_utility", "robust_worst_case_utility", "avg_uncertainty"]:
+        if key in metrics:
+            lines.append(f"{key}: {float(metrics.get(key, 0.0)):.3f}")
+    return "\n".join(lines)
+
+
 def render_trace_views(trace: dict) -> str:
     """Render all core trace views in one payload."""
 
@@ -116,6 +137,7 @@ def render_trace_views(trace: dict) -> str:
         render_skill_matrix(trace),
         render_execution_gantt(trace),
         render_confidence_waterfall(trace),
+        render_robustness_profile(trace),
     ]
     return "\n\n".join(sections)
 

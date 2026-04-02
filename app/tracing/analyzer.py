@@ -37,14 +37,20 @@ class RoutingAnalyzer:
         diversity = metrics.get("diversity_shannon", 0.0)
         coherence = metrics.get("ensemble_coherence", 0.0)
         quality_score = metrics.get("avg_quality_score", 0.0)
+        robust_expected = metrics.get("robust_expected_utility", 0.0)
+        robust_worst_case = metrics.get("robust_worst_case_utility", 0.0)
+        avg_uncertainty = metrics.get("avg_uncertainty", 0.0)
 
         overall = (
-            0.25 * coverage
-            + 0.20 * (1 - redundancy)
-            + 0.20 * min(diversity / 1.5, 1.0)
-            + 0.20 * coherence
-            + 0.15 * quality_score
+            0.20 * coverage
+            + 0.15 * (1 - redundancy)
+            + 0.15 * min(diversity / 1.5, 1.0)
+            + 0.15 * coherence
+            + 0.12 * quality_score
+            + 0.13 * min(robust_expected / 1.5, 1.0)
+            + 0.10 * min(max(robust_worst_case, 0.0) / 1.2, 1.0)
         )
+        overall -= 0.10 * avg_uncertainty
 
         return {
             "coverage": coverage,
@@ -52,6 +58,9 @@ class RoutingAnalyzer:
             "diversity": diversity,
             "coherence": coherence,
             "output_quality": quality_score,
+            "robust_expected_utility": robust_expected,
+            "robust_worst_case_utility": robust_worst_case,
+            "avg_uncertainty": avg_uncertainty,
             "overall_score": round(overall, 3),
             "grade": self._score_to_grade(overall),
         }
@@ -63,6 +72,8 @@ class RoutingAnalyzer:
         coverage = metrics.get("coverage", 0.0)
         redundancy = metrics.get("redundancy", 0.0)
         conflict_count = metrics.get("conflict_count", 0.0)
+        robust_worst_case = metrics.get("robust_worst_case_utility", 0.0)
+        avg_uncertainty = metrics.get("avg_uncertainty", 0.0)
 
         if coverage < 0.5:
             recommendations.append(
@@ -75,6 +86,14 @@ class RoutingAnalyzer:
         if conflict_count > 1:
             recommendations.append(
                 f"{int(conflict_count)} conflicts detected - enable stronger conflict avoidance"
+            )
+        if robust_worst_case < 0.35:
+            recommendations.append(
+                "Weak downside robustness - raise reliability floor or use robust_frontier routing"
+            )
+        if avg_uncertainty > 0.45:
+            recommendations.append(
+                "High uncertainty exposure - lower uncertainty tolerance or add stronger verifier coverage"
             )
 
         if not recommendations:
