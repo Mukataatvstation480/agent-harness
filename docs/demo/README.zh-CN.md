@@ -1,28 +1,52 @@
 <p align="right">
-  <a href="./README.md"><img alt="English" src="https://img.shields.io/badge/Language-English-0f766e?style=for-the-badge"></a>
-  <a href="./README.zh-CN.md"><img alt="简体中文" src="https://img.shields.io/badge/%E8%AF%AD%E8%A8%80-%E7%AE%80%E4%BD%93%E4%B8%AD%E6%96%87-2563eb?style=for-the-badge"></a>
+  <a href="../../README.md"><img alt="English" src="https://img.shields.io/badge/Language-English-0f766e?style=for-the-badge"></a>
+  <a href="../../README.zh-CN.md"><img alt="简体中文" src="https://img.shields.io/badge/语言-简体中文-2563eb?style=for-the-badge"></a>
 </p>
 
 # Demo 快照
 
-这里放的是随仓库一起跟踪的 showcase 静态快照。
+这里放的是随仓库一起提交的展示快照。
 
-`reports/` 是运行期输出目录，故意没有提交到仓库里。
+`reports/` 是运行期输出目录，默认不会提交到仓库。
 
-## Live 发布快照
+## 1. 实时金融发布包
 
-![Live Launch Snapshot](./live/showcase.png)
+![实时金融发布包](./live/showcase.png)
 
-- HTML 快照: [live/showcase.html](./live/showcase.html)
-- Press Brief: [live/press-brief.md](./live/press-brief.md)
-- JSON 载荷: [live/showcase.json](./live/showcase.json)
-- Interop Bundle: [live/interop_bundle.json](./live/interop_bundle.json)
+- 主题：受监管 AI 客服 copilot 发布
+- 模式：真实 API 生成
+- HTML 快照：[live/showcase.html](./live/showcase.html)
+- Press Brief：[live/press-brief.md](./live/press-brief.md)
+- JSON 载荷：[live/showcase.json](./live/showcase.json)
+- Interop Bundle：[live/interop_bundle.json](./live/interop_bundle.json)
 
-## Baseline 快照
+## 2. 企业级 rollout 套件
 
-![Baseline Launch Snapshot](./press/showcase.png)
+![企业级 rollout 套件](./enterprise/showcase.png)
 
-- HTML 快照: [press/showcase.html](./press/showcase.html)
-- Press Brief: [press/press-brief.md](./press/press-brief.md)
-- JSON 载荷: [press/showcase.json](./press/showcase.json)
-- Interop Bundle: [press/interop_bundle.json](./press/interop_bundle.json)
+- 主题：企业 AI operating layer 推广
+- 模式：可复现 baseline
+- HTML 快照：[enterprise/showcase.html](./enterprise/showcase.html)
+- Press Brief：[enterprise/press-brief.md](./enterprise/press-brief.md)
+- JSON 载荷：[enterprise/showcase.json](./enterprise/showcase.json)
+- Interop Bundle：[enterprise/interop_bundle.json](./enterprise/interop_bundle.json)
+
+## 3. 研究晋升包
+
+![研究晋升包](./research/showcase.png)
+
+- 主题：应用研究晋升与发布决策
+- 模式：可复现 baseline
+- HTML 快照：[research/showcase.html](./research/showcase.html)
+- Press Brief：[research/press-brief.md](./research/press-brief.md)
+- JSON 载荷：[research/showcase.json](./research/showcase.json)
+- Interop Bundle：[research/interop_bundle.json](./research/interop_bundle.json)
+
+## 4. Baseline Press 快照
+
+这个旧快照保留为可复现的 CI 演示基线。
+
+- HTML 快照：[press/showcase.html](./press/showcase.html)
+- Press Brief：[press/press-brief.md](./press/press-brief.md)
+- JSON 载荷：[press/showcase.json](./press/showcase.json)
+- Interop Bundle：[press/interop_bundle.json](./press/interop_bundle.json)

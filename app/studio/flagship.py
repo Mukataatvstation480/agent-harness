@@ -17,6 +17,7 @@ from app.harness import HarnessConstraints
 from app.harness.engine import HarnessEngine
 from app.policy.center import normalize_mode, policy_for_mode
 from app.skills.interop import export_interop_all, write_interop_bundle
+from app.studio.mission import MissionRegistry
 from app.studio.proposals import ProposalRegistry, ProposalScenario
 from app.tracing.analyzer import RoutingAnalyzer
 from app.tracing.visualizer import render_trace_views
@@ -124,11 +125,20 @@ def _sanitize_business_text(text: object) -> str:
     return value
 
 
+def _safe_list(value: object) -> list[Any]:
+    if isinstance(value, list):
+        return value
+    if value in ("", None):
+        return []
+    return [value]
+
+
 class StudioShowcaseBuilder:
     """Generate concentrated showcase artifacts from a single product pipeline."""
 
     def __init__(self, harness: HarnessEngine | None = None) -> None:
         self.harness = harness or HarnessEngine()
+        self.missions = MissionRegistry()
         self.proposals = ProposalRegistry()
 
     def build_showcase(
@@ -166,6 +176,7 @@ class StudioShowcaseBuilder:
         value_card = self.harness.build_value_card(run)
         visual_payload = self.harness.build_visual_payload(run, value_card=value_card)
         scenario = self.proposals.infer(query)
+        mission_profile = self.missions.infer(query)
 
         active_scenarios = scenario_ids or list(DEFAULT_STUDIO_SCENARIOS)
         lab_payload = self.harness.run_research_lab(
@@ -219,6 +230,16 @@ class StudioShowcaseBuilder:
             scenario=scenario,
         )
         agent_comparison = self._agent_comparison(router_payload)
+        mission_pack = self.missions.build_pack(
+            query=query,
+            profile=mission_profile,
+            scenario=scenario.to_dict(),
+            story=story,
+            proposal=proposal,
+            run_summary=run_summary,
+            lab_payload=lab_payload,
+            agent_comparison=agent_comparison,
+        )
         delivery_brief_excerpt = self._delivery_brief(
             query=query,
             story=story,
@@ -288,6 +309,7 @@ class StudioShowcaseBuilder:
                 "summary": interop_summary,
             },
             "story": story,
+            "mission": mission_pack,
             "proposal": proposal,
             "agent_comparison": agent_comparison,
             "capability_vector": capability,
@@ -591,9 +613,9 @@ class StudioShowcaseBuilder:
         if not migration:
             migration = analysis.get("migration_path", []) if isinstance(analysis, dict) else []
         architecture = analysis.get("target_architecture", {}) if isinstance(analysis, dict) else {}
-        proof_points = analysis.get("proof_points", []) if isinstance(analysis, dict) else []
-        target_users = analysis.get("target_users", []) if isinstance(analysis, dict) else []
-        controls = analysis.get("controls", []) if isinstance(analysis, dict) else []
+        proof_points = _safe_list(analysis.get("proof_points", [])) if isinstance(analysis, dict) else []
+        target_users = _safe_list(analysis.get("target_users", [])) if isinstance(analysis, dict) else []
+        controls = _safe_list(analysis.get("controls", [])) if isinstance(analysis, dict) else []
         winner_hypothesis = _sanitize_business_text(analysis.get("winner_hypothesis", "")) if isinstance(analysis, dict) else ""
         metrics = run_summary.get("metrics", {}) if isinstance(run_summary, dict) else {}
         value_card = run_summary.get("value_card", {}) if isinstance(run_summary, dict) else {}
@@ -616,7 +638,7 @@ class StudioShowcaseBuilder:
             )
 
         phases: list[dict[str, Any]] = []
-        for item in migration[:3]:
+        for item in _safe_list(migration)[:3]:
             if not isinstance(item, dict):
                 continue
             phases.append(
@@ -651,9 +673,9 @@ class StudioShowcaseBuilder:
             release=release,
             target_users=target_users,
         )
-        critical_risks = [_sanitize_business_text(x) for x in critique.get("red_flags", [])[:3]] if isinstance(critique, dict) else []
+        critical_risks = [_sanitize_business_text(x) for x in _safe_list(critique.get("red_flags", []))[:3]] if isinstance(critique, dict) else []
         if not critical_risks:
-            critical_risks = [_sanitize_business_text(x) for x in analysis.get("bottlenecks", [])[:3]] if isinstance(analysis, dict) else []
+            critical_risks = [_sanitize_business_text(x) for x in _safe_list(analysis.get("bottlenecks", []))[:3]] if isinstance(analysis, dict) else []
         if not critical_risks:
             security_findings = security.get("preflight_findings", []) if isinstance(security, dict) else []
             critical_risks = [
@@ -713,18 +735,26 @@ class StudioShowcaseBuilder:
     @staticmethod
     def _impact_frame(
         scenario: ProposalScenario,
-        expected: dict[str, Any],
+        expected: dict[str, Any] | Any,
         metrics: dict[str, Any],
         value_card: dict[str, Any],
         release: dict[str, Any],
         target_users: list[Any],
     ) -> list[dict[str, str]]:
         rows: list[dict[str, str]] = []
-        for key, value in list(expected.items())[:5]:
+        if isinstance(expected, dict):
+            for key, value in list(expected.items())[:5]:
+                rows.append(
+                    {
+                        "label": _sanitize_business_text(str(key).replace("_", " ").title()),
+                        "value": _sanitize_business_text(value),
+                    }
+                )
+        elif _sanitize_business_text(expected):
             rows.append(
                 {
-                    "label": _sanitize_business_text(str(key).replace("_", " ").title()),
-                    "value": _sanitize_business_text(value),
+                    "label": scenario.impact_labels[0] if scenario.impact_labels else "Expected Impact",
+                    "value": _sanitize_business_text(expected),
                 }
             )
         if rows:
@@ -844,6 +874,7 @@ class StudioShowcaseBuilder:
 
         identity = payload.get("identity", {})
         query = payload.get("query", {})
+        mission = payload.get("mission", {})
         frontier = payload.get("frontier", {})
         capability = payload.get("capability_vector", {})
         lab = payload.get("lab", {})
@@ -903,10 +934,10 @@ details{{border:1px solid var(--line);border-radius:18px;background:rgba(255,255
 <section class="hero">
   <div class="hero-grid">
     <div>
-      <div class="kicker">Launch Strategy Demo</div>
-      <h1>{html.escape(str(proposal.get("headline", "Flagship AI Platform Launch Plan")))}</h1>
+      <div class="kicker">Mission Pack Demo</div>
+      <h1>{html.escape(str(mission.get("primary_deliverable", proposal.get("headline", "Flagship AI Product Pack"))))}</h1>
       <p><strong>{html.escape(str(story.get("theme", "")))}</strong></p>
-      <p>{html.escape(str(story.get("release_need", "")))}</p>
+      <p>{html.escape(str(mission.get("summary", story.get("release_need", ""))))}</p>
       <div style="margin-top:14px">
         <span class="badge">Release {html.escape(str(release.get("decision", "block"))).upper()}</span>
         <span class="badge">Generation {html.escape(str(generation.get("mode", "baseline"))).upper()}</span>
@@ -914,12 +945,13 @@ details{{border:1px solid var(--line);border-radius:18px;background:rgba(255,255
         <span class="badge">Frontier {float(frontier.get("score", 0.0)):.3f}</span>
       </div>
       <div style="margin-top:14px" class="hero-panel">
-        <div class="kicker">Executive Thesis</div>
+        <div class="kicker">Primary View</div>
+        <p><strong>{html.escape(str(mission.get("title", "Mission Pack")))}</strong></p>
         <p>{html.escape(str(proposal.get("subheadline", "")))}</p>
       </div>
     </div>
     <div class="hero-panel">
-      <div class="kicker">Board Decision</div>
+      <div class="kicker">Release Decision</div>
       <div class="signal"><div class="label">Recommendation</div><div class="value">{html.escape(str(proposal.get("decision", {}).get("status", "block"))).upper()}</div><p>{html.escape(str(proposal.get("decision", {}).get("reason", "")))}</p></div>
       <div class="grid4" style="margin-top:12px">
         <div class="signal"><div class="label">Value Index</div><div class="value">{_safe_float(delivery.get("value_card", {}).get("value_index", 0.0)):.1f}</div></div>
@@ -931,18 +963,22 @@ details{{border:1px solid var(--line);border-radius:18px;background:rgba(255,255
   </div>
 </section>
 <section class="card glass">
-  <div class="kicker">Plan Summary</div>
+  <div class="kicker">Mission Summary</div>
   <div class="grid">
     <article>
-      <h2>What Is Being Launched</h2>
-      <p>{html.escape(str(story.get("audience_takeaway", "")))}</p>
-      <ul>{"".join(f"<li>{html.escape(str(item))}</li>" for item in proposal.get("business_summary", []))}</ul>
+      <h2>Primary Deliverable</h2>
+      <p>{html.escape(str(mission.get("primary_deliverable", "")))}</p>
+      <ul>{"".join(f"<li>{html.escape(str(item))}</li>" for item in mission.get("target_users", []))}</ul>
     </article>
     <article>
-      <h2>Release Criteria</h2>
-      <ul>{"".join(f"<li>{html.escape(str(item))}</li>" for item in story.get("evidence_bundle", []))}</ul>
+      <h2>Output Views</h2>
+      <ul>{"".join(f"<li>{html.escape(str(item))}</li>" for item in mission.get("output_views", []))}</ul>
     </article>
   </div>
+</section>
+<section class="card glass">
+  <div class="kicker">Deliverable Package</div>
+  <div class="grid4">{self._deliverable_cards(mission.get("deliverables", []))}</div>
 </section>
 <section class="grid3">
   {self._pillar_cards(proposal.get("pillars", []))}
@@ -950,6 +986,10 @@ details{{border:1px solid var(--line);border-radius:18px;background:rgba(255,255
 <section class="card glass">
   <div class="kicker">Three-Phase Rollout</div>
   <div class="grid3">{self._phase_cards(proposal.get("phases", []))}</div>
+</section>
+<section class="card glass">
+  <div class="kicker">Execution Tracks</div>
+  <div class="grid3">{self._execution_track_cards(mission.get("execution_tracks", []))}</div>
 </section>
 <section class="grid">
   <article class="card glass">
@@ -990,6 +1030,21 @@ details{{border:1px solid var(--line);border-radius:18px;background:rgba(255,255
     </article>
   </div>
 </section>
+<section class="card glass">
+  <div class="kicker">Benchmark Fit</div>
+  <div class="grid">
+    <article>
+      <h2>Relevant Benchmark Families</h2>
+      <table><thead><tr><th>Benchmark</th><th>Fit</th><th>Strength</th><th>Gap</th></tr></thead><tbody>{self._benchmark_rows(mission.get("benchmark_targets", []))}</tbody></table>
+    </article>
+    <article>
+      <h2>Honest Boundary</h2>
+      <p>{html.escape(str(mission.get("honest_boundary", "")))}</p>
+      <h3 style="margin-top:14px">Review Questions</h3>
+      <ul>{"".join(f"<li>{html.escape(str(item))}</li>" for item in mission.get("review_questions", []))}</ul>
+    </article>
+  </div>
+</section>
 <section class="grid">
   <article class="card glass">
     <div class="kicker">Framework Comparison</div>
@@ -1019,6 +1074,10 @@ details{{border:1px solid var(--line);border-radius:18px;background:rgba(255,255
     <pre>{html.escape(str(delivery.get("delivery_brief_excerpt", "")) or str(delivery.get("final_answer_excerpt", "")))}</pre>
   </details>
   <details style="margin-top:12px">
+    <summary>Mission Pack JSON</summary>
+    <pre>{html.escape(json.dumps(mission, indent=2, ensure_ascii=False))}</pre>
+  </details>
+  <details style="margin-top:12px">
     <summary>Internal Skills And Tools</summary>
     <table><thead><tr><th>Type</th><th>Name</th><th>Purpose</th></tr></thead><tbody>{self._appendix_rows(query.get("selected_skills", []), delivery.get("run_summary", {}).get("top_discovery", []), delivery.get("run_summary", {}).get("steps", []))}</tbody></table>
   </details>
@@ -1036,6 +1095,7 @@ details{{border:1px solid var(--line);border-radius:18px;background:rgba(255,255
 
         identity = payload.get("identity", {})
         query = payload.get("query", {})
+        mission = payload.get("mission", {})
         frontier = payload.get("frontier", {})
         comparison = payload.get("comparison", {}).get("positioning", {})
         proposal = payload.get("proposal", {})
@@ -1058,6 +1118,13 @@ details{{border:1px solid var(--line);border-radius:18px;background:rgba(255,255
                 "## Demo Theme",
                 "",
                 str(story.get("theme", "")),
+                "",
+                "## Mission Pack",
+                "",
+                f"- Type: {mission.get('title', '')}",
+                f"- Primary deliverable: {mission.get('primary_deliverable', '')}",
+                f"- Output views: {', '.join(mission.get('output_views', []))}",
+                *(f"- Deliverable: {item.get('title', '')} -> {item.get('description', '')}" for item in mission.get("deliverables", [])[:4]),
                 "",
                 "## Proposal Headline",
                 "",
@@ -1130,6 +1197,14 @@ details{{border:1px solid var(--line);border-radius:18px;background:rgba(255,255
                 "",
                 *(f"- {item}" for item in why_use),
                 "",
+                "## Benchmark Fit",
+                "",
+                *(f"- {item.get('name', '')}: fit={item.get('fit', '')}; strength={item.get('strength', '')}; gap={item.get('gap', '')}" for item in mission.get("benchmark_targets", [])[:6]),
+                "",
+                "## Honest Boundary",
+                "",
+                str(mission.get("honest_boundary", "")),
+                "",
                 "## Competitive Positioning",
                 "",
                 f"- Headline: {comparison.get('headline', '')}",
@@ -1159,6 +1234,7 @@ details{{border:1px solid var(--line);border-radius:18px;background:rgba(255,255
             "schema": "agent-harness-studio-bundle/v1",
             "generated_at": payload.get("generated_at", ""),
             "identity": payload.get("identity", {}),
+            "mission": payload.get("mission", {}),
             "headline": comparison.get("headline", ""),
             "release_decision": release,
             "frontier": payload.get("frontier", {}),
@@ -1244,6 +1320,23 @@ details{{border:1px solid var(--line);border-radius:18px;background:rgba(255,255
         return "".join(parts)
 
     @staticmethod
+    def _deliverable_cards(rows: list[dict[str, Any]]) -> str:
+        if not rows:
+            return ""
+        parts: list[str] = []
+        for row in rows[:4]:
+            parts.append(
+                "<article class='card glass'>"
+                f"<div class='kicker'>{html.escape(str(row.get('audience', 'deliverable')))}</div>"
+                f"<h2>{html.escape(str(row.get('title', 'Deliverable')))}</h2>"
+                f"<p>{html.escape(str(row.get('description', '')))}</p>"
+                f"<p><strong>Status:</strong> {html.escape(str(row.get('status', 'draft')))}</p>"
+                f"<p><strong>Signal:</strong> {html.escape(str(row.get('evidence_hint', '-')))}</p>"
+                "</article>"
+            )
+        return "".join(parts)
+
+    @staticmethod
     def _phase_cards(rows: list[dict[str, Any]]) -> str:
         if not rows:
             return ""
@@ -1260,6 +1353,22 @@ details{{border:1px solid var(--line);border-radius:18px;background:rgba(255,255
         return "".join(parts)
 
     @staticmethod
+    def _execution_track_cards(rows: list[dict[str, Any]]) -> str:
+        if not rows:
+            return ""
+        parts: list[str] = []
+        for row in rows[:4]:
+            parts.append(
+                "<article class='phase'>"
+                f"<div class='kicker'>{html.escape(str(row.get('name', 'Track')))}</div>"
+                f"<h3>{html.escape(str(row.get('name', 'Track')))}</h3>"
+                f"<p>{html.escape(str(row.get('focus', '')))}</p>"
+                f"<p><strong>Success:</strong> {html.escape(str(row.get('success', '-')))}</p>"
+                "</article>"
+            )
+        return "".join(parts)
+
+    @staticmethod
     def _impact_rows(rows: list[dict[str, Any]]) -> str:
         if not rows:
             return "<p>No expected impact recorded.</p>"
@@ -1270,6 +1379,22 @@ details{{border:1px solid var(--line);border-radius:18px;background:rgba(255,255
                 f"<div class='row'><span>{html.escape(str(row.get('label', 'Impact')))}</span></div>"
                 f"<strong>{html.escape(str(row.get('value', '')))}</strong>"
                 "</div>"
+            )
+        return "".join(parts)
+
+    @staticmethod
+    def _benchmark_rows(rows: list[dict[str, Any]]) -> str:
+        if not rows:
+            return "<tr><td colspan='4'>No benchmark mapping.</td></tr>"
+        parts: list[str] = []
+        for row in rows[:6]:
+            parts.append(
+                "<tr>"
+                f"<td>{html.escape(str(row.get('name', '')))}</td>"
+                f"<td>{html.escape(str(row.get('fit', '')))}</td>"
+                f"<td>{html.escape(str(row.get('strength', '')))}</td>"
+                f"<td>{html.escape(str(row.get('gap', '')))}</td>"
+                "</tr>"
             )
         return "".join(parts)
 

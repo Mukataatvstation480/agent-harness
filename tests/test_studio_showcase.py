@@ -27,10 +27,14 @@ def test_build_showcase_payload_shape() -> None:
     assert payload["identity"]["one_liner"] == FLAGSHIP_ONE_LINER
     assert payload["schema"] == "agent-harness-studio/v1"
     assert "story" in payload
+    assert "mission" in payload
     assert "proposal" in payload
     assert "agent_comparison" in payload
     assert "theme" in payload["story"]
     assert "release_need" in payload["story"]
+    assert payload["mission"]["primary_deliverable"]
+    assert len(payload["mission"].get("deliverables", [])) >= 3
+    assert len(payload["mission"].get("benchmark_targets", [])) >= 2
     assert len(payload["story"].get("strategy_plan", [])) >= 3
     assert "harness" in payload and "plan" in payload["harness"]
     assert "final_answer_excerpt" in payload["harness"]
@@ -84,8 +88,10 @@ def test_write_showcase_with_interop_bundle(tmp_path: Path) -> None:
     assert "catalog" not in written.get("interop", {})
     html_content = html_path.read_text(encoding="utf-8")
     assert "Agent Harness Studio" in html_content
-    assert "What Is Being Launched" in html_content
+    assert "Primary Deliverable" in html_content
+    assert "Deliverable Package" in html_content
     assert "Three-Phase Rollout" in html_content
+    assert "Benchmark Fit" in html_content
     assert "Agent Comparison" in html_content
     assert "Appendix" in html_content
     assert "Generated Business Brief" in html_content
@@ -107,4 +113,5 @@ def test_fintech_demo_query_maps_to_regulated_scenario_with_evidence() -> None:
 
     assert payload["scenario"]["name"] == "regulated_copilot_launch"
     assert payload["proposal"]["headline"] == "90-Day Launch Plan for a Regulated AI Support Copilot"
+    assert payload["mission"]["name"] == "strategy_pack"
     assert payload["harness"]["run_summary"]["evidence"]["record_count"] >= 1

@@ -1,11 +1,11 @@
 {
   "schema": "agent-skills-interop/v1",
-  "generated_at": "2026-04-02T17:13:39.102844+00:00",
+  "generated_at": "2026-04-02T17:14:56.332689+00:00",
   "frameworks": {
     "anthropic": {
       "schema": "agent-skills-interop/v1",
       "framework": "anthropic",
-      "generated_at": "2026-04-02T17:13:39.095476+00:00",
+      "generated_at": "2026-04-02T17:14:56.323998+00:00",
       "skill_count": 18,
       "skills": [
         {
@@ -427,7 +427,7 @@
     "openai": {
       "schema": "agent-skills-interop/v1",
       "framework": "openai",
-      "generated_at": "2026-04-02T17:13:39.102822+00:00",
+      "generated_at": "2026-04-02T17:14:56.332660+00:00",
       "skill_count": 18,
       "skills": [
         {

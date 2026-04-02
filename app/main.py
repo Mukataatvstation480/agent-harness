@@ -40,6 +40,7 @@ from app.skills.registry import (
 )
 from app.skills.interop import export_interop_all, export_interop_catalog, write_interop_bundle
 from app.studio.flagship import StudioShowcaseBuilder
+from app.studio.mission import MissionRegistry
 from app.studio.proposals import ProposalRegistry
 from app.tracing.analyzer import RoutingAnalyzer
 from app.tracing.store import list_recent_traces, load_trace, save_trace
@@ -66,6 +67,7 @@ app = typer.Typer(
 )
 HARNESS = HarnessEngine()
 PROPOSALS = ProposalRegistry()
+MISSIONS = MissionRegistry()
 STUDIO = StudioShowcaseBuilder(harness=HARNESS)
 
 
@@ -612,6 +614,13 @@ def proposal_scenarios_command() -> None:
     """List built-in proposal scenarios for studio/demo generation."""
 
     console.print_json(json.dumps({"scenarios": PROPOSALS.list_cards()}, indent=2, default=str))
+
+
+@app.command("mission-profiles")
+def mission_profiles_command() -> None:
+    """List generalized mission-pack profiles for studio outputs."""
+
+    console.print_json(json.dumps({"missions": MISSIONS.list_cards()}, indent=2, default=str))
 
 
 @app.command("harness")

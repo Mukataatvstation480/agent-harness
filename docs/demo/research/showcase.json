@@ -1,97 +1,88 @@
 {
   "schema": "agent-harness-studio/v1",
-  "generated_at": "2026-04-02T17:13:39.103475+00:00",
+  "generated_at": "2026-04-02T17:09:56.248565+00:00",
   "scenario": {
-    "name": "regulated_copilot_launch",
-    "theme": "Launching a regulated AI customer-support copilot with revenue pressure, auditability, and research credibility held in one operating model.",
-    "release_need": "A fintech launch team needs a 90-day plan that can ship a customer-support copilot, keep a human override path, satisfy model-risk governance, and generate proof strong enough for procurement, compliance, and executive rollout decisions.",
-    "audience_takeaway": "This package turns a risky AI feature launch into a staged operating program with commercial goals, control checkpoints, and evidence for expansion.",
-    "headline": "90-Day Launch Plan for a Regulated AI Support Copilot",
+    "name": "research_ops_platform",
+    "theme": "Launching an applied research platform that must ship product value while preserving experimental rigor.",
+    "release_need": "A research and product organization needs one operating plan that can move experiments into production without losing reproducibility, auditability, or decision quality.",
+    "audience_takeaway": "The proposal connects experiment design, evidence review, and product rollout into one repeatable system.",
+    "headline": "Applied Research Delivery Operating Plan",
     "strategy_plan": [
-      "Concentrate the launch on one revenue-linked support workflow instead of a broad AI platform story.",
-      "Prove operator control, auditability, and model-risk containment before scaling volume.",
-      "Translate pilot evidence into a release gate that commercial, risk, and research leaders can all sign."
+      "Align experiment throughput with release evidence rather than running research and product on separate tracks.",
+      "Use one scorecard for value, reproducibility, and safety before promotion to production.",
+      "Package experiment results into operating decisions that non-research stakeholders can use."
     ],
     "business_summary": [
-      "Start with a narrow customer-support workflow where response time and auditability matter enough to measure.",
-      "Use human override, evidence logging, and gated rollout as first-class launch features rather than afterthoughts.",
-      "Expand only after the pilot proves containment, operator adoption, and measurable service uplift."
+      "Move from isolated experiments to a governed release pipeline.",
+      "Treat reproducibility and benchmark history as launch requirements.",
+      "Use staged release criteria so research wins can survive real production scrutiny."
     ],
     "critical_risks": [
-      "Customer-facing hallucinations escaping human review.",
-      "Override policy exists on paper but is too slow for live operations.",
-      "Pilot metrics show engagement but not enough compliance evidence for expansion."
+      "Research signals look promising but do not translate to production operating constraints.",
+      "Benchmarks are strong but decision-makers cannot inspect the supporting evidence quickly enough.",
+      "Experimental branches proliferate faster than governance can review them."
     ],
     "impact_labels": [
-      "Pilot throughput lift",
-      "Audit readiness",
-      "Operator adoption",
-      "Expansion readiness"
+      "Experiment throughput",
+      "Evidence quality",
+      "Release confidence",
+      "Stakeholder trust"
     ],
     "keyword_patterns": [
-      "(regulated|compliance|audit|policy|governance)",
-      "(support|service|customer)",
-      "(copilot|assistant|agent)",
-      "(fintech|bank|payments|insurance)"
+      "(research|lab|experiment|benchmark|study|paper)"
     ],
     "pillars": [
       {
-        "title": "Commercial Wedge",
-        "summary": "Target one support workflow with visible revenue or retention pressure.",
-        "integration": "Connect launch scope to the frontline KPI dashboard and ticket-routing path.",
+        "title": "Research Throughput",
+        "summary": "Increase experiment velocity without breaking comparability.",
+        "integration": "Route candidate ideas into benchmark-ready release packets.",
         "live_key": "growth_pillar"
       },
       {
-        "title": "Control Surface",
-        "summary": "Human override, audit logging, and policy escalation stay in the request path.",
-        "integration": "Bind policy checks to case routing, override capture, and review queues.",
+        "title": "Governed Promotion",
+        "summary": "Promote only the candidates that pass quality and safety gates.",
+        "integration": "Tie release promotion to the same benchmark trail.",
         "live_key": "governance_pillar"
       },
       {
-        "title": "Proof Engine",
-        "summary": "Every release claim is backed by pilot evidence, replayable traces, and lab gates.",
-        "integration": "Feed pilot traces and release benchmarks into the same decision packet.",
+        "title": "Decision Readout",
+        "summary": "Convert experiment evidence into board-readable launch claims.",
+        "integration": "Attach lab and runtime evidence to the operating memo.",
         "live_key": "research_pillar"
       }
     ],
     "phases": [
       {
-        "phase": "Phase 1 - Scope And Control Setup",
+        "phase": "Phase 1 - Benchmark Foundation",
         "actions": [
-          "Limit the first release to one support motion with stable documentation and bounded risk.",
-          "Define override ownership, escalation path, and audit log schema before model exposure grows.",
-          "Instrument baseline service metrics and reviewer workload before turning on automation."
+          "Stabilize scenario suites and quality gates.",
+          "Define success metrics before scaling experiments."
         ],
         "success_metrics": [
-          "baseline metrics captured",
-          "override policy signed off",
-          "audit schema wired into launch logs"
+          "scenario coverage complete",
+          "quality gates agreed"
         ]
       },
       {
-        "phase": "Phase 2 - Pilot And Evidence Collection",
+        "phase": "Phase 2 - Candidate Promotion",
         "actions": [
-          "Run the copilot in shadow or assisted mode with sampled human review.",
-          "Track response quality, override frequency, and policy exceptions in one operating dashboard.",
-          "Build a release packet that procurement, risk, and product leaders can read without extra translation."
+          "Run contenders through repeatable evaluation.",
+          "Package evidence for decision review."
         ],
         "success_metrics": [
-          "quality threshold sustained",
-          "override load within staffing plan",
-          "evidence packet complete"
+          "promotion packet complete",
+          "release committee review ready"
         ]
       },
       {
-        "phase": "Phase 3 - Controlled Expansion",
+        "phase": "Phase 3 - Production Rollout",
         "actions": [
-          "Open the copilot to more queues only after gates pass on quality, safety, and operator adoption.",
-          "Separate fast rollback levers from growth levers so expansion does not compromise containment.",
-          "Turn pilot proof into the board narrative for regional or workflow expansion."
+          "Ship the winning candidate with monitoring hooks.",
+          "Track post-launch drift against lab expectations."
         ],
         "success_metrics": [
-          "gates passed for next queue",
-          "rollback tested",
-          "expansion case approved"
+          "post-launch drift within threshold",
+          "rollback plan validated"
         ]
       }
     ]
@@ -102,16 +93,15 @@
     "differentiator": "Single pipeline with runtime routing evidence, research-grade release gating, and OpenAI/Anthropic skill export compatibility."
   },
   "query": {
-    "text": "Design a 90-day launch plan for a regulated AI customer-support copilot at a fintech, balancing growth targets, auditability, human override policy, and research credibility.",
+    "text": "Design an applied research promotion pack for a model-evaluation platform, balancing experiment throughput, reproducibility, benchmark credibility, and production release criteria.",
     "mode": "deep",
     "selected_agent": "AnalysisAgent",
     "selected_skills": [
       "build_timeline",
-      "risk_heatmap",
       "synthesize_perspectives"
     ],
-    "complexity": "complex",
-    "risk_level": "critical"
+    "complexity": "moderate",
+    "risk_level": "medium"
   },
   "router": {
     "analysis": {
@@ -127,11 +117,11 @@
         "redundancy": 0.0,
         "diversity": 0.6931471805599453,
         "coherence": 0.49533333333333335,
-        "output_quality": 0.9555555555555556,
-        "robust_expected_utility": 0.6089658495989305,
-        "robust_worst_case_utility": 0.32419084902916256,
+        "output_quality": 0.9333333333333333,
+        "robust_expected_utility": 0.6204777029514603,
+        "robust_worst_case_utility": 0.33048566885216896,
         "avg_uncertainty": 0.20999999999999996,
-        "overall_score": 0.534,
+        "overall_score": 0.533,
         "grade": "D"
       },
       "recommendations": [
@@ -139,31 +129,27 @@
         "Weak downside robustness - raise reliability floor or use robust_frontier routing"
       ]
     },
-    "trace_views": "Routing Sankey\n========================================\nQuery\n  -> Agent Candidates: AnalysisAgent, ResearchAgent, DebugAgent, PlannerAgent, AdvisorAgent, SummaryAgent\n  -> Selected Agent: AnalysisAgent\n  -> Skill Candidates: identify_risks, compare_options, extract_facts, detect_anomalies, validate_claims, synthesize_perspectives, build_timeline, executive_summary\n  -> Selected Skills: build_timeline, risk_heatmap, synthesize_perspectives\n\nSkill Matrix\n========================================\nidentify_risks <-> executive_summary: 0.810\nidentify_risks <-> risk_heatmap: 0.810\nidentify_risks <-> scenario_generator: 0.810\ncompare_options <-> extract_facts: 0.810\ncompare_options <-> generate_recommendations: 0.810\nextract_facts <-> validate_claims: 0.810\nextract_facts <-> synthesize_perspectives: 0.810\nextract_facts <-> build_timeline: 0.810\nextract_facts <-> executive_summary: 0.810\nextract_facts <-> dependency_mapper: 0.810\ndetect_anomalies <-> validate_claims: 0.810\nsynthesize_perspectives <-> brainstorm_ideas: 0.810\n\nExecution Gantt\n========================================\nbuild_timeline         |#-------------------|     0.0ms\nrisk_heatmap           |####################|     1.2ms\nsynthesize_perspectives |#-------------------|     0.0ms\n\nConfidence Breakdown\n========================================\nrouting_confidence              1.00  |####################|\nportfolio_confidence            0.33  |#######-------------|\nevidence_confidence             1.00  |####################|\nconsistency_confidence          1.00  |####################|\nverification_confidence         0.60  |############--------|\ncalibration_adjusted_confidence  0.96  |###################-|\nrobustness_confidence           0.26  |#####---------------|\n\nRobustness Profile\n========================================\nenabled: True\nrisk_aversion: 0.750\nreliability_floor: 0.675\nuncertainty_tolerance: 0.415\nrobust_expected_utility: 0.609\nrobust_worst_case_utility: 0.324\navg_uncertainty: 0.210",
+    "trace_views": "Routing Sankey\n========================================\nQuery\n  -> Agent Candidates: AnalysisAgent, ResearchAgent, DebugAgent, CreativeAgent, AdvisorAgent, PlannerAgent\n  -> Selected Agent: AnalysisAgent\n  -> Skill Candidates: identify_risks, compare_options, extract_facts, detect_anomalies, validate_claims, synthesize_perspectives, build_timeline, executive_summary\n  -> Selected Skills: build_timeline, synthesize_perspectives\n\nSkill Matrix\n========================================\nidentify_risks <-> executive_summary: 0.810\nidentify_risks <-> risk_heatmap: 0.810\nidentify_risks <-> scenario_generator: 0.810\ncompare_options <-> extract_facts: 0.810\ncompare_options <-> generate_recommendations: 0.810\nextract_facts <-> validate_claims: 0.810\nextract_facts <-> synthesize_perspectives: 0.810\nextract_facts <-> build_timeline: 0.810\nextract_facts <-> executive_summary: 0.810\nextract_facts <-> dependency_mapper: 0.810\ndetect_anomalies <-> validate_claims: 0.810\nsynthesize_perspectives <-> brainstorm_ideas: 0.810\n\nExecution Gantt\n========================================\nbuild_timeline         |#################---|     0.0ms\nsynthesize_perspectives |####################|     0.0ms\n\nConfidence Breakdown\n========================================\nrouting_confidence              1.00  |####################|\nportfolio_confidence            0.33  |#######-------------|\nevidence_confidence             1.00  |####################|\nconsistency_confidence          1.00  |####################|\nverification_confidence         1.00  |####################|\ncalibration_adjusted_confidence  0.93  |###################-|\nrobustness_confidence           0.26  |#####---------------|\n\nRobustness Profile\n========================================\nenabled: True\nrisk_aversion: 0.700\nreliability_floor: 0.640\nuncertainty_tolerance: 0.440\nrobust_expected_utility: 0.620\nrobust_worst_case_utility: 0.330\navg_uncertainty: 0.210",
     "trace": {
       "state_snapshots": [
         {
           "phase": "query_understanding",
           "mode": "deep",
-          "risk_level": "critical",
+          "risk_level": "medium",
           "max_skills": 3
         },
         {
           "phase": "agent_router",
           "agent": "AnalysisAgent",
           "mode": "deep",
-          "risk_level": "critical",
-          "complexity": "complex",
-          "intents": [
-            "analysis",
-            "advice"
-          ]
+          "risk_level": "medium",
+          "complexity": "moderate",
+          "intents": []
         },
         {
           "phase": "skill_router",
           "selected": [
             "build_timeline",
-            "risk_heatmap",
             "synthesize_perspectives"
           ],
           "rejected": [
@@ -177,6 +163,7 @@
             "brainstorm_ideas",
             "generate_analogies",
             "prioritize_items",
+            "risk_heatmap",
             "evidence_matrix",
             "board_brief",
             "sentiment_scanner",
@@ -188,26 +175,25 @@
             "reasoning",
             "verification"
           ],
-          "effective_max_skills": 4,
-          "budget_used": 4.7,
-          "robust_expected_utility": 0.609,
-          "robust_worst_case_utility": 0.3242,
+          "effective_max_skills": 3,
+          "budget_used": 3.3,
+          "robust_expected_utility": 0.6205,
+          "robust_worst_case_utility": 0.3305,
           "avg_uncertainty": 0.21
         },
         {
           "phase": "executor",
           "executed_skills": [
             "build_timeline",
-            "risk_heatmap",
             "synthesize_perspectives"
           ],
-          "timeline_points": 3
+          "timeline_points": 2
         },
         {
           "phase": "aggregate",
           "conflicts": 0,
-          "consensus": "moderate",
-          "approval_required": true
+          "consensus": "strong",
+          "approval_required": false
         }
       ],
       "agent_decision": {
@@ -217,41 +203,41 @@
         "rejected": [
           "ResearchAgent",
           "DebugAgent",
-          "PlannerAgent",
-          "AdvisorAgent",
-          "SummaryAgent",
           "CreativeAgent",
-          "CriticAgent"
+          "AdvisorAgent",
+          "PlannerAgent",
+          "CriticAgent",
+          "SummaryAgent"
         ],
         "reasons": {
-          "AnalysisAgent": "selected (score=0.329, complexity=complex): best domain+intent match",
-          "ResearchAgent": "rejected (score=0.285): lower relevance",
-          "DebugAgent": "rejected (score=0.273): lower relevance",
-          "PlannerAgent": "rejected (score=0.218): lower relevance",
-          "AdvisorAgent": "rejected (score=0.204): lower relevance",
-          "SummaryAgent": "rejected (score=0.196): lower relevance",
-          "CreativeAgent": "rejected (score=0.195): lower relevance",
-          "CriticAgent": "rejected (score=0.182): lower relevance"
+          "AnalysisAgent": "selected (score=0.250, complexity=moderate): best domain+intent match",
+          "ResearchAgent": "rejected (score=0.245): lower relevance",
+          "DebugAgent": "rejected (score=0.233): lower relevance",
+          "CreativeAgent": "rejected (score=0.228): lower relevance",
+          "AdvisorAgent": "rejected (score=0.228): lower relevance",
+          "PlannerAgent": "rejected (score=0.228): lower relevance",
+          "CriticAgent": "rejected (score=0.228): lower relevance",
+          "SummaryAgent": "rejected (score=0.208): lower relevance"
         },
         "scores": {
-          "AnalysisAgent": 0.3288,
-          "ResearchAgent": 0.2846,
-          "DebugAgent": 0.2725,
-          "PlannerAgent": 0.2176,
-          "AdvisorAgent": 0.2041,
-          "SummaryAgent": 0.1956,
-          "CreativeAgent": 0.1951,
-          "CriticAgent": 0.1816
+          "AnalysisAgent": 0.2505,
+          "ResearchAgent": 0.2455,
+          "DebugAgent": 0.233,
+          "CreativeAgent": 0.2276,
+          "AdvisorAgent": 0.2276,
+          "PlannerAgent": 0.2276,
+          "CriticAgent": 0.2276,
+          "SummaryAgent": 0.2076
         },
         "score_breakdown": {
           "AnalysisAgent": {
-            "intent_fit": 0.0833,
+            "intent_fit": 0.0,
             "domain_affinity": 0.125,
             "output_style_fit": 0.0,
             "skill_access_fit": 0.8333,
             "memory_affinity": 0.5,
-            "risk_alignment": 0.9,
-            "context_compression_gain": 0.8,
+            "risk_alignment": 0.7,
+            "context_compression_gain": 0.45,
             "cost_penalty": 0.25,
             "latency_penalty": 0.2,
             "overconfidence_risk": 0.08,
@@ -260,11 +246,11 @@
           "ResearchAgent": {
             "intent_fit": 0.0,
             "domain_affinity": 0.125,
-            "output_style_fit": 0.0909,
+            "output_style_fit": 0.1,
             "skill_access_fit": 0.6667,
             "memory_affinity": 0.5,
-            "risk_alignment": 0.9,
-            "context_compression_gain": 0.55,
+            "risk_alignment": 0.7,
+            "context_compression_gain": 0.45,
             "cost_penalty": 0.25,
             "latency_penalty": 0.2,
             "overconfidence_risk": 0.08,
@@ -273,24 +259,24 @@
           "DebugAgent": {
             "intent_fit": 0.0,
             "domain_affinity": 0.0,
-            "output_style_fit": 0.0455,
+            "output_style_fit": 0.05,
             "skill_access_fit": 0.8333,
             "memory_affinity": 0.5,
-            "risk_alignment": 0.9,
-            "context_compression_gain": 0.55,
+            "risk_alignment": 0.7,
+            "context_compression_gain": 0.45,
             "cost_penalty": 0.25,
             "latency_penalty": 0.2,
             "overconfidence_risk": 0.08,
             "anti_pattern_penalty": 0.0
           },
-          "PlannerAgent": {
+          "CreativeAgent": {
             "intent_fit": 0.0,
-            "domain_affinity": 0.125,
-            "output_style_fit": 0.0455,
+            "domain_affinity": 0.0,
+            "output_style_fit": 0.05,
             "skill_access_fit": 0.6667,
             "memory_affinity": 0.5,
-            "risk_alignment": 0.45,
-            "context_compression_gain": 0.55,
+            "risk_alignment": 0.7,
+            "context_compression_gain": 0.45,
             "cost_penalty": 0.1,
             "latency_penalty": 0.08,
             "overconfidence_risk": 0.08,
@@ -298,38 +284,25 @@
           },
           "AdvisorAgent": {
             "intent_fit": 0.0,
-            "domain_affinity": 0.125,
-            "output_style_fit": 0.0455,
+            "domain_affinity": 0.0,
+            "output_style_fit": 0.05,
             "skill_access_fit": 0.6667,
             "memory_affinity": 0.5,
-            "risk_alignment": 0.45,
-            "context_compression_gain": 0.55,
-            "cost_penalty": 0.1,
-            "latency_penalty": 0.08,
-            "overconfidence_risk": 0.35,
-            "anti_pattern_penalty": 0.0
-          },
-          "SummaryAgent": {
-            "intent_fit": 0.0,
-            "domain_affinity": 0.0,
-            "output_style_fit": 0.0,
-            "skill_access_fit": 0.5,
-            "memory_affinity": 0.5,
-            "risk_alignment": 0.45,
-            "context_compression_gain": 0.8,
+            "risk_alignment": 0.7,
+            "context_compression_gain": 0.45,
             "cost_penalty": 0.1,
             "latency_penalty": 0.08,
             "overconfidence_risk": 0.08,
             "anti_pattern_penalty": 0.0
           },
-          "CreativeAgent": {
+          "PlannerAgent": {
             "intent_fit": 0.0,
             "domain_affinity": 0.0,
-            "output_style_fit": 0.0455,
+            "output_style_fit": 0.05,
             "skill_access_fit": 0.6667,
             "memory_affinity": 0.5,
-            "risk_alignment": 0.45,
-            "context_compression_gain": 0.55,
+            "risk_alignment": 0.7,
+            "context_compression_gain": 0.45,
             "cost_penalty": 0.1,
             "latency_penalty": 0.08,
             "overconfidence_risk": 0.08,
@@ -338,29 +311,39 @@
           "CriticAgent": {
             "intent_fit": 0.0,
             "domain_affinity": 0.0,
-            "output_style_fit": 0.0455,
+            "output_style_fit": 0.05,
             "skill_access_fit": 0.6667,
             "memory_affinity": 0.5,
-            "risk_alignment": 0.45,
-            "context_compression_gain": 0.55,
+            "risk_alignment": 0.7,
+            "context_compression_gain": 0.45,
             "cost_penalty": 0.1,
             "latency_penalty": 0.08,
-            "overconfidence_risk": 0.35,
+            "overconfidence_risk": 0.08,
+            "anti_pattern_penalty": 0.0
+          },
+          "SummaryAgent": {
+            "intent_fit": 0.0,
+            "domain_affinity": 0.0,
+            "output_style_fit": 0.0,
+            "skill_access_fit": 0.5,
+            "memory_affinity": 0.5,
+            "risk_alignment": 0.7,
+            "context_compression_gain": 0.45,
+            "cost_penalty": 0.1,
+            "latency_penalty": 0.08,
+            "overconfidence_risk": 0.08,
             "anti_pattern_penalty": 0.0
           }
         },
-        "intent_signals": {
-          "analysis": 0.16666666666666666,
-          "advice": 0.14285714285714285
-        },
-        "query_complexity": "complex",
+        "intent_signals": {},
+        "query_complexity": "moderate",
         "system_mode": "deep",
-        "risk_level": "critical",
+        "risk_level": "medium",
         "collaboration": {
           "agents": [
             "ResearchAgent"
           ],
-          "reason": "close score gap (0.044)"
+          "reason": "close score gap (0.005)"
         },
         "agent_council": [
           {
@@ -405,46 +388,47 @@
         "AnalysisAgent",
         "ResearchAgent",
         "DebugAgent",
-        "PlannerAgent",
-        "AdvisorAgent",
-        "SummaryAgent",
         "CreativeAgent",
-        "CriticAgent"
+        "AdvisorAgent",
+        "PlannerAgent",
+        "CriticAgent",
+        "SummaryAgent"
       ],
       "agent_scores": {
-        "AnalysisAgent": 0.3288,
-        "ResearchAgent": 0.2846,
-        "DebugAgent": 0.2725,
-        "PlannerAgent": 0.2176,
-        "AdvisorAgent": 0.2041,
-        "SummaryAgent": 0.1956,
-        "CreativeAgent": 0.1951,
-        "CriticAgent": 0.1816
+        "AnalysisAgent": 0.2505,
+        "ResearchAgent": 0.2455,
+        "DebugAgent": 0.233,
+        "CreativeAgent": 0.2276,
+        "AdvisorAgent": 0.2276,
+        "PlannerAgent": 0.2276,
+        "CriticAgent": 0.2276,
+        "SummaryAgent": 0.2076
       },
-      "agent_selection_reason": "selected (score=0.329, complexity=complex): best domain+intent match",
+      "agent_selection_reason": "selected (score=0.250, complexity=moderate): best domain+intent match",
       "rejection_reasons": {
-        "ResearchAgent": "rejected (score=0.285): lower relevance",
-        "DebugAgent": "rejected (score=0.273): lower relevance",
-        "PlannerAgent": "rejected (score=0.218): lower relevance",
-        "AdvisorAgent": "rejected (score=0.204): lower relevance",
-        "SummaryAgent": "rejected (score=0.196): lower relevance",
-        "CreativeAgent": "rejected (score=0.195): lower relevance",
-        "CriticAgent": "rejected (score=0.182): lower relevance",
-        "identify_risks": "rejected (relevance=0.009, redundancy=0.373, cost=1.20)",
+        "ResearchAgent": "rejected (score=0.245): lower relevance",
+        "DebugAgent": "rejected (score=0.233): lower relevance",
+        "CreativeAgent": "rejected (score=0.228): lower relevance",
+        "AdvisorAgent": "rejected (score=0.228): lower relevance",
+        "PlannerAgent": "rejected (score=0.228): lower relevance",
+        "CriticAgent": "rejected (score=0.228): lower relevance",
+        "SummaryAgent": "rejected (score=0.208): lower relevance",
+        "identify_risks": "rejected (relevance=0.010, redundancy=0.373, cost=1.20)",
         "compare_options": "rejected (relevance=0.000, redundancy=0.500, cost=1.20)",
-        "extract_facts": "rejected (relevance=0.009, redundancy=0.408, cost=0.90)",
-        "detect_anomalies": "rejected (relevance=0.009, redundancy=0.500, cost=1.50)",
-        "validate_claims": "rejected (relevance=0.009, redundancy=0.523, cost=2.00)",
-        "executive_summary": "rejected (relevance=0.009, redundancy=0.590, cost=0.80)",
+        "extract_facts": "rejected (relevance=0.010, redundancy=0.408, cost=0.90)",
+        "detect_anomalies": "rejected (relevance=0.010, redundancy=0.500, cost=1.50)",
+        "validate_claims": "rejected (relevance=0.010, redundancy=0.523, cost=2.00)",
+        "executive_summary": "rejected (relevance=0.010, redundancy=0.590, cost=0.80)",
         "generate_recommendations": "rejected (relevance=0.000, redundancy=0.500, cost=1.10)",
-        "brainstorm_ideas": "rejected (relevance=0.009, redundancy=0.500, cost=0.90)",
+        "brainstorm_ideas": "rejected (relevance=0.010, redundancy=0.500, cost=0.90)",
         "generate_analogies": "rejected (relevance=0.000, redundancy=0.350, cost=1.20)",
-        "prioritize_items": "rejected (relevance=0.009, redundancy=0.500, cost=0.80)",
+        "prioritize_items": "rejected (relevance=0.010, redundancy=0.500, cost=0.80)",
+        "risk_heatmap": "rejected (relevance=0.020, redundancy=0.500, cost=1.40)",
         "evidence_matrix": "rejected (relevance=0.000, redundancy=0.408, cost=1.80)",
         "board_brief": "rejected (relevance=0.000, redundancy=0.590, cost=1.10)",
-        "sentiment_scanner": "rejected (relevance=0.009, redundancy=0.500, cost=1.30)",
-        "dependency_mapper": "rejected (relevance=0.009, redundancy=0.375, cost=1.70)",
-        "scenario_generator": "rejected (relevance=0.009, redundancy=0.368, cost=1.40)"
+        "sentiment_scanner": "rejected (relevance=0.010, redundancy=0.500, cost=1.30)",
+        "dependency_mapper": "rejected (relevance=0.010, redundancy=0.375, cost=1.70)",
+        "scenario_generator": "rejected (relevance=0.010, redundancy=0.368, cost=1.40)"
       },
       "skill_decision": {
         "skill_candidates": [
@@ -469,7 +453,6 @@
         ],
         "selected": [
           "build_timeline",
-          "risk_heatmap",
           "synthesize_perspectives"
         ],
         "rejected": [
@@ -483,6 +466,7 @@
           "brainstorm_ideas",
           "generate_analogies",
           "prioritize_items",
+          "risk_heatmap",
           "evidence_matrix",
           "board_brief",
           "sentiment_scanner",
@@ -490,44 +474,44 @@
           "scenario_generator"
         ],
         "skill_scores": {
-          "build_timeline": 0.4015,
-          "risk_heatmap": 0.3694,
-          "identify_risks": 0.39,
+          "build_timeline": 0.4022,
+          "synthesize_perspectives": 0.3832,
+          "identify_risks": 0.3903,
           "compare_options": 0.3735,
-          "extract_facts": 0.3945,
-          "detect_anomalies": 0.3668,
-          "validate_claims": 0.3778,
-          "synthesize_perspectives": 0.3789,
-          "executive_summary": 0.3805,
+          "extract_facts": 0.3949,
+          "detect_anomalies": 0.3671,
+          "validate_claims": 0.3782,
+          "executive_summary": 0.3809,
           "generate_recommendations": 0.3639,
-          "brainstorm_ideas": 0.3407,
+          "brainstorm_ideas": 0.3411,
           "generate_analogies": 0.3607,
-          "prioritize_items": 0.3628,
+          "prioritize_items": 0.3632,
+          "risk_heatmap": 0.3701,
           "evidence_matrix": 0.3831,
           "board_brief": 0.3809,
-          "sentiment_scanner": 0.3267,
-          "dependency_mapper": 0.4016,
-          "scenario_generator": 0.3786
+          "sentiment_scanner": 0.3271,
+          "dependency_mapper": 0.4019,
+          "scenario_generator": 0.379
         },
         "reasons": {
-          "build_timeline": "selected (relevance=0.018, diversity=0.954, synergy=0.810, cost=1.30, reliability=0.790, uncertainty=0.210, composite=0.401)",
-          "risk_heatmap": "selected (relevance=0.018, diversity=0.880, synergy=0.810, cost=1.40, reliability=0.790, uncertainty=0.210, composite=0.369)",
-          "identify_risks": "rejected (relevance=0.009, redundancy=0.373, cost=1.20)",
+          "build_timeline": "selected (relevance=0.020, diversity=0.954, synergy=0.810, cost=1.30, reliability=0.790, uncertainty=0.210, composite=0.402)",
+          "synthesize_perspectives": "selected (relevance=0.020, diversity=0.899, synergy=0.810, cost=2.00, reliability=0.790, uncertainty=0.210, composite=0.383)",
+          "identify_risks": "rejected (relevance=0.010, redundancy=0.373, cost=1.20)",
           "compare_options": "rejected (relevance=0.000, redundancy=0.500, cost=1.20)",
-          "extract_facts": "rejected (relevance=0.009, redundancy=0.408, cost=0.90)",
-          "detect_anomalies": "rejected (relevance=0.009, redundancy=0.500, cost=1.50)",
-          "validate_claims": "rejected (relevance=0.009, redundancy=0.523, cost=2.00)",
-          "synthesize_perspectives": "selected (role-slot=reasoning, relevance=0.009, cost=2.00)",
-          "executive_summary": "rejected (relevance=0.009, redundancy=0.590, cost=0.80)",
+          "extract_facts": "rejected (relevance=0.010, redundancy=0.408, cost=0.90)",
+          "detect_anomalies": "rejected (relevance=0.010, redundancy=0.500, cost=1.50)",
+          "validate_claims": "rejected (relevance=0.010, redundancy=0.523, cost=2.00)",
+          "executive_summary": "rejected (relevance=0.010, redundancy=0.590, cost=0.80)",
           "generate_recommendations": "rejected (relevance=0.000, redundancy=0.500, cost=1.10)",
-          "brainstorm_ideas": "rejected (relevance=0.009, redundancy=0.500, cost=0.90)",
+          "brainstorm_ideas": "rejected (relevance=0.010, redundancy=0.500, cost=0.90)",
           "generate_analogies": "rejected (relevance=0.000, redundancy=0.350, cost=1.20)",
-          "prioritize_items": "rejected (relevance=0.009, redundancy=0.500, cost=0.80)",
+          "prioritize_items": "rejected (relevance=0.010, redundancy=0.500, cost=0.80)",
+          "risk_heatmap": "rejected (relevance=0.020, redundancy=0.500, cost=1.40)",
           "evidence_matrix": "rejected (relevance=0.000, redundancy=0.408, cost=1.80)",
           "board_brief": "rejected (relevance=0.000, redundancy=0.590, cost=1.10)",
-          "sentiment_scanner": "rejected (relevance=0.009, redundancy=0.500, cost=1.30)",
-          "dependency_mapper": "rejected (relevance=0.009, redundancy=0.375, cost=1.70)",
-          "scenario_generator": "rejected (relevance=0.009, redundancy=0.368, cost=1.40)"
+          "sentiment_scanner": "rejected (relevance=0.010, redundancy=0.500, cost=1.30)",
+          "dependency_mapper": "rejected (relevance=0.010, redundancy=0.375, cost=1.70)",
+          "scenario_generator": "rejected (relevance=0.010, redundancy=0.368, cost=1.40)"
         },
         "complementarity_metrics": {
           "coverage": 0.3333333333333333,
@@ -536,14 +520,14 @@
           "diversity_simpson": 0.5,
           "ensemble_coherence": 0.49533333333333335,
           "total_synergy": 0.31,
-          "total_budget_used": 4.7,
-          "selection_rounds": 2,
-          "robust_expected_utility": 0.6089658495989305,
-          "robust_worst_case_utility": 0.32419084902916256,
+          "total_budget_used": 3.3,
+          "selection_rounds": 1,
+          "robust_expected_utility": 0.6204777029514603,
+          "robust_worst_case_utility": 0.33048566885216896,
           "avg_uncertainty": 0.20999999999999996,
-          "risk_aversion": 0.75,
-          "reliability_floor": 0.6749999999999999,
-          "uncertainty_tolerance": 0.41500000000000004
+          "risk_aversion": 0.7,
+          "reliability_floor": 0.6399999999999999,
+          "uncertainty_tolerance": 0.44000000000000006
         },
         "pairwise_scores": {
           "identify_risks <-> compare_options": 0.03,
@@ -1015,8 +999,8 @@
             "name": "risk_heatmap",
             "provider": "core-labs",
             "version": "0.1.0",
-            "score": 0.241,
-            "reputation": 0.9279,
+            "score": 0.2539,
+            "reputation": 0.9267,
             "trending_score": 1.0,
             "tags": [
               "risk",
@@ -1028,7 +1012,7 @@
             "name": "dependency_mapper",
             "provider": "arch-ai",
             "version": "0.3.0",
-            "score": 0.2105,
+            "score": 0.2047,
             "reputation": 0.8722,
             "trending_score": 0.72,
             "tags": [
@@ -1039,23 +1023,10 @@
             ]
           },
           {
-            "name": "board_brief",
-            "provider": "exec-ai",
-            "version": "1.0.0",
-            "score": 0.206,
-            "reputation": 0.9575,
-            "trending_score": 1.0,
-            "tags": [
-              "communication",
-              "executive",
-              "brief"
-            ]
-          },
-          {
             "name": "evidence_matrix",
             "provider": "research-hub",
             "version": "0.2.1",
-            "score": 0.189,
+            "score": 0.1979,
             "reputation": 0.7578,
             "trending_score": 0.23,
             "tags": [
@@ -1065,10 +1036,23 @@
             ]
           },
           {
+            "name": "board_brief",
+            "provider": "exec-ai",
+            "version": "1.0.0",
+            "score": 0.1913,
+            "reputation": 0.9565,
+            "trending_score": 0.92,
+            "tags": [
+              "communication",
+              "executive",
+              "brief"
+            ]
+          },
+          {
             "name": "sentiment_scanner",
             "provider": "nlp-works",
             "version": "1.2.0",
-            "score": 0.173,
+            "score": 0.1786,
             "reputation": 0.7452,
             "trending_score": 0.16,
             "tags": [
@@ -1082,7 +1066,7 @@
             "name": "scenario_generator",
             "provider": "futures-lab",
             "version": "0.1.0",
-            "score": 0.1556,
+            "score": 0.1607,
             "reputation": 0.671,
             "trending_score": 0.35,
             "tags": [
@@ -1095,39 +1079,33 @@
         ],
         "execution_order": [
           "build_timeline",
-          "risk_heatmap",
           "synthesize_perspectives"
         ],
-        "effective_max_skills": 4,
+        "effective_max_skills": 3,
         "strategy": "robust_frontier",
         "portfolio_plan": {
           "selected_skills": [
             "build_timeline",
-            "risk_heatmap",
             "synthesize_perspectives"
           ],
           "role_coverage": {
             "evidence": 1,
-            "reasoning": 2
+            "reasoning": 1
           },
           "execution_order": [
             "build_timeline",
-            "risk_heatmap",
             "synthesize_perspectives"
           ],
           "parallel_groups": [
             [
               "build_timeline",
-              "risk_heatmap"
-            ],
-            [
               "synthesize_perspectives"
             ]
           ],
           "verification_chain": [],
-          "budget_estimate": 4.7,
-          "latency_estimate": 470.0,
-          "portfolio_score": 0.38323827128753596,
+          "budget_estimate": 3.3,
+          "latency_estimate": 330.0,
+          "portfolio_score": 0.392707406931304,
           "portfolio_rationale": "Role-aware complementary portfolio optimized under budget and diversity constraints.",
           "rejected_candidates": [
             "identify_risks",
@@ -1140,6 +1118,7 @@
             "brainstorm_ideas",
             "generate_analogies",
             "prioritize_items",
+            "risk_heatmap",
             "evidence_matrix",
             "board_brief",
             "sentiment_scanner",
@@ -1148,8 +1127,7 @@
           ],
           "fallback_portfolios": [
             [
-              "build_timeline",
-              "risk_heatmap"
+              "build_timeline"
             ]
           ]
         },
@@ -1161,9 +1139,9 @@
         "robustness_profile": {
           "enabled": true,
           "require_downside_guard": true,
-          "risk_aversion": 0.75,
-          "reliability_floor": 0.675,
-          "uncertainty_tolerance": 0.415
+          "risk_aversion": 0.7,
+          "reliability_floor": 0.64,
+          "uncertainty_tolerance": 0.44
         }
       },
       "skill_candidates": [
@@ -1187,24 +1165,24 @@
         "scenario_generator"
       ],
       "skill_scores": {
-        "build_timeline": 0.4015,
-        "risk_heatmap": 0.3694,
-        "identify_risks": 0.39,
+        "build_timeline": 0.4022,
+        "synthesize_perspectives": 0.3832,
+        "identify_risks": 0.3903,
         "compare_options": 0.3735,
-        "extract_facts": 0.3945,
-        "detect_anomalies": 0.3668,
-        "validate_claims": 0.3778,
-        "synthesize_perspectives": 0.3789,
-        "executive_summary": 0.3805,
+        "extract_facts": 0.3949,
+        "detect_anomalies": 0.3671,
+        "validate_claims": 0.3782,
+        "executive_summary": 0.3809,
         "generate_recommendations": 0.3639,
-        "brainstorm_ideas": 0.3407,
+        "brainstorm_ideas": 0.3411,
         "generate_analogies": 0.3607,
-        "prioritize_items": 0.3628,
+        "prioritize_items": 0.3632,
+        "risk_heatmap": 0.3701,
         "evidence_matrix": 0.3831,
         "board_brief": 0.3809,
-        "sentiment_scanner": 0.3267,
-        "dependency_mapper": 0.4016,
-        "scenario_generator": 0.3786
+        "sentiment_scanner": 0.3271,
+        "dependency_mapper": 0.4019,
+        "scenario_generator": 0.379
       },
       "complementarity_matrix": {
         "identify_risks <-> compare_options": 0.31,
@@ -1364,125 +1342,104 @@
       "execution_timeline": [
         {
           "skill": "build_timeline",
-          "start_time": 1775149952.9508126,
-          "end_time": 1775149952.9508228,
-          "duration_ms": 0.010251998901367188,
-          "success": true
-        },
-        {
-          "skill": "risk_heatmap",
-          "start_time": 1775149952.951977,
-          "end_time": 1775149952.953213,
-          "duration_ms": 1.2359619140625,
+          "start_time": 1775149794.4618413,
+          "end_time": 1775149794.4618497,
+          "duration_ms": 0.008344650268554688,
           "success": true
         },
         {
           "skill": "synthesize_perspectives",
-          "start_time": 1775149952.9556432,
-          "end_time": 1775149952.9556549,
-          "duration_ms": 0.011682510375976562,
+          "start_time": 1775149794.463054,
+          "end_time": 1775149794.4630637,
+          "duration_ms": 0.009775161743164062,
           "success": true
         }
       ],
       "latency_breakdown": {
-        "build_timeline": 0.010251998901367188,
-        "risk_heatmap": 1.2359619140625,
-        "synthesize_perspectives": 0.011682510375976562,
-        "total": 1.2578964233398438
+        "build_timeline": 0.008344650268554688,
+        "synthesize_perspectives": 0.009775161743164062,
+        "total": 0.01811981201171875
       },
       "verifier_findings": [
         {
           "triggered": true,
           "reasons": [
-            "high_risk_task",
             "weak_output_quality",
             "fragile_downside_case"
           ],
-          "challenged_claims": [
-            {
-              "skill": "risk_heatmap",
-              "claim": "Marketplace Skill `risk_heatmap` Output:",
-              "challenge": "Need additional evidence or cross-check before acceptance."
-            }
-          ],
+          "challenged_claims": [],
           "alternative_paths": [
             "Add validate_claims for stronger evidence verification",
             "Add detect_anomalies to probe contradictions"
           ],
-          "needs_human_review": true,
+          "needs_human_review": false,
           "summary": "DISSENT branch triggered for structured challenge."
-        }
-      ],
-      "interrupt_events": [
-        {
-          "type": "approval_required",
-          "reason": "dissent_or_risk_policy"
-        },
-        {
-          "type": "human_review_gate",
-          "approval_required": true,
-          "disagreement_triggered": true
         }
       ],
       "cost_breakdown": {
         "build_timeline": 1.3,
-        "risk_heatmap": 1.0,
         "synthesize_perspectives": 2.0,
-        "total": 4.3
+        "total": 3.3
       },
       "final_confidence_breakdown": {
         "routing_confidence": 1.0,
         "portfolio_confidence": 0.3333333333333333,
         "evidence_confidence": 1.0,
         "consistency_confidence": 1.0,
-        "verification_confidence": 0.6,
-        "calibration_adjusted_confidence": 0.9555555555555556,
-        "robustness_confidence": 0.25611077073303845
-      }
+        "verification_confidence": 1.0,
+        "calibration_adjusted_confidence": 0.9333333333333333,
+        "robustness_confidence": 0.2610836783932135
+      },
+      "interrupt_events": [
+        {
+          "type": "dissent_review_gate",
+          "approval_required": false,
+          "disagreement_triggered": true
+        }
+      ]
     }
   },
   "harness": {
     "run_summary": {
-      "query": "Design a 90-day launch plan for a regulated AI customer-support copilot at a fintech, balancing growth targets, auditability, human override policy, and research credibility.",
+      "query": "Design an applied research promotion pack for a model-evaluation platform, balancing experiment throughput, reproducibility, benchmark credibility, and production release criteria.",
       "completed": true,
       "plan": [
         "understand intent",
         "collect supporting signals",
-        "run verification-oriented tools",
         "synthesize and evaluate",
-        "recipe:risk-radar"
+        "recipe:research-rig"
       ],
-      "final_answer_preview": "**MEMORANDUM**\n\n**TO:** Executive Leadership Team  \n**FROM:** AI Launch Risk Assessment Unit  \n**DATE:** 21 June 2025  \n**SUBJECT:** 90-Day Regulated AI Customer-Support Copilot Launch Decision\n\n---\n\n### **DECISION**\nApprove the 90-day phased launch plan for the regulated AI customer-support copilot, contingent on impl",
+      "final_answer_preview": "[build_timeline]\nTimeline:\n  [T1] [Event A - earliest mention]\n  [T2] [Event B - subsequent development]\n  [T3] [Event C - most recent]\n  Dependencies: T2 depends on T1, T3 depends on T2\n--- (skill: build_timeline)\n\n[synthesize_perspectives]\nPerspective Synthesis:\n  Viewpoint A: [perspective summary]\n  Viewpoint B: [pe",
       "metrics": {
         "tool_calls": 4.0,
         "tool_success_rate": 1.0,
         "guardrail_block_count": 0.0,
-        "context_reuse_score": 1.0,
+        "context_reuse_score": 0.0,
         "completion_score": 1.0,
         "security_block_count": 0.0,
         "security_challenge_count": 0.0,
         "discovery_count": 8.0,
-        "discovery_utilization": 0.75,
+        "discovery_utilization": 1.0,
         "recipe_completion": 0.8,
-        "live_agent_enabled": 1.0,
-        "live_agent_configured": 1.0,
-        "live_agent_success": 1.0,
-        "live_agent_calls": 3.0
+        "live_agent_enabled": 0.0,
+        "live_agent_configured": 0.0,
+        "live_agent_success": 0.0,
+        "live_agent_calls": 0.0
       },
       "value_card": {
-        "value_index": 86.36,
-        "band": "platinum",
+        "value_index": 82.53,
+        "band": "gold",
         "dimensions": [
           {
             "name": "reliability",
-            "score": 1.0,
+            "score": 0.84,
             "weight": 0.25,
-            "weighted_score": 0.25,
+            "weighted_score": 0.21,
             "evidence": [
               "tool_success_rate=1.00",
               "completion_score=1.00",
-              "context_reuse_score=1.00",
-              "live_agent_success=1.00"
+              "context_reuse_score=0.00",
+              "live_agent_success=0.00"
             ],
             "visual_hint": "kpi_card"
           },
@@ -1500,11 +1457,11 @@
           },
           {
             "name": "adaptability",
-            "score": 0.7292,
+            "score": 0.75,
             "weight": 0.2,
-            "weighted_score": 0.1458,
+            "weighted_score": 0.15,
             "evidence": [
-              "discovery_utilization=0.75",
+              "discovery_utilization=1.00",
               "recipe_completion=0.80",
               "source_variants=1"
             ],
@@ -1524,39 +1481,39 @@
           },
           {
             "name": "innovation",
-            "score": 0.825,
+            "score": 0.809,
             "weight": 0.15,
-            "weighted_score": 0.1237,
+            "weighted_score": 0.1213,
             "evidence": [
-              "avg_novelty=0.81",
+              "avg_novelty=0.92",
               "unique_tools=4",
-              "cross_type_coverage=3",
-              "live_agent_calls=3.0"
+              "cross_type_coverage=2",
+              "live_agent_calls=0.0"
             ],
             "visual_hint": "novelty_radar"
           }
         ],
-        "narrative": "Value Index 86.4 (platinum) with strengths in reliability, observability. Completed=True, steps=4, tool_calls=4.",
+        "narrative": "Value Index 82.5 (gold) with strengths in observability, reliability. Completed=True, steps=4, tool_calls=4.",
         "visual_hooks": [
-          {
-            "dimension": "reliability",
-            "recommended_visual": "kpi_card",
-            "headline": "Reliability 100%"
-          },
           {
             "dimension": "observability",
             "recommended_visual": "timeline_with_annotations",
             "headline": "Observability 100%"
           },
           {
+            "dimension": "reliability",
+            "recommended_visual": "kpi_card",
+            "headline": "Reliability 84%"
+          },
+          {
             "dimension": "innovation",
             "recommended_visual": "novelty_radar",
-            "headline": "Innovation 82%"
+            "headline": "Innovation 81%"
           },
           {
             "dimension": "adaptability",
             "recommended_visual": "strategy_heatmap",
-            "headline": "Adaptability 73%"
+            "headline": "Adaptability 75%"
           },
           {
             "dimension": "safety",
@@ -1571,182 +1528,47 @@
         "preflight_findings": []
       },
       "recipe": {
-        "name": "risk-radar",
+        "name": "research-rig",
         "version": "1.0.0",
         "total_steps": 5,
         "executed_steps": 4
       },
       "live_agent": {
-        "enabled": true,
-        "configured": true,
-        "calls_used": 3,
-        "call_budget": 6,
-        "model": "deepseek-chat",
-        "base_url": "https://yunwu.ai/v1",
-        "success": true,
-        "latency_ms": 64334.22,
-        "analysis": {
-          "raw": "{\n  \"thesis\": \"The 90-day launch plan for a regulated AI customer-support copilot in a fintech must prioritize a phased, evidence-driven approach that balances growth with compliance, ensuring robust audit trails, clear human override protocols, and credible research validation to mitigate regulatory and operational risks.\",\n  \"key_risks\": [\n    {\n      \"risk\": \"Regulatory non-compliance due to inadequate audit trails or explainability\",\n      \"impact\": \"High\",\n      \"likelihood\": \"Medium\",\n      \"category\": \"Compliance\"\n    },\n    {\n      \"risk\": \"Operational failure from insufficient human override mechanisms during critical financial queries\",\n      \"impact\": \"High\",\n      \"likelihood\": \"Medium\",\n      \"category\": \"Operational\"\n    },\n    {\n      \"risk\": \"Growth targets compromised by overly conservative rollout or poor user adoption\",\n      \"impact\": \"Medium\",\n      \"likelihood\": \"Medium\",\n      \"category\": \"Business\"\n    },\n    {\n      \"risk\": \"Research credibility undermined by flawed experiment design or biased evaluation metrics\",\n      \"impact\": \"Medium\",\n      \"likelihood\": \"Medium\",\n      \"category\": \"Reputational\"\n    },\n    {\n      \"risk\": \"Skill dependency and integration failures causing system instability or data leakage\",\n      \"impact\": \"High\",\n      \"likelihood\": \"Low\",\n      \"category\": \"Technical\"\n    }\n  ],\n  \"missing_evidence\": [\n    \"Specific regulatory requirements (e.g., GDPR, PSD2, local fintech regulations) for AI in customer support\",\n    \"Historical data on user query volumes and types to baseline performance and risk scenarios\",\n    \"Existing internal audit and compliance frameworks for AI systems\",\n    \"Stakeholder alignment metrics from legal, compliance, and product teams\",\n    \"Benchmark data on competitor AI copilot implementations in regulated fintech environments\",\n    \"Detailed cost-benefit analysis for control implementations (e.g., human-in-the-loop overhead)\"\n  ],\n  \"controls\": [\n    {\n      \"control\": \"Implement phased rollout with strict monitoring: Day 1-30 internal testing, Day 31-60 limited beta with high-risk queries flagged for human review, Day 61-90 gradual public release.\",\n      \"mitigates\": [\"Regulatory non-compliance\", \"Operational failure\"]\n    },\n    {\n      \"control\": \"Deploy immutable audit logs for all AI interactions, including input queries, outputs, override actions, and user feedback, integrated with existing compliance systems.\",\n      \"mitigates\": [\"Regulatory non-compliance\", \"Research credibility\"]\n    },\n    {\n      \"control\": \"Establish clear human override policy with escalation protocols, mandatory for transactions above thresholds, account changes, and dispute resolutions; train support staff accordingly.\",\n      \"mitigates\": [\"Operational failure\", \"Regulatory non-compliance\"]\n    },\n    {\n      \"control\": \"Use code_experiment_design to create A/B tests and ablation studies measuring accuracy, resolution time, and user satisfaction against baselines, ensuring statistical validity.\",\n      \"mitigates\": [\"Research credibility\", \"Growth targets compromised\"]\n    },\n    {\n      \"control\": \"Leverage api_skill_portfolio_optimizer to balance skill diversity and risk, ensuring critical functions (e.g., fraud detection) have fallbacks and low-latency responses.\",\n      \"mitigates\": [\"Skill dependency and integration failures\", \"Operational failure\"]\n    },\n    {\n      \"control\": \"Conduct weekly risk reviews using policy_risk_matrix to update controls based on incident reports and audit findings, with cross-functional oversight.\",\n      \"mitigates\": [\"All key risks\"]\n    }\n  ],\n  \"expected_value\": \"Successful launch of a compliant AI copilot that improves customer support efficiency by 20-30%, maintains regulatory adherence, establishes a scalable audit framework, and provides credible performance data for future iterations, while"
-        },
-        "critique": {
-          "confidence": 45,
-          "blind_spots": [
-            "No specific regulatory framework identification (SEC, FINRA, CFPB, etc.)",
-            "Missing concrete metrics for human override effectiveness measurement",
-            "No discussion of data privacy compliance (GLBA, GDPR, CCPA)",
-            "Absence of customer consent and disclosure requirements",
-            "No mention of bias testing or fairness assessments for AI responses",
-            "Lacks specific incident response protocols for AI failures"
-          ],
-          "red_flags": [
-            "75% confidence level claimed without supporting quantitative validation",
-            "Vague 'evidence packet template' referenced without content specification",
-            "No legal counsel review mentioned in approval process",
-            "Human override 'training materials' referenced but not detailed",
-            "Escalation triggers use arbitrary percentages without statistical justification",
-            "No independent third-party audit requirements specified"
-          ],
-          "improve": [
-            "Specify exact regulatory bodies and compliance requirements",
-            "Define measurable KPIs for human override effectiveness",
-            "Include legal department sign-off requirements",
-            "Detail bias testing methodology and frequency",
-            "Specify customer disclosure and consent protocols",
-            "Add incident response playbooks for AI malfunctions",
-            "Include independent audit schedule and criteria"
-          ],
-          "policy_gaps": [
-            "No explicit AI ethics policy framework",
-            "Missing data retention and deletion policies for AI interactions",
-            "No employee training completion requirements documented",
-            "Absence of customer complaint handling procedures for AI issues",
-            "No cross-border data transfer considerations",
-            "Missing escalation procedures for regulatory inquiries"
-          ],
-          "legal_gaps": [
-            "No mention of liability allocation for AI errors",
-            "Missing contractual compliance with banking/financial regulations",
-            "No discussion of insurance coverage for AI-related claims",
-            "Absence of regulatory filing requirements documentation",
-            "No intellectual property considerations for AI-generated content",
-            "Missing state-specific financial regulations compliance"
-          ]
-        },
-        "strategy": {
-          "name": "risk_sentinel",
-          "title": "Risk Sentinel",
-          "summary": "Safety-heavy strategy emphasizing controls, compliance, and failure containment.",
-          "temperature_bias": -0.04,
-          "max_tokens_bias": 0,
-          "tags": [
-            "safety",
-            "compliance",
-            "enterprise"
-          ],
-          "source": "heuristic",
-          "reason": "auto-selected by mode=deep"
-        },
-        "transport": {
-          "analysis": {
-            "latency_ms": 35344.879150390625,
-            "model": "deepseek-chat",
-            "finish_reason": "length",
-            "usage": {
-              "prompt_tokens": 1893,
-              "completion_tokens": 800,
-              "total_tokens": 2693,
-              "completion_tokens_details": {
-                "reasoning_tokens": 0
-              }
-            },
-            "attempts": 1,
-            "retries": 0
-          },
-          "synthesis": {
-            "latency_ms": 18562.745809555054,
-            "model": "deepseek-chat",
-            "finish_reason": "stop",
-            "usage": {
-              "prompt_tokens": 4299,
-              "completion_tokens": 730,
-              "total_tokens": 5029
-            },
-            "attempts": 1,
-            "retries": 0
-          },
-          "critique": {
-            "latency_ms": 10424.822568893433,
-            "model": "deepseek-chat",
-            "finish_reason": "stop",
-            "usage": {
-              "prompt_tokens": 900,
-              "completion_tokens": 412,
-              "total_tokens": 1312
-            },
-            "attempts": 1,
-            "retries": 0
-          }
-        },
-        "notes": [
-          "analysis_finish:length",
-          "synthesis_finish:stop",
-          "critique_finish:stop"
-        ],
+        "enabled": false,
+        "configured": false,
+        "calls_used": 0,
+        "call_budget": 0,
+        "success": false,
+        "notes": [],
         "errors": []
       },
       "evidence": {
-        "record_count": 9,
+        "record_count": 12,
         "citation_count": 6,
         "records": [
           {
-            "record_id": "fintech-human-override-policy",
-            "title": "Human Override Policy for Regulated Support Copilots",
-            "summary": "Customer-facing copilots in regulated queues need explicit operator takeover conditions, SLA limits, and audit logs for overrides.",
+            "record_id": "research-experiment-promotion-criteria",
+            "title": "Experiment Promotion Criteria",
+            "summary": "Applied research candidates should only be promoted when reproducibility, benchmark stability, and operating constraints are jointly satisfied.",
             "source_id": "repo_dossiers",
             "source_type": "local_dossier",
-            "evidence_type": "policy_note",
-            "url": "internal://fintech/human-override-policy",
-            "path": "C:\\7\\1\\agent-harness\\docs\\evidence\\fintech\\human-override-policy.json",
+            "evidence_type": "research_gate",
+            "url": "internal://research/experiment-promotion-criteria",
+            "path": "C:\\7\\1\\agent-harness\\docs\\evidence\\research\\experiment-promotion-criteria.json",
             "tags": [
-              "governance",
-              "control",
-              "human-review",
-              "fintech"
+              "research",
+              "benchmark",
+              "reproducibility",
+              "promotion"
             ],
             "domains": [
-              "risk",
-              "governance",
-              "fintech"
+              "research",
+              "evidence"
             ],
-            "trust_score": 0.88,
+            "trust_score": 0.9,
             "freshness_hint": "stable",
-            "content": "Define override triggers for low-confidence answers, policy-sensitive requests, and disputes. Require review queue ownership and retained audit artifacts.",
-            "score": 3.196
-          },
-          {
-            "record_id": "fintech-audit-readiness-checklist",
-            "title": "Audit Readiness Checklist for AI Service Launches",
-            "summary": "Launch packets need retained traces, policy versioning, evidence retention, and reviewer attribution before expansion.",
-            "source_id": "repo_dossiers",
-            "source_type": "local_dossier",
-            "evidence_type": "checklist",
-            "url": "internal://fintech/audit-readiness-checklist",
-            "path": "C:\\7\\1\\agent-harness\\docs\\evidence\\fintech\\audit-readiness-checklist.json",
-            "tags": [
-              "audit",
-              "traceability",
-              "controls",
-              "release"
-            ],
-            "domains": [
-              "risk",
-              "governance",
-              "enterprise"
-            ],
-            "trust_score": 0.86,
-            "freshness_hint": "stable",
-            "content": "Capture request trace, model version, control decision, human approver, and exception handling path in the release packet.",
-            "score": 1.787
+            "content": "Promotion requires repeatable gains, stable confidence intervals, and a production-facing readout that names risk and rollback assumptions.",
+            "score": 2.525
           },
           {
             "record_id": "cross-evidence-packet-template",
@@ -1775,30 +1597,6 @@
             "score": 1.778
           },
           {
-            "record_id": "owasp-llm-top10",
-            "title": "OWASP Top 10 for LLM Applications",
-            "summary": "Practical failure modes and control categories for LLM application launches.",
-            "source_id": "built_in_catalog",
-            "source_type": "static_catalog",
-            "evidence_type": "reference",
-            "url": "https://owasp.org/www-project-top-10-for-large-language-model-applications/",
-            "path": "",
-            "tags": [
-              "security",
-              "llm",
-              "risk",
-              "controls"
-            ],
-            "domains": [
-              "risk",
-              "security"
-            ],
-            "trust_score": 0.9,
-            "freshness_hint": "stable",
-            "content": "",
-            "score": 1.445
-          },
-          {
             "record_id": "mcp-architecture",
             "title": "Model Context Protocol Architecture",
             "summary": "Reference for interoperable agent-tool integration and external capability composition.",
@@ -1821,32 +1619,30 @@
             "trust_score": 0.88,
             "freshness_hint": "stable",
             "content": "",
-            "score": 1.436
+            "score": 1.616
           },
           {
-            "record_id": "fintech-human-override-policy",
-            "title": "Human Override Policy for Regulated Support Copilots",
-            "summary": "Customer-facing copilots in regulated queues need explicit operator takeover conditions, SLA limits, and audit logs for overrides.",
-            "source_id": "repo_dossiers",
-            "source_type": "local_dossier",
-            "evidence_type": "policy_note",
-            "url": "internal://fintech/human-override-policy",
-            "path": "C:\\7\\1\\agent-harness\\docs\\evidence\\fintech\\human-override-policy.json",
+            "record_id": "langgraph-overview",
+            "title": "LangGraph Overview",
+            "summary": "Operational patterns for stateful agent execution, durability, and orchestration loops.",
+            "source_id": "built_in_catalog",
+            "source_type": "static_catalog",
+            "evidence_type": "reference",
+            "url": "https://docs.langchain.com/oss/python/langgraph/overview",
+            "path": "",
             "tags": [
-              "governance",
-              "control",
-              "human-review",
-              "fintech"
+              "agents",
+              "orchestration",
+              "durability"
             ],
             "domains": [
-              "risk",
-              "governance",
-              "fintech"
+              "research",
+              "enterprise"
             ],
-            "trust_score": 0.88,
+            "trust_score": 0.82,
             "freshness_hint": "stable",
-            "content": "Define override triggers for low-confidence answers, policy-sensitive requests, and disputes. Require review queue ownership and retained audit artifacts.",
-            "score": 3.196
+            "content": "",
+            "score": 1.409
           },
           {
             "record_id": "fintech-audit-readiness-checklist",
@@ -1871,7 +1667,7 @@
             "trust_score": 0.86,
             "freshness_hint": "stable",
             "content": "Capture request trace, model version, control decision, human approver, and exception handling path in the release packet.",
-            "score": 2.287
+            "score": 1.287
           },
           {
             "record_id": "nist-ai-rmf",
@@ -1895,21 +1691,71 @@
             "trust_score": 0.95,
             "freshness_hint": "stable",
             "content": "",
-            "score": 1.7875
+            "score": 0.7875
+          },
+          {
+            "record_id": "research-experiment-promotion-criteria",
+            "title": "Experiment Promotion Criteria",
+            "summary": "Applied research candidates should only be promoted when reproducibility, benchmark stability, and operating constraints are jointly satisfied.",
+            "source_id": "repo_dossiers",
+            "source_type": "local_dossier",
+            "evidence_type": "research_gate",
+            "url": "internal://research/experiment-promotion-criteria",
+            "path": "C:\\7\\1\\agent-harness\\docs\\evidence\\research\\experiment-promotion-criteria.json",
+            "tags": [
+              "research",
+              "benchmark",
+              "reproducibility",
+              "promotion"
+            ],
+            "domains": [
+              "research",
+              "evidence"
+            ],
+            "trust_score": 0.9,
+            "freshness_hint": "stable",
+            "content": "Promotion requires repeatable gains, stable confidence intervals, and a production-facing readout that names risk and rollback assumptions.",
+            "score": 2.525
+          },
+          {
+            "record_id": "cross-evidence-packet-template",
+            "title": "Evidence Packet Template",
+            "summary": "A release packet should combine quantitative metrics, control decisions, citations, unresolved risks, and expansion triggers in one artifact.",
+            "source_id": "repo_dossiers",
+            "source_type": "local_dossier",
+            "evidence_type": "template",
+            "url": "internal://cross/evidence-packet-template",
+            "path": "C:\\7\\1\\agent-harness\\docs\\evidence\\cross\\evidence-packet-template.json",
+            "tags": [
+              "evidence",
+              "release",
+              "packet",
+              "decision"
+            ],
+            "domains": [
+              "evidence",
+              "governance",
+              "research",
+              "enterprise"
+            ],
+            "trust_score": 0.84,
+            "freshness_hint": "stable",
+            "content": "Decision-makers should not have to collect metrics, controls, and supporting citations from separate systems before approving launch.",
+            "score": 1.778
           }
         ],
         "citations": [
-          "internal://fintech/human-override-policy",
-          "internal://fintech/audit-readiness-checklist",
+          "internal://research/experiment-promotion-criteria",
           "internal://cross/evidence-packet-template",
-          "https://owasp.org/www-project-top-10-for-large-language-model-applications/",
           "https://modelcontextprotocol.io/specification/2025-06-18/architecture/index",
+          "https://docs.langchain.com/oss/python/langgraph/overview",
+          "internal://fintech/audit-readiness-checklist",
           "https://www.nist.gov/itl/ai-risk-management-framework"
         ],
         "sources": [
           {
             "source_id": "built_in_catalog",
-            "records": 3
+            "records": 6
           },
           {
             "source_id": "repo_dossiers",
@@ -1919,19 +1765,11 @@
       },
       "top_discovery": [
         {
-          "name": "api_skill_portfolio_optimizer",
-          "score": 1.086,
-          "reasons": [
-            "intent_match:research,planning",
-            "mode_boost:deep_analysis"
-          ]
-        },
-        {
           "name": "code_experiment_design",
-          "score": 1.077,
+          "score": 1.197,
           "reasons": [
             "intent_match:research,design",
-            "token_overlap:design,research"
+            "token_overlap:benchmark,design,evaluation,research"
           ]
         },
         {
@@ -1942,117 +1780,116 @@
           ]
         },
         {
-          "name": "evidence_dossier_builder",
-          "score": 0.941,
+          "name": "api_skill_portfolio_optimizer",
+          "score": 0.906,
           "reasons": [
-            "intent_match:research,planning"
+            "intent_match:research",
+            "mode_boost:deep_analysis"
           ]
         },
         {
-          "name": "policy_risk_matrix",
-          "score": 0.805,
+          "name": "code_router_blueprint",
+          "score": 0.7875,
           "reasons": [
-            "intent_match:risk",
-            "token_overlap:policy"
+            "intent_match:design",
+            "token_overlap:design"
+          ]
+        },
+        {
+          "name": "evidence_dossier_builder",
+          "score": 0.761,
+          "reasons": [
+            "intent_match:research"
           ]
         }
       ],
       "steps": [
         {
           "step": 1,
-          "tool": "api_market_discover",
-          "source": "recipe:risk-radar",
-          "score": 0.736,
+          "tool": "browser_trending_scan",
+          "source": "recipe:research-rig",
+          "score": 0.675,
           "success": true,
-          "latency_ms": 1.63,
+          "latency_ms": 1.13,
           "evidence_count": 0,
           "notes": [
-            "WARN:high_risk_requires_human_review",
-            "SECURITY_ALLOW:risk_score=1.30",
-            "SECURITY_ALLOW:high_risk_api_review:medium"
+            "SECURITY_ALLOW:risk_score=0.00"
           ]
         },
         {
           "step": 2,
           "tool": "evidence_dossier_builder",
-          "source": "recipe:risk-radar",
-          "score": 0.941,
+          "source": "recipe:research-rig",
+          "score": 0.761,
           "success": true,
-          "latency_ms": 3.17,
-          "evidence_count": 5,
+          "latency_ms": 2.72,
+          "evidence_count": 6,
           "notes": [
             "SECURITY_ALLOW:risk_score=0.00"
           ]
         },
         {
           "step": 3,
-          "tool": "policy_risk_matrix",
-          "source": "recipe:risk-radar",
-          "score": 0.805,
+          "tool": "external_resource_hub",
+          "source": "recipe:research-rig",
+          "score": 0.974,
           "success": true,
-          "latency_ms": 3.01,
-          "evidence_count": 4,
+          "latency_ms": 2.6,
+          "evidence_count": 6,
           "notes": [
             "SECURITY_ALLOW:risk_score=0.00"
           ]
         },
         {
           "step": 4,
-          "tool": "api_skill_dependency_graph",
-          "source": "recipe:risk-radar",
-          "score": 0.0,
+          "tool": "code_experiment_design",
+          "source": "recipe:research-rig",
+          "score": 1.197,
           "success": true,
-          "latency_ms": 1.2,
+          "latency_ms": 0.01,
           "evidence_count": 0,
           "notes": [
-            "WARN:high_risk_requires_human_review",
-            "SECURITY_ALLOW:risk_score=1.30",
-            "SECURITY_ALLOW:high_risk_api_review:medium"
+            "SECURITY_ALLOW:risk_score=0.00"
           ]
         }
       ],
-      "memory_snapshot_size": 8
+      "memory_snapshot_size": 0
     },
     "plan": [
       "understand intent",
       "collect supporting signals",
-      "run verification-oriented tools",
       "synthesize and evaluate",
-      "recipe:risk-radar"
+      "recipe:research-rig"
     ],
-    "final_answer": "**MEMORANDUM**\n\n**TO:** Executive Leadership Team  \n**FROM:** AI Launch Risk Assessment Unit  \n**DATE:** 21 June 2025  \n**SUBJECT:** 90-Day Regulated AI Customer-Support Copilot Launch Decision\n\n---\n\n### **DECISION**\nApprove the 90-day phased launch plan for the regulated AI customer-support copilot, contingent on implementation of prescribed controls and weekly risk reviews. The plan balances growth targets with compliance requirements through evidence-driven rollout stages.\n\n---\n\n### **CONTROL MATRIX**\n\n| Risk | Impact | Likelihood | Control Measures | Evidence Sources |\n|------|--------|------------|------------------|------------------|\n| Regulatory non-compliance | High | Medium | Phased rollout with monitoring; Immutable audit logs; Human override protocols | Internal policy docs; NIST AI RMF |\n| Operational failure | High | Medium | Human override policy; Skill portfolio optimization; Phased testing | Human override policy; Audit readiness checklist |\n| Growth targets compromised | Medium | Medium | A/B testing with statistical validity; Gradual public release | Evidence packet template |\n| Research credibility undermined | Medium | Medium | Rigorous experiment design; Audit trail integration | OWASP LLM Top 10; Experiment design protocols |\n| Skill dependency failures | High | Low | API skill portfolio optimization; Fallback mechanisms | MCP architecture; Dependency analysis |\n\n---\n\n### **RESIDUAL RISK**\nDespite comprehensive controls, residual risks remain:\n\n1. **Regulatory Interpretation Risk** (Medium): Evolving regulatory interpretations may require mid-launch control adjustments\n2. **Human Factor Risk** (Medium): Support staff adaptation to override protocols may impact initial efficiency gains\n3. **Integration Complexity** (Low-Medium): Legacy system integration points may reveal unexpected latency or data flow issues\n\nResidual risk level: **MODERATE** - Acceptable with continuous monitoring\n\n---\n\n### **ESCALATION GATES**\n\n| Timeline | Gate Criteria | Escalation Trigger |\n|----------|---------------|-------------------|\n| Day 30 | Internal testing completion | >5% error rate in high-risk query categories |\n| Day 60 | Limited beta performance | Customer satisfaction drop >15% from baseline |\n| Day 75 | Public release readiness | Audit trail gaps or compliance exceptions |\n| Ongoing | Weekly risk reviews | Control effectiveness score <80% |\n\n---\n\n### **72H ACTION PLAN**\n\n1. **IMMEDIATE (Day 1-2)**\n   - Establish cross-functional launch oversight committee\n   - Deploy immutable audit logging infrastructure\n   - Finalize human override policy training materials\n\n2. **SHORT-TERM (Day 3)**\n   - Begin internal testing environment setup\n   - Conduct initial risk control baseline assessment\n   - Schedule first weekly risk review meeting\n\n---\n\n### **CONFIDENCE**\n**Confidence Level: MEDIUM-HIGH (75%)**\n\n**Supporting Factors:**\n- Strong evidence base from internal policy documentation\n- Comprehensive control framework addressing key risk categories\n- Phased approach allows for iterative validation\n\n**Limiting Factors:**\n- Missing specific regulatory requirement details\n- Limited historical performance baselines\n- Unvalidated stakeholder alignment metrics\n\n**Recommendation:** Proceed with launch plan while prioritizing evidence collection for missing data points and maintaining agile response capability for regulatory changes.\n\n---\n\n*This assessment incorporates evidence from internal policy documentation, industry frameworks (NIST AI RMF, OWASP LLM Top 10), and technical architecture references. Continuous monitoring and weekly review cycles are essential for risk mitigation throughout the 90-day launch period.*",
-    "final_answer_excerpt": "**MEMORANDUM**\n\n**TO:** Executive Leadership Team  \n**FROM:** AI Launch Risk Assessment Unit  \n**DATE:** 21 June 2025  \n**SUBJECT:** 90-Day Regulated AI Customer-Support Copilot Launch Decision\n\n---\n\n### **DECISION**\nApprove the 90-day phased launch plan for the regulated AI customer-support copilot, contingent on implementation of prescribed controls and weekly risk reviews. The plan balances growth targets with compliance requirements through evidence-driven rollout stages.\n\n---\n\n### **CONTROL MATRIX**\n\n| Risk | Impact | Likelihood | Control Measures | Evidence Sources |\n|------|--------|------------|------------------|------------------|\n| Regulatory non-compliance | High | Medium | Phased rollout with monitoring; Immutable audit logs; Human override protocols | Internal policy docs; NIST AI RMF |\n| Operational failure | High | Medium | Human override policy; Skill portfolio optimization; Phased testing | Human override policy; Audit readiness checklist |\n| Growth targets compromised | Medium | Medium | A/B testing with statistical validity; Gradual public release | Evidence packet template |\n| Research credibility undermined | Medium | Medium | Rigorous experiment design; Audit trail integration | OWASP LLM Top 10; Experiment design protocols |\n| Skill dependency failures | High | Low | API skill portfolio optimization; Fallback mechanisms | MCP architecture; Dependency analysis |\n\n---\n\n### **RESIDUAL RISK**\nDespite comprehensive controls, residual risks remain:\n\n1. **Regulatory Interpretation Risk** (Medium): Evolving regulatory interpretations may require mid-launch c",
-    "delivery_brief_excerpt": "90-Day Launch Plan for a Regulated AI Support Copilot\nScenario: Launching a regulated AI customer-support copilot with revenue pressure, auditability, and research credibility held in one operating model.\nDecision: go (all_quality_gates_passed)\nRequest: Design a 90-day launch plan for a regulated AI customer-support copilot at a fintech, balancing growth targets, auditability, human override policy, and research credibility.\nOperating Thesis:\n- This package turns a risky AI feature launch into a staged operating program with commercial goals, control checkpoints, and evidence for expansion.\nBusiness Summary:\n- Start with a narrow customer-support workflow where response time and auditability matter enough to measure.\n- Use human override, evidence logging, and gated rollout as first-class launch features rather than afterthoughts.\n- Expand only after the pilot proves containment, operator adoption, and measurable service uplift.\n- Evidence base: 9 records and 6 citations were injected into the launch packet.\nPhased Rollout:\n- Phase 1 - Scope And Control Setup: Limit the first release to one support motion with stable documentation and bounded risk., Define override ownership, escalation path, and audit log schema before model exposure grows., understand intent\n- Phase 2 - Pilot And Evidence Collection: Run the copilot in shadow or assisted mode with sampled human review., Track response quality, override frequency, and policy exceptions in one operating dashboard., collect supporting signals\n- Phase 3 - Controlled Expansion: Open the copilot to more queues only after gates pass on quality, safety, and operator adoption., Separate fast rollback levers from growth levers so expansion does not compromise containment., run verification-oriented tools\nExpected Impact:\n- Pilot throughput lift: value index 86.4 and band platinum\n- Audit readiness: release decision go with reason all_quality_gates_passed\n- Operator adoption: completion score 1.00 and tool success 1.00\n- Expansion readiness: stakeholder packet ready for product, operations, and governance review\nCritical Risks:\n- 75% confidence level claimed without supporting quantitative validation\n- Vague 'evidence packet template' referenced without content specification\n- No legal counsel review mentioned in approval process\nEvidence Citations:\n- internal://fintech/human-override-policy\n- internal://fintech/audit-readiness-checklist\n- internal://cross/evidence-packet-template\n- https://owasp.org/www-project-top-10-for-large-language-model-applications/\nExecution Backbone:\n- understand intent\n- collect supporting signals\n- run verification-oriented tools\n- synthesize and evaluate\n- recipe:risk-radar",
+    "final_answer": "[build_timeline]\nTimeline:\n  [T1] [Event A - earliest mention]\n  [T2] [Event B - subsequent development]\n  [T3] [Event C - most recent]\n  Dependencies: T2 depends on T1, T3 depends on T2\n--- (skill: build_timeline)\n\n[synthesize_perspectives]\nPerspective Synthesis:\n  Viewpoint A: [perspective summary]\n  Viewpoint B: [perspective summary]\n  Common Ground: [shared conclusions]\n  Key Disagreements: [where perspectives diverge]\n  Synthesis: [integrated view acknowledging trade-offs]\n--- (skill: synthesize_perspectives)\n\nEnsemble Synthesis:\n- Query: Design an applied research promotion pack for a model-evaluation platform, balancing experiment throughput, reproducibility, benchmark credibility, and production release criteria.\n- Contributing skills: build_timeline, synthesize_perspectives\n- Cross-skill agreement signals: 0\n- Conflicts: no conflicts\n- Consensus strength: strong\n- DISSENT triggered: True\n- Average output quality: 0.93\n- Total execution time: 0.0ms\n- Ensemble confidence: medium\n\nDISSENT Findings:\n- Reasons: weak_output_quality, fragile_downside_case\n- Human review required: False\n\nHarness Execution Notes:\n- security preflight: allow (score=0.00)\n- discovered tools: code_experiment_design, external_resource_hub, api_skill_portfolio_optimizer\n- recipe: research-rig\n- browser_trending_scan: OK (1.1ms)\n- evidence_dossier_builder: OK (2.7ms)\n- external_resource_hub: OK (2.6ms)\n- code_experiment_design: OK (0.0ms)\n- evidence highlights:\n- evidence_dossier_builder: internal://research/experiment-promotion-criteria, internal://cross/evidence-packet-template\n- external_resource_hub: internal://research/experiment-promotion-criteria, internal://cross/evidence-packet-template",
+    "final_answer_excerpt": "[build_timeline]\nTimeline:\n  [T1] [Event A - earliest mention]\n  [T2] [Event B - subsequent development]\n  [T3] [Event C - most recent]\n  Dependencies: T2 depends on T1, T3 depends on T2\n--- (skill: build_timeline)\n\n[synthesize_perspectives]\nPerspective Synthesis:\n  Viewpoint A: [perspective summary]\n  Viewpoint B: [perspective summary]\n  Common Ground: [shared conclusions]\n  Key Disagreements: [where perspectives diverge]\n  Synthesis: [integrated view acknowledging trade-offs]\n--- (skill: synthesize_perspectives)\n\nEnsemble Synthesis:\n- Query: Design an applied research promotion pack for a model-evaluation platform, balancing experiment throughput, reproducibility, benchmark credibility, and production release criteria.\n- Contributing skills: build_timeline, synthesize_perspectives\n- Cross-skill agreement signals: 0\n- Conflicts: no conflicts\n- Consensus strength: strong\n- DISSENT triggered: True\n- Average output quality: 0.93\n- Total execution time: 0.0ms\n- Ensemble confidence: medium\n\nDISSENT Findings:\n- Reasons: weak_output_quality, fragile_downside_case\n- Human review required: False\n\nHarness Execution Notes:\n- security preflight: allow (score=0.00)\n- discovered tools: code_experiment_design, external_resource_hub, api_skill_portfolio_optimizer\n- recipe: research-rig\n- browser_trending_scan: OK (1.1ms)\n- evidence_dossier_builder: OK (2.7ms)\n- external_resource_hub: OK (2.6ms)\n- code_experiment_design: OK (0.0ms)\n- evidence highlights:\n- evidence_dossier_builder: internal://research/experiment-promotion-criteria, internal://cross/evidence-packet-template\n- external_resou",
+    "delivery_brief_excerpt": "Applied Research Delivery Operating Plan\nScenario: Launching an applied research platform that must ship product value while preserving experimental rigor.\nDecision: go (all_quality_gates_passed)\nRequest: Design an applied research promotion pack for a model-evaluation platform, balancing experiment throughput, reproducibility, benchmark credibility, and production release criteria.\nOperating Thesis:\n- The proposal connects experiment design, evidence review, and product rollout into one repeatable system.\nBusiness Summary:\n- Move from isolated experiments to a governed release pipeline.\n- Treat reproducibility and benchmark history as launch requirements.\n- Use staged release criteria so research wins can survive real production scrutiny.\n- Evidence base: 12 records and 6 citations were injected into the launch packet.\nPhased Rollout:\n- Phase 1 - Benchmark Foundation: Stabilize scenario suites and quality gates., Define success metrics before scaling experiments., understand intent\n- Phase 2 - Candidate Promotion: Run contenders through repeatable evaluation., Package evidence for decision review., collect supporting signals\n- Phase 3 - Production Rollout: Ship the winning candidate with monitoring hooks., Track post-launch drift against lab expectations., synthesize and evaluate\nExpected Impact:\n- Experiment throughput: value index 82.5 and band gold\n- Evidence quality: release decision go with reason all_quality_gates_passed\n- Release confidence: completion score 1.00 and tool success 1.00\n- Stakeholder trust: stakeholder packet ready for product, operations, and governance review\nCritical Risks:\n- Research signals look promising but do not translate to production operating constraints.\n- Benchmarks are strong but decision-makers cannot inspect the supporting evidence quickly enough.\n- Experimental branches proliferate faster than governance can review them.\nEvidence Citations:\n- internal://research/experiment-promotion-criteria\n- internal://cross/evidence-packet-template\n- https://modelcontextprotocol.io/specification/2025-06-18/architecture/index\n- https://docs.langchain.com/oss/python/langgraph/overview\nExecution Backbone:\n- understand intent\n- collect supporting signals\n- synthesize and evaluate\n- recipe:research-rig",
     "generation": {
-      "mode": "live_api",
-      "live_agent_enabled": true,
-      "live_agent_configured": true,
-      "live_agent_success": true,
-      "model": "deepseek-chat",
-      "base_url": "https://yunwu.ai/v1",
-      "calls_used": 3,
-      "call_budget": 6,
-      "notes": [
-        "analysis_finish:length",
-        "synthesis_finish:stop",
-        "critique_finish:stop"
-      ],
+      "mode": "baseline",
+      "live_agent_enabled": false,
+      "live_agent_configured": false,
+      "live_agent_success": false,
+      "model": "",
+      "base_url": "",
+      "calls_used": 0,
+      "call_budget": 0,
+      "notes": [],
       "errors": []
     },
     "value_card": {
-      "value_index": 86.36,
-      "band": "platinum",
+      "value_index": 82.53,
+      "band": "gold",
       "dimensions": [
         {
           "name": "reliability",
-          "score": 1.0,
+          "score": 0.84,
           "weight": 0.25,
-          "weighted_score": 0.25,
+          "weighted_score": 0.21,
           "evidence": [
             "tool_success_rate=1.00",
             "completion_score=1.00",
-            "context_reuse_score=1.00",
-            "live_agent_success=1.00"
+            "context_reuse_score=0.00",
+            "live_agent_success=0.00"
           ],
           "visual_hint": "kpi_card"
         },
@@ -2070,11 +1907,11 @@
         },
         {
           "name": "adaptability",
-          "score": 0.7292,
+          "score": 0.75,
           "weight": 0.2,
-          "weighted_score": 0.1458,
+          "weighted_score": 0.15,
           "evidence": [
-            "discovery_utilization=0.75",
+            "discovery_utilization=1.00",
             "recipe_completion=0.80",
             "source_variants=1"
           ],
@@ -2094,39 +1931,39 @@
         },
         {
           "name": "innovation",
-          "score": 0.825,
+          "score": 0.809,
           "weight": 0.15,
-          "weighted_score": 0.1237,
+          "weighted_score": 0.1213,
           "evidence": [
-            "avg_novelty=0.81",
+            "avg_novelty=0.92",
             "unique_tools=4",
-            "cross_type_coverage=3",
-            "live_agent_calls=3.0"
+            "cross_type_coverage=2",
+            "live_agent_calls=0.0"
           ],
           "visual_hint": "novelty_radar"
         }
       ],
-      "narrative": "Value Index 86.4 (platinum) with strengths in reliability, observability. Completed=True, steps=4, tool_calls=4.",
+      "narrative": "Value Index 82.5 (gold) with strengths in observability, reliability. Completed=True, steps=4, tool_calls=4.",
       "visual_hooks": [
-        {
-          "dimension": "reliability",
-          "recommended_visual": "kpi_card",
-          "headline": "Reliability 100%"
-        },
         {
           "dimension": "observability",
           "recommended_visual": "timeline_with_annotations",
           "headline": "Observability 100%"
         },
         {
+          "dimension": "reliability",
+          "recommended_visual": "kpi_card",
+          "headline": "Reliability 84%"
+        },
+        {
           "dimension": "innovation",
           "recommended_visual": "novelty_radar",
-          "headline": "Innovation 82%"
+          "headline": "Innovation 81%"
         },
         {
           "dimension": "adaptability",
           "recommended_visual": "strategy_heatmap",
-          "headline": "Adaptability 73%"
+          "headline": "Adaptability 75%"
         },
         {
           "dimension": "safety",
@@ -2136,18 +1973,18 @@
       ]
     },
     "visual_kpis": {
-      "value_index": 86.36,
+      "value_index": 82.53,
       "tool_calls": 4.0,
       "tool_success_rate": 1.0,
       "completion_score": 1.0,
-      "live_agent_calls": 3.0,
-      "live_agent_success": 1.0,
-      "evidence_records": 9.0,
-      "reliability": 1.0,
+      "live_agent_calls": 0.0,
+      "live_agent_success": 0.0,
+      "evidence_records": 12.0,
+      "reliability": 0.84,
       "observability": 1.0,
-      "adaptability": 0.7292,
+      "adaptability": 0.75,
       "safety": 0.72,
-      "innovation": 0.825
+      "innovation": 0.809
     },
     "first_screen_blueprint": {
       "layout_version": "1.0.0",
@@ -2162,30 +1999,26 @@
       },
       "hero": {
         "title": "Harness Value Lens",
-        "subtitle": "Value Index 86.4 (platinum) with strengths in reliability, observability. Completed=True, steps=4, tool_calls=4.",
+        "subtitle": "Value Index 82.5 (gold) with strengths in observability, reliability. Completed=True, steps=4, tool_calls=4.",
         "badges": [
           {
-            "label": "PLATINUM VALUE",
-            "tone": "success"
+            "label": "GOLD VALUE",
+            "tone": "accent"
           },
           {
             "label": "INNOVATION HIGH",
             "tone": "accent"
-          },
-          {
-            "label": "REAL AGENT ONLINE",
-            "tone": "success"
           }
         ],
         "kpi_cards": [
           {
             "title": "Value Index",
-            "value": 86.36,
+            "value": 82.53,
             "ref": "kpis.value_index"
           },
           {
             "title": "Reliability",
-            "value": 100.0,
+            "value": 84.0,
             "unit": "%",
             "ref": "kpis.reliability"
           },
@@ -2197,13 +2030,13 @@
           },
           {
             "title": "Innovation",
-            "value": 82.5,
+            "value": 80.9,
             "unit": "%",
             "ref": "kpis.innovation"
           },
           {
             "title": "Live Calls",
-            "value": 3.0,
+            "value": 0.0,
             "ref": "kpis.live_agent_calls"
           }
         ]
@@ -2228,12 +2061,6 @@
           "data_ref": "discovery_board"
         },
         {
-          "id": "live-agent",
-          "title": "Real Agent Loop",
-          "component": "agent_loop_board",
-          "data_ref": "live_agent_board"
-        },
-        {
           "id": "security",
           "title": "Safety Decision Lane",
           "component": "security_lane",
@@ -2249,7 +2076,7 @@
       "callouts": [
         {
           "title": "Reliability Signal",
-          "headline": "100% reliable execution",
+          "headline": "84% reliable execution",
           "evidence": "tool_success_rate=1.00, completion=1.00"
         },
         {
@@ -2259,8 +2086,8 @@
         },
         {
           "title": "Innovation Signal",
-          "headline": "82% innovation density",
-          "evidence": "discovery_count=8.0, utilization=0.75"
+          "headline": "81% innovation density",
+          "evidence": "discovery_count=8.0, utilization=1.00"
         }
       ],
       "motion_guidance": [
@@ -2301,7 +2128,7 @@
       "avg_tool_success_rate": 0.8,
       "avg_security_alignment": 1.0,
       "avg_expected_tool_coverage": 1.0,
-      "efficiency_score": 0.7897,
+      "efficiency_score": 0.7896,
       "stability_score": 0.7819,
       "pass_rate": 0.8,
       "composite_score": 0.8325,
@@ -2345,9 +2172,9 @@
           "avg_security_alignment": 1.0
         }
       },
-      "dominated_by_count": 0,
-      "pareto_frontier": true,
-      "dominance_rank": 1
+      "dominated_by_count": 1,
+      "pareto_frontier": false,
+      "dominance_rank": 3
     },
     "leaderboard": [
       {
@@ -2359,7 +2186,7 @@
         "avg_tool_success_rate": 0.8,
         "avg_security_alignment": 1.0,
         "avg_expected_tool_coverage": 1.0,
-        "efficiency_score": 0.7897,
+        "efficiency_score": 0.7896,
         "stability_score": 0.7819,
         "pass_rate": 0.8,
         "composite_score": 0.8325,
@@ -2403,9 +2230,9 @@
             "avg_security_alignment": 1.0
           }
         },
-        "dominated_by_count": 0,
-        "pareto_frontier": true,
-        "dominance_rank": 1
+        "dominated_by_count": 1,
+        "pareto_frontier": false,
+        "dominance_rank": 3
       },
       {
         "candidate": "daily-operator",
@@ -2416,7 +2243,7 @@
         "avg_tool_success_rate": 0.8,
         "avg_security_alignment": 1.0,
         "avg_expected_tool_coverage": 0.7,
-        "efficiency_score": 0.7916,
+        "efficiency_score": 0.7914,
         "stability_score": 0.7857,
         "pass_rate": 0.8,
         "composite_score": 0.7824,
@@ -2462,7 +2289,7 @@
         },
         "dominated_by_count": 0,
         "pareto_frontier": true,
-        "dominance_rank": 2
+        "dominance_rank": 1
       },
       {
         "candidate": "enterprise-ops",
@@ -2473,7 +2300,7 @@
         "avg_tool_success_rate": 0.8,
         "avg_security_alignment": 1.0,
         "avg_expected_tool_coverage": 0.6,
-        "efficiency_score": 0.7879,
+        "efficiency_score": 0.7875,
         "stability_score": 0.7815,
         "pass_rate": 0.8,
         "composite_score": 0.7732,
@@ -2530,7 +2357,7 @@
         "avg_tool_success_rate": 0.8,
         "avg_security_alignment": 1.0,
         "avg_expected_tool_coverage": 0.5667,
-        "efficiency_score": 0.7895,
+        "efficiency_score": 0.79,
         "stability_score": 0.7803,
         "pass_rate": 0.8,
         "composite_score": 0.7703,
@@ -2576,7 +2403,7 @@
         },
         "dominated_by_count": 0,
         "pareto_frontier": true,
-        "dominance_rank": 3
+        "dominance_rank": 2
       },
       {
         "candidate": "research-rig",
@@ -2587,7 +2414,7 @@
         "avg_tool_success_rate": 0.8,
         "avg_security_alignment": 1.0,
         "avg_expected_tool_coverage": 0.5,
-        "efficiency_score": 0.7897,
+        "efficiency_score": 0.7894,
         "stability_score": 0.7828,
         "pass_rate": 0.8,
         "composite_score": 0.7565,
@@ -2631,22 +2458,21 @@
             "avg_security_alignment": 1.0
           }
         },
-        "dominated_by_count": 1,
+        "dominated_by_count": 2,
         "pareto_frontier": false,
         "dominance_rank": 5
       }
     ],
     "competition": {
       "pareto_frontier": [
-        "balanced-auto",
         "daily-operator",
         "creative-studio"
       ],
       "dominance_matrix": [
         {
           "candidate": "balanced-auto",
-          "dominated_by_count": 0,
-          "pareto_frontier": true
+          "dominated_by_count": 1,
+          "pareto_frontier": false
         },
         {
           "candidate": "daily-operator",
@@ -2665,7 +2491,7 @@
         },
         {
           "candidate": "research-rig",
-          "dominated_by_count": 1,
+          "dominated_by_count": 2,
           "pareto_frontier": false
         }
       ]
@@ -2680,14 +2506,14 @@
         "best_value_index": 72.134,
         "release_decision": "go",
         "release_reason": "all_quality_gates_passed",
-        "pareto_frontier_size": 3,
+        "pareto_frontier_size": 2,
         "composite_delta_vs_prev": 0.8325,
         "champion_streak": 1
       },
       "applause_points": [
         "Release gate decision is `go` with reason `all_quality_gates_passed`.",
         "Best candidate `balanced-auto` reached composite score 0.8325.",
-        "Pareto frontier includes 3 candidate(s): balanced-auto, daily-operator, creative-studio.",
+        "Pareto frontier includes 2 candidate(s): daily-operator, creative-studio.",
         "No previous run found; this run establishes initial benchmark history."
       ],
       "trend": {
@@ -2708,8 +2534,8 @@
         "name": "risk_heatmap",
         "provider": "core-labs",
         "version": "0.1.0",
-        "score": 0.2413,
-        "reputation": 0.9294,
+        "score": 0.254,
+        "reputation": 0.9273,
         "trending_score": 1.0,
         "tags": [
           "risk",
@@ -2721,7 +2547,7 @@
         "name": "dependency_mapper",
         "provider": "arch-ai",
         "version": "0.3.0",
-        "score": 0.2105,
+        "score": 0.2047,
         "reputation": 0.8722,
         "trending_score": 0.72,
         "tags": [
@@ -2732,23 +2558,10 @@
         ]
       },
       {
-        "name": "board_brief",
-        "provider": "exec-ai",
-        "version": "1.0.0",
-        "score": 0.2063,
-        "reputation": 0.9587,
-        "trending_score": 1.0,
-        "tags": [
-          "communication",
-          "executive",
-          "brief"
-        ]
-      },
-      {
         "name": "evidence_matrix",
         "provider": "research-hub",
         "version": "0.2.1",
-        "score": 0.189,
+        "score": 0.1979,
         "reputation": 0.7578,
         "trending_score": 0.23,
         "tags": [
@@ -2758,10 +2571,23 @@
         ]
       },
       {
+        "name": "board_brief",
+        "provider": "exec-ai",
+        "version": "1.0.0",
+        "score": 0.1914,
+        "reputation": 0.957,
+        "trending_score": 0.97,
+        "tags": [
+          "communication",
+          "executive",
+          "brief"
+        ]
+      },
+      {
         "name": "sentiment_scanner",
         "provider": "nlp-works",
         "version": "1.2.0",
-        "score": 0.173,
+        "score": 0.1786,
         "reputation": 0.7452,
         "trending_score": 0.16,
         "tags": [
@@ -2775,7 +2601,7 @@
         "name": "scenario_generator",
         "provider": "futures-lab",
         "version": "0.1.0",
-        "score": 0.1556,
+        "score": 0.1607,
         "reputation": 0.671,
         "trending_score": 0.35,
         "tags": [
@@ -2792,7 +2618,7 @@
         "provider": "core-labs",
         "trending_score": 1.0,
         "installs": 120,
-        "uses": 282,
+        "uses": 236,
         "rating": 4.6,
         "tags": [
           "risk",
@@ -2803,9 +2629,9 @@
       {
         "name": "board_brief",
         "provider": "exec-ai",
-        "trending_score": 1.0,
+        "trending_score": 0.97,
         "installs": 180,
-        "uses": 239,
+        "uses": 222,
         "rating": 4.8,
         "tags": [
           "communication",
@@ -2874,9 +2700,9 @@
         "provider": "core-labs",
         "count": 1,
         "installs": 120,
-        "uses": 282,
+        "uses": 236,
         "avg_rating": 4.6,
-        "avg_reputation": 0.929,
+        "avg_reputation": 0.927,
         "skills": [
           "risk_heatmap"
         ]
@@ -2893,17 +2719,6 @@
         ]
       },
       {
-        "provider": "exec-ai",
-        "count": 1,
-        "installs": 180,
-        "uses": 239,
-        "avg_rating": 4.8,
-        "avg_reputation": 0.959,
-        "skills": [
-          "board_brief"
-        ]
-      },
-      {
         "provider": "research-hub",
         "count": 1,
         "installs": 95,
@@ -2912,6 +2727,17 @@
         "avg_reputation": 0.758,
         "skills": [
           "evidence_matrix"
+        ]
+      },
+      {
+        "provider": "exec-ai",
+        "count": 1,
+        "installs": 180,
+        "uses": 222,
+        "avg_rating": 4.8,
+        "avg_reputation": 0.957,
+        "skills": [
+          "board_brief"
         ]
       }
     ]
@@ -2939,149 +2765,146 @@
     }
   },
   "story": {
-    "theme": "Launching a regulated AI customer-support copilot with revenue pressure, auditability, and research credibility held in one operating model.",
-    "release_need": "A fintech launch team needs a 90-day plan that can ship a customer-support copilot, keep a human override path, satisfy model-risk governance, and generate proof strong enough for procurement, compliance, and executive rollout decisions.",
+    "theme": "Launching an applied research platform that must ship product value while preserving experimental rigor.",
+    "release_need": "A research and product organization needs one operating plan that can move experiments into production without losing reproducibility, auditability, or decision quality.",
     "strategy_plan": [
-      "Concentrate the launch on one revenue-linked support workflow instead of a broad AI platform story.",
-      "Prove operator control, auditability, and model-risk containment before scaling volume.",
-      "Translate pilot evidence into a release gate that commercial, risk, and research leaders can all sign."
+      "Align experiment throughput with release evidence rather than running research and product on separate tracks.",
+      "Use one scorecard for value, reproducibility, and safety before promotion to production.",
+      "Package experiment results into operating decisions that non-research stakeholders can use."
     ],
     "execution_recipe": [
       "understand intent",
       "collect supporting signals",
-      "run verification-oriented tools",
       "synthesize and evaluate",
-      "recipe:risk-radar"
+      "recipe:research-rig"
     ],
     "selected_agent": "AnalysisAgent",
     "selected_skills": [
       "build_timeline",
-      "risk_heatmap",
       "synthesize_perspectives"
     ],
     "evidence_bundle": [
       "Release decision: go (all_quality_gates_passed)",
-      "Frontier score: 0.730; bottleneck axis: orchestration_quality",
+      "Frontier score: 0.726; bottleneck axis: orchestration_quality",
       "Routing confidence: 1.000",
-      "Value index: 86.36 (platinum)",
-      "Safety score: 0.72; reliability score: 1.00",
-      "Evidence packet: 9 records / 6 citations",
+      "Value index: 82.53 (gold)",
+      "Safety score: 0.72; reliability score: 0.84",
+      "Evidence packet: 12 records / 6 citations",
       "Interop export: 2 frameworks / 36 skill entries"
     ],
-    "audience_takeaway": "This package turns a risky AI feature launch into a staged operating program with commercial goals, control checkpoints, and evidence for expansion.",
+    "audience_takeaway": "The proposal connects experiment design, evidence review, and product rollout into one repeatable system.",
     "mode": "deep",
-    "query": "Design a 90-day launch plan for a regulated AI customer-support copilot at a fintech, balancing growth targets, auditability, human override policy, and research credibility.",
-    "scenario_name": "regulated_copilot_launch"
+    "query": "Design an applied research promotion pack for a model-evaluation platform, balancing experiment throughput, reproducibility, benchmark credibility, and production release criteria.",
+    "scenario_name": "research_ops_platform"
   },
   "mission": {
-    "name": "strategy_pack",
-    "title": "Strategy Mission Pack",
-    "summary": "Business-facing package for launch, rollout, and investment decisions.",
-    "primary_deliverable": "Launch strategy packet with execution, evidence, and release gate.",
-    "query": "Design a 90-day launch plan for a regulated AI customer-support copilot at a fintech, balancing growth targets, auditability, human override policy, and research credibility.",
+    "name": "research_pack",
+    "title": "Research Mission Pack",
+    "summary": "Research-facing package for study design, evidence review, and promotion decisions.",
+    "primary_deliverable": "Research promotion packet with experiment rationale, evidence, and release criteria.",
+    "query": "Design an applied research promotion pack for a model-evaluation platform, balancing experiment throughput, reproducibility, benchmark credibility, and production release criteria.",
     "target_users": [
-      "product lead",
-      "operations lead",
-      "risk owner",
-      "executive sponsor",
-      "This package turns a risky AI feature launch into a staged operating program with commercial goals, control checkpoints, and evidence for expansion."
+      "research lead",
+      "applied scientist",
+      "review committee",
+      "The proposal connects experiment design, evidence review, and product rollout into one repeatable system."
     ],
     "output_views": [
-      "proposal",
-      "execution plan",
-      "evidence packet",
-      "benchmark positioning"
+      "research brief",
+      "benchmark report",
+      "promotion packet",
+      "risk register"
     ],
     "deliverables": [
       {
-        "title": "Decision Memo",
-        "description": "One-page business recommendation with tradeoffs and target wedge.",
-        "audience": "executive sponsor",
+        "title": "Research Brief",
+        "description": "Hypothesis, operating thesis, and study implications.",
+        "audience": "research committee",
         "status": "ready",
         "evidence_hint": ""
       },
       {
-        "title": "Execution Playbook",
-        "description": "Phased rollout with operators, checkpoints, and fallback path.",
-        "audience": "product and operations",
+        "title": "Benchmark Readout",
+        "description": "Release gate, leaderboard, and evidence trail.",
+        "audience": "lab leadership",
         "status": "ready",
-        "evidence_hint": "5 execution steps"
+        "evidence_hint": "go"
+      },
+      {
+        "title": "Promotion Checklist",
+        "description": "What must pass before the result becomes default.",
+        "audience": "release committee",
+        "status": "ready",
+        "evidence_hint": ""
       },
       {
         "title": "Evidence Packet",
-        "description": "Citations, policy references, and runtime signals behind the claim.",
-        "audience": "risk and procurement",
+        "description": "External and internal citations linked to the claim.",
+        "audience": "reviewers",
         "status": "ready",
-        "evidence_hint": "9 records / 6 citations"
-      },
-      {
-        "title": "Interop Export",
-        "description": "External skill-compatible bundle for downstream ecosystems.",
-        "audience": "platform team",
-        "status": "ready",
-        "evidence_hint": "OpenAI + Anthropic exportable"
+        "evidence_hint": "12 records / 6 citations"
       }
     ],
     "review_questions": [
-      "Is the chosen wedge narrow enough to execute and large enough to matter?",
-      "Which release gate blocks expansion first?",
-      "What evidence is still missing for executive sign-off?",
+      "Is the claimed gain reproducible beyond the current scenario set?",
+      "Which missing evidence would most likely change the promotion decision?",
+      "What post-launch monitoring is required to validate the lab result?",
       "all_quality_gates_passed",
-      "Does the evidence packet support expansion beyond regulated_copilot_launch?",
+      "Does the evidence packet support expansion beyond research_ops_platform?",
       "Is AnalysisAgent still the right owner if constraints tighten?"
     ],
     "execution_tracks": [
       {
-        "name": "Phase 1 - Scope And Control Setup",
-        "focus": "Limit the first release to one support motion with stable documentation and bounded risk., Define override ownership, escalation path, and audit log schema before model exposure grows.",
-        "success": "baseline metrics captured, override policy signed off, audit schema wired into launch logs"
+        "name": "Phase 1 - Benchmark Foundation",
+        "focus": "Stabilize scenario suites and quality gates., Define success metrics before scaling experiments.",
+        "success": "scenario coverage complete, quality gates agreed"
       },
       {
-        "name": "Phase 2 - Pilot And Evidence Collection",
-        "focus": "Run the copilot in shadow or assisted mode with sampled human review., Track response quality, override frequency, and policy exceptions in one operating dashboard.",
-        "success": "quality threshold sustained, override load within staffing plan, evidence packet complete"
+        "name": "Phase 2 - Candidate Promotion",
+        "focus": "Run contenders through repeatable evaluation., Package evidence for decision review.",
+        "success": "promotion packet complete, release committee review ready"
       },
       {
-        "name": "Phase 3 - Controlled Expansion",
-        "focus": "Open the copilot to more queues only after gates pass on quality, safety, and operator adoption., Separate fast rollback levers from growth levers so expansion does not compromise containment.",
-        "success": "gates passed for next queue, rollback tested, expansion case approved"
+        "name": "Phase 3 - Production Rollout",
+        "focus": "Ship the winning candidate with monitoring hooks., Track post-launch drift against lab expectations.",
+        "success": "post-launch drift within threshold, rollback plan validated"
       }
     ],
     "benchmark_targets": [
       {
         "name": "GAIA",
-        "fit": "medium",
-        "strength": "Good match for evidence-backed multi-step reasoning.",
-        "gap": "Needs stronger open-web retrieval verification.",
-        "current_status": "mapped",
-        "current_signal": "release-gated with evidence"
-      },
-      {
-        "name": "TAU-bench",
         "fit": "high",
-        "strength": "Strong fit for enterprise workflow planning and tool orchestration.",
-        "gap": "Needs deeper real connector coverage.",
+        "strength": "Reasoning + retrieval alignment is directly relevant.",
+        "gap": "Needs public benchmark execution history.",
         "current_status": "mapped",
         "current_signal": "release-gated with evidence"
       },
       {
         "name": "TheAgentCompany",
         "fit": "medium",
-        "strength": "Good fit for knowledge-work packaging and operating decisions.",
-        "gap": "Needs richer long-horizon workplace state.",
+        "strength": "Useful for broader knowledge-work research tasks.",
+        "gap": "Needs richer interactive environment state.",
         "current_status": "mapped",
         "current_signal": "release-gated with evidence"
+      },
+      {
+        "name": "WebArena",
+        "fit": "low",
+        "strength": "Only partial overlap through retrieval and action planning.",
+        "gap": "Needs real browser action loops.",
+        "current_status": "mapped",
+        "current_signal": "partially covered"
       }
     ],
     "evidence_snapshot": {
-      "record_count": 9,
+      "record_count": 12,
       "citation_count": 6,
       "citations": [
-        "internal://fintech/human-override-policy",
-        "internal://fintech/audit-readiness-checklist",
+        "internal://research/experiment-promotion-criteria",
         "internal://cross/evidence-packet-template",
-        "https://owasp.org/www-project-top-10-for-large-language-model-applications/",
         "https://modelcontextprotocol.io/specification/2025-06-18/architecture/index",
+        "https://docs.langchain.com/oss/python/langgraph/overview",
+        "internal://fintech/audit-readiness-checklist",
         "https://www.nist.gov/itl/ai-risk-management-framework"
       ]
     },
@@ -3089,13 +2912,13 @@
       "status": "go",
       "reason": "all_quality_gates_passed",
       "selected_candidate": "balanced-auto",
-      "value_index": 86.36
+      "value_index": 82.53
     },
     "honest_boundary": "Current strength is evidence-backed planning, governance framing, and packaged delivery. It is not yet a leaderboard winner on web navigation or code-fix benchmarks because the repo still lacks full browser-actuation loops and code-task specific execution traces."
   },
   "proposal": {
-    "headline": "90-Day Launch Plan for a Regulated AI Support Copilot",
-    "subheadline": "This package turns a risky AI feature launch into a staged operating program with commercial goals, control checkpoints, and evidence for expansion.",
+    "headline": "Applied Research Delivery Operating Plan",
+    "subheadline": "The proposal connects experiment design, evidence review, and product rollout into one repeatable system.",
     "decision": {
       "status": "go",
       "reason": "all_quality_gates_passed",
@@ -3103,119 +2926,115 @@
     },
     "pillars": [
       {
-        "title": "Commercial Wedge",
-        "summary": "Target one support workflow with visible revenue or retention pressure.",
-        "integration": "Connect launch scope to the frontline KPI dashboard and ticket-routing path."
+        "title": "Research Throughput",
+        "summary": "Increase experiment velocity without breaking comparability.",
+        "integration": "Route candidate ideas into benchmark-ready release packets."
       },
       {
-        "title": "Control Surface",
-        "summary": "Human override, audit logging, and policy escalation stay in the request path.",
-        "integration": "Bind policy checks to case routing, override capture, and review queues."
+        "title": "Governed Promotion",
+        "summary": "Promote only the candidates that pass quality and safety gates.",
+        "integration": "Tie release promotion to the same benchmark trail."
       },
       {
-        "title": "Proof Engine",
-        "summary": "Every release claim is backed by pilot evidence, replayable traces, and lab gates.",
-        "integration": "Feed pilot traces and release benchmarks into the same decision packet."
+        "title": "Decision Readout",
+        "summary": "Convert experiment evidence into board-readable launch claims.",
+        "integration": "Attach lab and runtime evidence to the operating memo."
       }
     ],
     "phases": [
       {
-        "phase": "Phase 1 - Scope And Control Setup",
+        "phase": "Phase 1 - Benchmark Foundation",
         "actions": [
-          "Limit the first release to one support motion with stable documentation and bounded risk.",
-          "Define override ownership, escalation path, and audit log schema before model exposure grows.",
+          "Stabilize scenario suites and quality gates.",
+          "Define success metrics before scaling experiments.",
           "understand intent"
         ],
         "success_metrics": [
-          "baseline metrics captured",
-          "override policy signed off",
-          "audit schema wired into launch logs"
+          "scenario coverage complete",
+          "quality gates agreed"
         ]
       },
       {
-        "phase": "Phase 2 - Pilot And Evidence Collection",
+        "phase": "Phase 2 - Candidate Promotion",
         "actions": [
-          "Run the copilot in shadow or assisted mode with sampled human review.",
-          "Track response quality, override frequency, and policy exceptions in one operating dashboard.",
+          "Run contenders through repeatable evaluation.",
+          "Package evidence for decision review.",
           "collect supporting signals"
         ],
         "success_metrics": [
-          "quality threshold sustained",
-          "override load within staffing plan",
-          "evidence packet complete"
+          "promotion packet complete",
+          "release committee review ready"
         ]
       },
       {
-        "phase": "Phase 3 - Controlled Expansion",
+        "phase": "Phase 3 - Production Rollout",
         "actions": [
-          "Open the copilot to more queues only after gates pass on quality, safety, and operator adoption.",
-          "Separate fast rollback levers from growth levers so expansion does not compromise containment.",
-          "run verification-oriented tools"
+          "Ship the winning candidate with monitoring hooks.",
+          "Track post-launch drift against lab expectations.",
+          "synthesize and evaluate"
         ],
         "success_metrics": [
-          "gates passed for next queue",
-          "rollback tested",
-          "expansion case approved"
+          "post-launch drift within threshold",
+          "rollback plan validated"
         ]
       }
     ],
     "expected_impact": [
       {
-        "label": "Pilot throughput lift",
-        "value": "value index 86.4 and band platinum"
+        "label": "Experiment throughput",
+        "value": "value index 82.5 and band gold"
       },
       {
-        "label": "Audit readiness",
+        "label": "Evidence quality",
         "value": "release decision go with reason all_quality_gates_passed"
       },
       {
-        "label": "Operator adoption",
+        "label": "Release confidence",
         "value": "completion score 1.00 and tool success 1.00"
       },
       {
-        "label": "Expansion readiness",
+        "label": "Stakeholder trust",
         "value": "stakeholder packet ready for product, operations, and governance review"
       }
     ],
     "critical_risks": [
-      "75% confidence level claimed without supporting quantitative validation",
-      "Vague 'evidence packet template' referenced without content specification",
-      "No legal counsel review mentioned in approval process"
+      "Research signals look promising but do not translate to production operating constraints.",
+      "Benchmarks are strong but decision-makers cannot inspect the supporting evidence quickly enough.",
+      "Experimental branches proliferate faster than governance can review them."
     ],
     "business_summary": [
-      "Start with a narrow customer-support workflow where response time and auditability matter enough to measure.",
-      "Use human override, evidence logging, and gated rollout as first-class launch features rather than afterthoughts.",
-      "Expand only after the pilot proves containment, operator adoption, and measurable service uplift.",
-      "Evidence base: 9 records and 6 citations were injected into the launch packet."
+      "Move from isolated experiments to a governed release pipeline.",
+      "Treat reproducibility and benchmark history as launch requirements.",
+      "Use staged release criteria so research wins can survive real production scrutiny.",
+      "Evidence base: 12 records and 6 citations were injected into the launch packet."
     ],
     "execution_plan": [
       "understand intent",
       "collect supporting signals",
-      "run verification-oriented tools",
       "synthesize and evaluate",
-      "recipe:risk-radar"
+      "recipe:research-rig"
     ],
     "target_users": [],
     "proof_points": [],
-    "scenario_name": "regulated_copilot_launch"
+    "scenario_name": "research_ops_platform"
   },
   "agent_comparison": {
     "winner": "AnalysisAgent",
     "runner_up": "ResearchAgent",
-    "score_gap": 0.0442,
+    "score_gap": 0.005,
     "rows": [
       {
         "agent": "AnalysisAgent",
-        "score": 0.3288,
-        "reason": "selected (score=0.329, complexity=complex): best domain+intent match",
+        "score": 0.2505,
+        "reason": "selected (score=0.250, complexity=moderate): best domain+intent match",
         "breakdown": {
-          "intent_fit": 0.0833,
+          "intent_fit": 0.0,
           "domain_affinity": 0.125,
           "output_style_fit": 0.0,
           "skill_access_fit": 0.8333,
           "memory_affinity": 0.5,
-          "risk_alignment": 0.9,
-          "context_compression_gain": 0.8,
+          "risk_alignment": 0.7,
+          "context_compression_gain": 0.45,
           "cost_penalty": 0.25,
           "latency_penalty": 0.2,
           "overconfidence_risk": 0.08,
@@ -3224,16 +3043,16 @@
       },
       {
         "agent": "ResearchAgent",
-        "score": 0.2846,
-        "reason": "rejected (score=0.285): lower relevance",
+        "score": 0.2455,
+        "reason": "rejected (score=0.245): lower relevance",
         "breakdown": {
           "intent_fit": 0.0,
           "domain_affinity": 0.125,
-          "output_style_fit": 0.0909,
+          "output_style_fit": 0.1,
           "skill_access_fit": 0.6667,
           "memory_affinity": 0.5,
-          "risk_alignment": 0.9,
-          "context_compression_gain": 0.55,
+          "risk_alignment": 0.7,
+          "context_compression_gain": 0.45,
           "cost_penalty": 0.25,
           "latency_penalty": 0.2,
           "overconfidence_risk": 0.08,
@@ -3242,16 +3061,16 @@
       },
       {
         "agent": "DebugAgent",
-        "score": 0.2725,
-        "reason": "rejected (score=0.273): lower relevance",
+        "score": 0.233,
+        "reason": "rejected (score=0.233): lower relevance",
         "breakdown": {
           "intent_fit": 0.0,
           "domain_affinity": 0.0,
-          "output_style_fit": 0.0455,
+          "output_style_fit": 0.05,
           "skill_access_fit": 0.8333,
           "memory_affinity": 0.5,
-          "risk_alignment": 0.9,
-          "context_compression_gain": 0.55,
+          "risk_alignment": 0.7,
+          "context_compression_gain": 0.45,
           "cost_penalty": 0.25,
           "latency_penalty": 0.2,
           "overconfidence_risk": 0.08,
@@ -3259,17 +3078,17 @@
         }
       },
       {
-        "agent": "PlannerAgent",
-        "score": 0.2176,
-        "reason": "rejected (score=0.218): lower relevance",
+        "agent": "CreativeAgent",
+        "score": 0.2276,
+        "reason": "rejected (score=0.228): lower relevance",
         "breakdown": {
           "intent_fit": 0.0,
-          "domain_affinity": 0.125,
-          "output_style_fit": 0.0455,
+          "domain_affinity": 0.0,
+          "output_style_fit": 0.05,
           "skill_access_fit": 0.6667,
           "memory_affinity": 0.5,
-          "risk_alignment": 0.45,
-          "context_compression_gain": 0.55,
+          "risk_alignment": 0.7,
+          "context_compression_gain": 0.45,
           "cost_penalty": 0.1,
           "latency_penalty": 0.08,
           "overconfidence_risk": 0.08,
@@ -3278,34 +3097,34 @@
       },
       {
         "agent": "AdvisorAgent",
-        "score": 0.2041,
-        "reason": "rejected (score=0.204): lower relevance",
+        "score": 0.2276,
+        "reason": "rejected (score=0.228): lower relevance",
         "breakdown": {
           "intent_fit": 0.0,
-          "domain_affinity": 0.125,
-          "output_style_fit": 0.0455,
+          "domain_affinity": 0.0,
+          "output_style_fit": 0.05,
           "skill_access_fit": 0.6667,
           "memory_affinity": 0.5,
-          "risk_alignment": 0.45,
-          "context_compression_gain": 0.55,
+          "risk_alignment": 0.7,
+          "context_compression_gain": 0.45,
           "cost_penalty": 0.1,
           "latency_penalty": 0.08,
-          "overconfidence_risk": 0.35,
+          "overconfidence_risk": 0.08,
           "anti_pattern_penalty": 0.0
         }
       },
       {
-        "agent": "SummaryAgent",
-        "score": 0.1956,
-        "reason": "rejected (score=0.196): lower relevance",
+        "agent": "PlannerAgent",
+        "score": 0.2276,
+        "reason": "rejected (score=0.228): lower relevance",
         "breakdown": {
           "intent_fit": 0.0,
           "domain_affinity": 0.0,
-          "output_style_fit": 0.0,
-          "skill_access_fit": 0.5,
+          "output_style_fit": 0.05,
+          "skill_access_fit": 0.6667,
           "memory_affinity": 0.5,
-          "risk_alignment": 0.45,
-          "context_compression_gain": 0.8,
+          "risk_alignment": 0.7,
+          "context_compression_gain": 0.45,
           "cost_penalty": 0.1,
           "latency_penalty": 0.08,
           "overconfidence_risk": 0.08,
@@ -3315,21 +3134,21 @@
     ]
   },
   "capability_vector": {
-    "orchestration_quality": 0.5372,
+    "orchestration_quality": 0.5377,
     "research_rigor": 0.8995,
     "ecosystem_leverage": 1.0,
     "governance_safety": 0.818,
-    "product_readiness": 0.9458,
+    "product_readiness": 0.8972,
     "interoperability": 1.0
   },
   "frontier": {
-    "score": 0.7304,
-    "mean": 0.8668,
-    "minimum_axis": 0.5372,
-    "geometric": 0.8488,
+    "score": 0.726,
+    "mean": 0.8587,
+    "minimum_axis": 0.5377,
+    "geometric": 0.8415,
     "bottleneck": {
       "axis": "orchestration_quality",
-      "score": 0.5372
+      "score": 0.5377
     }
   },
   "comparison": {
@@ -3338,7 +3157,7 @@
         "name": "deep-research",
         "description": "Strong research loop and analysis depth; weaker productization and onboarding.",
         "baseline_frontier": 0.5239,
-        "frontier_gap": 0.2065,
+        "frontier_gap": 0.2021,
         "wins": [
           "research_rigor",
           "ecosystem_leverage",
@@ -3350,11 +3169,11 @@
           "orchestration_quality"
         ],
         "deltas": {
-          "orchestration_quality": -0.1828,
+          "orchestration_quality": -0.1823,
           "research_rigor": 0.0195,
           "ecosystem_leverage": 0.6,
           "governance_safety": 0.158,
-          "product_readiness": 0.4658,
+          "product_readiness": 0.4172,
           "interoperability": 0.45
         },
         "advantage_ratio": 0.8333
@@ -3363,7 +3182,7 @@
         "name": "data-flow",
         "description": "Strong flow orchestration and deterministic pipelines; weaker portability.",
         "baseline_frontier": 0.5679,
-        "frontier_gap": 0.1625,
+        "frontier_gap": 0.1581,
         "wins": [
           "research_rigor",
           "ecosystem_leverage",
@@ -3375,11 +3194,11 @@
           "orchestration_quality"
         ],
         "deltas": {
-          "orchestration_quality": -0.2828,
+          "orchestration_quality": -0.2823,
           "research_rigor": 0.3195,
           "ecosystem_leverage": 0.48,
           "governance_safety": 0.198,
-          "product_readiness": 0.2858,
+          "product_readiness": 0.2372,
           "interoperability": 0.5
         },
         "advantage_ratio": 0.8333
@@ -3388,7 +3207,7 @@
         "name": "skill-hub",
         "description": "Strong ecosystem integration; weaker rigorous evaluation gates.",
         "baseline_frontier": 0.5796,
-        "frontier_gap": 0.1508,
+        "frontier_gap": 0.1464,
         "wins": [
           "research_rigor",
           "ecosystem_leverage",
@@ -3400,26 +3219,26 @@
           "orchestration_quality"
         ],
         "deltas": {
-          "orchestration_quality": -0.0828,
+          "orchestration_quality": -0.0823,
           "research_rigor": 0.3995,
           "ecosystem_leverage": 0.1,
           "governance_safety": 0.368,
-          "product_readiness": 0.2258,
+          "product_readiness": 0.1772,
           "interoperability": 0.14
         },
         "advantage_ratio": 0.8333
       }
     ],
     "positioning": {
-      "headline": "Ahead of deep-research by +0.206 frontier score.",
+      "headline": "Ahead of deep-research by +0.202 frontier score.",
       "best_vs_name": "deep-research",
-      "best_vs_gap": 0.2065
+      "best_vs_gap": 0.2021
     }
   },
   "why_use_this": [
-    "Concentrated value axis: ecosystem_leverage=1.00, interoperability=1.00, product_readiness=0.95.",
-    "Frontier score=0.730 with bottleneck `orchestration_quality`.",
-    "Ahead of deep-research by +0.206 frontier score.",
+    "Concentrated value axis: ecosystem_leverage=1.00, interoperability=1.00, research_rigor=0.90.",
+    "Frontier score=0.726 with bottleneck `orchestration_quality`.",
+    "Ahead of deep-research by +0.202 frontier score.",
     "Method edge: robust_frontier routing optimizes expected value and downside case under uncertainty.",
     "Same command emits narrative report, quantitative leaderboard, and OpenAI/Anthropic skill bundle."
   ]

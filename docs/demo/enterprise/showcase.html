@@ -1,0 +1,394 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8" /><meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Agent Harness Studio</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=IBM+Plex+Sans:wght@400;600&display=swap');
+:root{--bg:#07111d;--bg2:#10263b;--ink:#122233;--muted:#587086;--card:rgba(248,251,255,.92);--line:rgba(10,30,48,.12);--accent:#0ea5a6;--accent2:#f59e0b;--accent3:#38bdf8;--shadow:0 18px 50px rgba(4,18,30,.24);}
+*{box-sizing:border-box}body{margin:0;font-family:'IBM Plex Sans','Segoe UI',sans-serif;color:var(--ink);background:
+radial-gradient(circle at 10% 10%, rgba(14,165,166,.30), transparent 28%),
+radial-gradient(circle at 90% 8%, rgba(245,158,11,.20), transparent 24%),
+radial-gradient(circle at 78% 78%, rgba(56,189,248,.18), transparent 28%),
+linear-gradient(135deg,var(--bg),var(--bg2));padding:24px}
+.wrap{max-width:1240px;margin:0 auto;display:grid;gap:14px}
+.hero{position:relative;overflow:hidden;background:linear-gradient(135deg,rgba(7,17,29,.85),rgba(15,53,76,.78));color:#edf7ff;border:1px solid rgba(255,255,255,.12);border-radius:28px;padding:28px;box-shadow:var(--shadow)}
+.hero:before{content:'';position:absolute;inset:auto -60px -80px auto;width:280px;height:280px;background:radial-gradient(circle,rgba(245,158,11,.26),transparent 68%)} 
+.hero-grid{display:grid;grid-template-columns:1.35fr .95fr;gap:18px}@media(max-width:980px){.hero-grid{grid-template-columns:1fr}}
+.hero h1{font-family:'Space Grotesk','IBM Plex Sans',sans-serif;font-size:44px;line-height:1.05;margin:0 0 10px}
+.hero p{color:rgba(237,247,255,.82);margin:6px 0}
+.hero-panel{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);border-radius:20px;padding:16px}
+.card{background:var(--card);border:1px solid rgba(255,255,255,.55);border-radius:20px;padding:18px;box-shadow:var(--shadow)}
+.glass{background:linear-gradient(180deg,rgba(255,255,255,.92),rgba(245,249,252,.84))}
+h2,h3{font-family:'Space Grotesk','IBM Plex Sans',sans-serif;margin:0 0 10px}p{margin:5px 0;color:var(--muted)}ul{margin:8px 0 0;padding-left:18px}li{margin:6px 0}
+.grid{display:grid;grid-template-columns:1.2fr 1fr;gap:14px}@media(max-width:980px){.grid{grid-template-columns:1fr}}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}@media(max-width:980px){.grid3{grid-template-columns:1fr}}
+.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}@media(max-width:980px){.grid4{grid-template-columns:repeat(2,1fr)}}@media(max-width:700px){.grid4{grid-template-columns:1fr}}
+.badge{display:inline-block;padding:6px 11px;border-radius:999px;background:rgba(255,255,255,.10);border:1px solid rgba(255,255,255,.16);font-size:12px;margin:0 8px 8px 0;color:#edf7ff}
+.signal{padding:14px;border-radius:18px;background:linear-gradient(180deg,rgba(255,255,255,.72),rgba(255,255,255,.55));border:1px solid var(--line)}
+.signal .label{font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}.signal .value{font-size:28px;font-family:'Space Grotesk';margin-top:6px}
+.metric{margin:8px 0;padding:8px 10px;border:1px solid var(--line);border-radius:12px;background:rgba(255,255,255,.72)}
+.row{display:flex;justify-content:space-between;gap:12px;font-size:13px;color:var(--muted);margin-bottom:6px}.bar{height:8px;background:rgba(13,36,56,.10);border-radius:999px;overflow:hidden}
+.fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent3),var(--accent2))}
+.phase{position:relative;padding:16px 16px 16px 18px;border-radius:18px;background:linear-gradient(180deg,rgba(255,255,255,.90),rgba(246,250,252,.84));border:1px solid var(--line)}
+.phase:before{content:'';position:absolute;left:0;top:14px;bottom:14px;width:4px;border-radius:999px;background:linear-gradient(180deg,var(--accent),var(--accent2))}
+.kicker{font-size:12px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
+table{width:100%;border-collapse:collapse;font-size:13px}th,td{padding:8px 6px;text-align:left;border-bottom:1px solid var(--line);vertical-align:top}
+pre{margin:0;font-size:12px;white-space:pre-wrap;background:rgba(6,24,38,.96);color:#e7f7ff;border:1px solid rgba(255,255,255,.12);border-radius:14px;padding:12px;max-height:320px;overflow:auto}
+details{border:1px solid var(--line);border-radius:18px;background:rgba(255,255,255,.7);padding:14px}summary{cursor:pointer;font-weight:600}
+.muted{color:var(--muted)}
+</style></head><body><div class="wrap">
+<section class="hero">
+  <div class="hero-grid">
+    <div>
+      <div class="kicker">Mission Pack Demo</div>
+      <h1>Launch strategy packet with execution, evidence, and release gate.</h1>
+      <p><strong>Rolling out an enterprise AI operating layer with stronger governance than point-solution copilots.</strong></p>
+      <p>Business-facing package for launch, rollout, and investment decisions.</p>
+      <div style="margin-top:14px">
+        <span class="badge">Release GO</span>
+        <span class="badge">Generation BASELINE</span>
+        <span class="badge">Model -</span>
+        <span class="badge">Frontier 0.729</span>
+      </div>
+      <div style="margin-top:14px" class="hero-panel">
+        <div class="kicker">Primary View</div>
+        <p><strong>Strategy Mission Pack</strong></p>
+        <p>The system is framed as an operating layer with phased adoption, evidence gates, and ecosystem leverage.</p>
+      </div>
+    </div>
+    <div class="hero-panel">
+      <div class="kicker">Release Decision</div>
+      <div class="signal"><div class="label">Recommendation</div><div class="value">GO</div><p>all_quality_gates_passed</p></div>
+      <div class="grid4" style="margin-top:12px">
+        <div class="signal"><div class="label">Value Index</div><div class="value">80.5</div></div>
+        <div class="signal"><div class="label">Expected</div><div class="value">0.64</div></div>
+        <div class="signal"><div class="label">Worst Case</div><div class="value">0.34</div></div>
+        <div class="signal"><div class="label">Uncertainty</div><div class="value">0.21</div></div>
+      </div>
+    </div>
+  </div>
+</section>
+<section class="card glass">
+  <div class="kicker">Mission Summary</div>
+  <div class="grid">
+    <article>
+      <h2>Primary Deliverable</h2>
+      <p>Launch strategy packet with execution, evidence, and release gate.</p>
+      <ul><li>product lead</li><li>operations lead</li><li>risk owner</li><li>executive sponsor</li><li>The system is framed as an operating layer with phased adoption, evidence gates, and ecosystem leverage.</li></ul>
+    </article>
+    <article>
+      <h2>Output Views</h2>
+      <ul><li>proposal</li><li>execution plan</li><li>evidence packet</li><li>benchmark positioning</li></ul>
+    </article>
+  </div>
+</section>
+<section class="card glass">
+  <div class="kicker">Deliverable Package</div>
+  <div class="grid4"><article class='card glass'><div class='kicker'>executive sponsor</div><h2>Decision Memo</h2><p>One-page business recommendation with tradeoffs and target wedge.</p><p><strong>Status:</strong> ready</p><p><strong>Signal:</strong> </p></article><article class='card glass'><div class='kicker'>product and operations</div><h2>Execution Playbook</h2><p>Phased rollout with operators, checkpoints, and fallback path.</p><p><strong>Status:</strong> ready</p><p><strong>Signal:</strong> 6 execution steps</p></article><article class='card glass'><div class='kicker'>risk and procurement</div><h2>Evidence Packet</h2><p>Citations, policy references, and runtime signals behind the claim.</p><p><strong>Status:</strong> ready</p><p><strong>Signal:</strong> 9 records / 5 citations</p></article><article class='card glass'><div class='kicker'>platform team</div><h2>Interop Export</h2><p>External skill-compatible bundle for downstream ecosystems.</p><p><strong>Status:</strong> ready</p><p><strong>Signal:</strong> OpenAI + Anthropic exportable</p></article></div>
+</section>
+<section class="grid3">
+  <article class='card glass'><div class='kicker'>Workflow Wedge</div><h2>Workflow Wedge</h2><p>Start with one workflow that benefits from orchestration and evidence capture.</p><p><strong>Integration:</strong> Wire the wedge directly into the rollout scorecard.</p></article><article class='card glass'><div class='kicker'>Governance By Default</div><h2>Governance By Default</h2><p>Move security and policy checks into the operating loop.</p><p><strong>Integration:</strong> Attach controls to runtime routing and release decisions.</p></article><article class='card glass'><div class='kicker'>Portable Capability</div><h2>Portable Capability</h2><p>Export skills and evidence so adoption is not trapped in one runtime.</p><p><strong>Integration:</strong> Use interoperability bundles to accelerate adjacent teams.</p></article>
+</section>
+<section class="card glass">
+  <div class="kicker">Three-Phase Rollout</div>
+  <div class="grid3"><article class='phase'><div class='kicker'>Phase 1 - Wedge Selection</div><h3>Phase 1 - Wedge Selection</h3><ul><li>Choose the first workflow and define owner metrics.</li><li>Instrument current-state baseline.</li><li>understand intent</li></ul><p><strong>Success:</strong> workflow owner assigned, baseline captured</p></article><article class='phase'><div class='kicker'>Phase 2 - Controlled Deployment</div><h3>Phase 2 - Controlled Deployment</h3><ul><li>Launch with guardrails and evidence collection.</li><li>Verify deployment and security readiness.</li><li>collect supporting signals</li></ul><p><strong>Success:</strong> deployment checklist passed, evidence bundle generated</p></article><article class='phase'><div class='kicker'>Phase 3 - Expansion Playbook</div><h3>Phase 3 - Expansion Playbook</h3><ul><li>Replicate the pattern to the next workflow.</li><li>Use interop to accelerate ecosystem adoption.</li><li>retrieve alternatives and trade-offs</li></ul><p><strong>Success:</strong> second workflow approved, interop bundle consumed</p></article></div>
+</section>
+<section class="card glass">
+  <div class="kicker">Execution Tracks</div>
+  <div class="grid3"><article class='phase'><div class='kicker'>Phase 1 - Wedge Selection</div><h3>Phase 1 - Wedge Selection</h3><p>Choose the first workflow and define owner metrics., Instrument current-state baseline.</p><p><strong>Success:</strong> workflow owner assigned, baseline captured</p></article><article class='phase'><div class='kicker'>Phase 2 - Controlled Deployment</div><h3>Phase 2 - Controlled Deployment</h3><p>Launch with guardrails and evidence collection., Verify deployment and security readiness.</p><p><strong>Success:</strong> deployment checklist passed, evidence bundle generated</p></article><article class='phase'><div class='kicker'>Phase 3 - Expansion Playbook</div><h3>Phase 3 - Expansion Playbook</h3><p>Replicate the pattern to the next workflow., Use interop to accelerate ecosystem adoption.</p><p><strong>Success:</strong> second workflow approved, interop bundle consumed</p></article></div>
+</section>
+<section class="grid">
+  <article class="card glass">
+    <div class="kicker">Expected Impact</div>
+    <div class='metric'><div class='row'><span>Workflow time saved</span></div><strong>value index 80.5 and band gold</strong></div><div class='metric'><div class='row'><span>Deployment readiness</span></div><strong>release decision go with reason all_quality_gates_passed</strong></div><div class='metric'><div class='row'><span>Governance coverage</span></div><strong>completion score 1.00 and tool success 1.00</strong></div><div class='metric'><div class='row'><span>Ecosystem leverage</span></div><strong>stakeholder packet ready for product, operations, and governance review</strong></div>
+  </article>
+  <article class="card glass">
+    <div class="kicker">Critical Risks To Watch</div>
+    <ul><li>Platform scope expands before any workflow proves value.</li><li>Local pilot success cannot be repeated in the next environment.</li><li>Governance review happens after integration choices are already expensive to reverse.</li></ul>
+  </article>
+</section>
+<section class="card glass">
+  <div class="kicker">Evidence And Scores</div>
+  <div class="grid">
+    <article>
+      <h2>Evidence Bundle</h2>
+      <ul><li>Release decision: go (all_quality_gates_passed)</li><li>Frontier score: 0.729; bottleneck axis: orchestration_quality</li><li>Routing confidence: 1.000</li><li>Value index: 80.51 (gold)</li><li>Safety score: 0.72; reliability score: 0.84</li><li>Evidence packet: 9 records / 5 citations</li><li>Interop export: 2 frameworks / 36 skill entries</li></ul>
+      <h3 style="margin-top:14px">Execution Plan</h3>
+      <ul><li>understand intent</li><li>collect supporting signals</li><li>retrieve alternatives and trade-offs</li><li>inspect code-level capabilities</li><li>synthesize and evaluate</li><li>recipe:enterprise-ops</li></ul>
+    </article>
+    <article>
+      <h2>Capability Vector</h2>
+      <div class='metric'><div class='row'><span>Orchestration Quality</span><strong>54.5%</strong></div><div class='bar'><div class='fill' style='width:54.5%'></div></div></div><div class='metric'><div class='row'><span>Research Rigor</span><strong>90.0%</strong></div><div class='bar'><div class='fill' style='width:90.0%'></div></div></div><div class='metric'><div class='row'><span>Ecosystem Leverage</span><strong>100.0%</strong></div><div class='bar'><div class='fill' style='width:100.0%'></div></div></div><div class='metric'><div class='row'><span>Governance Safety</span><strong>81.8%</strong></div><div class='bar'><div class='fill' style='width:81.8%'></div></div></div><div class='metric'><div class='row'><span>Product Readiness</span><strong>89.3%</strong></div><div class='bar'><div class='fill' style='width:89.3%'></div></div></div><div class='metric'><div class='row'><span>Interoperability</span><strong>100.0%</strong></div><div class='bar'><div class='fill' style='width:100.0%'></div></div></div>
+    </article>
+  </div>
+</section>
+<section class="card glass">
+  <div class="kicker">External Evidence</div>
+  <div class="grid">
+    <article>
+      <h2>Evidence Packet</h2>
+      <p>9 records and 5 citations injected into the run.</p>
+      <ul><li>internal://fintech/audit-readiness-checklist</li><li>internal://enterprise/workflow-rollout-scorecard</li><li>https://www.nist.gov/itl/ai-risk-management-framework</li><li>https://owasp.org/www-project-top-10-for-large-language-model-applications/</li><li>internal://fintech/human-override-policy</li></ul>
+    </article>
+    <article>
+      <h2>Evidence Sources</h2>
+      <table><thead><tr><th>Source</th><th>Records</th></tr></thead><tbody><tr><td>built_in_catalog</td><td>3</td></tr><tr><td>repo_dossiers</td><td>6</td></tr></tbody></table>
+    </article>
+  </div>
+</section>
+<section class="card glass">
+  <div class="kicker">Benchmark Fit</div>
+  <div class="grid">
+    <article>
+      <h2>Relevant Benchmark Families</h2>
+      <table><thead><tr><th>Benchmark</th><th>Fit</th><th>Strength</th><th>Gap</th></tr></thead><tbody><tr><td>GAIA</td><td>medium</td><td>Good match for evidence-backed multi-step reasoning.</td><td>Needs stronger open-web retrieval verification.</td></tr><tr><td>TAU-bench</td><td>high</td><td>Strong fit for enterprise workflow planning and tool orchestration.</td><td>Needs deeper real connector coverage.</td></tr><tr><td>TheAgentCompany</td><td>medium</td><td>Good fit for knowledge-work packaging and operating decisions.</td><td>Needs richer long-horizon workplace state.</td></tr></tbody></table>
+    </article>
+    <article>
+      <h2>Honest Boundary</h2>
+      <p>Current strength is evidence-backed planning, governance framing, and packaged delivery. It is not yet a leaderboard winner on web navigation or code-fix benchmarks because the repo still lacks full browser-actuation loops and code-task specific execution traces.</p>
+      <h3 style="margin-top:14px">Review Questions</h3>
+      <ul><li>Is the chosen wedge narrow enough to execute and large enough to matter?</li><li>Which release gate blocks expansion first?</li><li>What evidence is still missing for executive sign-off?</li><li>all_quality_gates_passed</li><li>Does the evidence packet support expansion beyond enterprise_ai_rollout?</li><li>Is AnalysisAgent still the right owner if constraints tighten?</li></ul>
+    </article>
+  </div>
+</section>
+<section class="grid">
+  <article class="card glass">
+    <div class="kicker">Framework Comparison</div>
+    <h2>Ahead of deep-research by +0.205 frontier score.</h2>
+    <table><thead><tr><th>Archetype</th><th>Gap</th><th>Advantage</th><th>Wins</th></tr></thead><tbody><tr><td>deep-research</td><td>+0.2054</td><td>0.83</td><td>research_rigor, ecosystem_leverage, governance_safety, product_readiness, interoperability</td></tr><tr><td>data-flow</td><td>+0.1614</td><td>0.83</td><td>research_rigor, ecosystem_leverage, governance_safety, product_readiness, interoperability</td></tr><tr><td>skill-hub</td><td>+0.1497</td><td>0.83</td><td>research_rigor, ecosystem_leverage, governance_safety, product_readiness, interoperability</td></tr></tbody></table>
+  </article>
+  <article class="card glass">
+    <div class="kicker">Agent Comparison</div>
+    <h2>AnalysisAgent won the route</h2>
+    <p class="muted">Runner-up: DebugAgent | score gap 0.0162</p>
+    <table><thead><tr><th>Agent</th><th>Score</th><th>Reason</th></tr></thead><tbody><tr><td>AnalysisAgent</td><td>0.2880</td><td>selected (score=0.288, complexity=moderate): best domain+intent match</td></tr><tr><td>DebugAgent</td><td>0.2718</td><td>rejected (score=0.272): lower relevance</td></tr><tr><td>ResearchAgent</td><td>0.2568</td><td>rejected (score=0.257): lower relevance</td></tr><tr><td>SummaryAgent</td><td>0.1956</td><td>rejected (score=0.196): lower relevance</td></tr><tr><td>CreativeAgent</td><td>0.1944</td><td>rejected (score=0.194): lower relevance</td></tr><tr><td>PlannerAgent</td><td>0.1944</td><td>rejected (score=0.194): lower relevance</td></tr></tbody></table>
+  </article>
+</section>
+<section class="card glass">
+  <div class="kicker">Research Lab Leaderboard</div>
+  <table><thead><tr><th>Candidate</th><th>Composite</th><th>Value</th><th>Pass</th><th>Safety</th><th>Pareto</th></tr></thead><tbody>
+  <tr><td>balanced-auto</td><td>0.8325</td><td>72.13</td><td>0.800</td><td>1.000</td><td>no</td></tr><tr><td>daily-operator</td><td>0.7824</td><td>70.69</td><td>0.800</td><td>1.000</td><td>yes</td></tr><tr><td>enterprise-ops</td><td>0.7732</td><td>72.35</td><td>0.800</td><td>1.000</td><td>no</td></tr><tr><td>creative-studio</td><td>0.7703</td><td>72.94</td><td>0.800</td><td>1.000</td><td>yes</td></tr><tr><td>research-rig</td><td>0.7565</td><td>71.86</td><td>0.800</td><td>1.000</td><td>no</td></tr></tbody></table>
+</section>
+<section class="card glass">
+  <div class="kicker">Why This System Wins</div>
+  <ul><li>Concentrated value axis: ecosystem_leverage=1.00, interoperability=1.00, research_rigor=0.90.</li><li>Frontier score=0.729 with bottleneck `orchestration_quality`.</li><li>Ahead of deep-research by +0.205 frontier score.</li><li>Method edge: robust_frontier routing optimizes expected value and downside case under uncertainty.</li><li>Same command emits narrative report, quantitative leaderboard, and OpenAI/Anthropic skill bundle.</li></ul>
+</section>
+<section class="card glass">
+  <div class="kicker">Appendix</div>
+  <details>
+    <summary>Generated Business Brief</summary>
+    <pre>Enterprise AI Operating Layer Rollout Plan
+Scenario: Rolling out an enterprise AI operating layer with stronger governance than point-solution copilots.
+Decision: go (all_quality_gates_passed)
+Request: Design a 120-day enterprise AI operating layer rollout for finance, procurement, and internal workflow automation, balancing security review, shared tooling adoption, deployment readiness, and measurable productivity gains.
+Operating Thesis:
+- The system is framed as an operating layer with phased adoption, evidence gates, and ecosystem leverage.
+Business Summary:
+- Build around a single high-friction workflow first.
+- Keep release gates visible to security and operators from day one.
+- Turn ecosystem compatibility into a deployment multiplier.
+- Evidence base: 9 records and 5 citations were injected into the launch packet.
+Phased Rollout:
+- Phase 1 - Wedge Selection: Choose the first workflow and define owner metrics., Instrument current-state baseline., understand intent
+- Phase 2 - Controlled Deployment: Launch with guardrails and evidence collection., Verify deployment and security readiness., collect supporting signals
+- Phase 3 - Expansion Playbook: Replicate the pattern to the next workflow., Use interop to accelerate ecosystem adoption., retrieve alternatives and trade-offs
+Expected Impact:
+- Workflow time saved: value index 80.5 and band gold
+- Deployment readiness: release decision go with reason all_quality_gates_passed
+- Governance coverage: completion score 1.00 and tool success 1.00
+- Ecosystem leverage: stakeholder packet ready for product, operations, and governance review
+Critical Risks:
+- Platform scope expands before any workflow proves value.
+- Local pilot success cannot be repeated in the next environment.
+- Governance review happens after integration choices are already expensive to reverse.
+Evidence Citations:
+- internal://fintech/audit-readiness-checklist
+- internal://enterprise/workflow-rollout-scorecard
+- https://www.nist.gov/itl/ai-risk-management-framework
+- https://owasp.org/www-project-top-10-for-large-language-model-applications/
+Execution Backbone:
+- understand intent
+- collect supporting signals
+- retrieve alternatives and trade-offs
+- inspect code-level capabilities
+- synthesize and evaluate
+- recipe:enterprise-ops</pre>
+  </details>
+  <details style="margin-top:12px">
+    <summary>Mission Pack JSON</summary>
+    <pre>{
+  &quot;name&quot;: &quot;strategy_pack&quot;,
+  &quot;title&quot;: &quot;Strategy Mission Pack&quot;,
+  &quot;summary&quot;: &quot;Business-facing package for launch, rollout, and investment decisions.&quot;,
+  &quot;primary_deliverable&quot;: &quot;Launch strategy packet with execution, evidence, and release gate.&quot;,
+  &quot;query&quot;: &quot;Design a 120-day enterprise AI operating layer rollout for finance, procurement, and internal workflow automation, balancing security review, shared tooling adoption, deployment readiness, and measurable productivity gains.&quot;,
+  &quot;target_users&quot;: [
+    &quot;product lead&quot;,
+    &quot;operations lead&quot;,
+    &quot;risk owner&quot;,
+    &quot;executive sponsor&quot;,
+    &quot;The system is framed as an operating layer with phased adoption, evidence gates, and ecosystem leverage.&quot;
+  ],
+  &quot;output_views&quot;: [
+    &quot;proposal&quot;,
+    &quot;execution plan&quot;,
+    &quot;evidence packet&quot;,
+    &quot;benchmark positioning&quot;
+  ],
+  &quot;deliverables&quot;: [
+    {
+      &quot;title&quot;: &quot;Decision Memo&quot;,
+      &quot;description&quot;: &quot;One-page business recommendation with tradeoffs and target wedge.&quot;,
+      &quot;audience&quot;: &quot;executive sponsor&quot;,
+      &quot;status&quot;: &quot;ready&quot;,
+      &quot;evidence_hint&quot;: &quot;&quot;
+    },
+    {
+      &quot;title&quot;: &quot;Execution Playbook&quot;,
+      &quot;description&quot;: &quot;Phased rollout with operators, checkpoints, and fallback path.&quot;,
+      &quot;audience&quot;: &quot;product and operations&quot;,
+      &quot;status&quot;: &quot;ready&quot;,
+      &quot;evidence_hint&quot;: &quot;6 execution steps&quot;
+    },
+    {
+      &quot;title&quot;: &quot;Evidence Packet&quot;,
+      &quot;description&quot;: &quot;Citations, policy references, and runtime signals behind the claim.&quot;,
+      &quot;audience&quot;: &quot;risk and procurement&quot;,
+      &quot;status&quot;: &quot;ready&quot;,
+      &quot;evidence_hint&quot;: &quot;9 records / 5 citations&quot;
+    },
+    {
+      &quot;title&quot;: &quot;Interop Export&quot;,
+      &quot;description&quot;: &quot;External skill-compatible bundle for downstream ecosystems.&quot;,
+      &quot;audience&quot;: &quot;platform team&quot;,
+      &quot;status&quot;: &quot;ready&quot;,
+      &quot;evidence_hint&quot;: &quot;OpenAI + Anthropic exportable&quot;
+    }
+  ],
+  &quot;review_questions&quot;: [
+    &quot;Is the chosen wedge narrow enough to execute and large enough to matter?&quot;,
+    &quot;Which release gate blocks expansion first?&quot;,
+    &quot;What evidence is still missing for executive sign-off?&quot;,
+    &quot;all_quality_gates_passed&quot;,
+    &quot;Does the evidence packet support expansion beyond enterprise_ai_rollout?&quot;,
+    &quot;Is AnalysisAgent still the right owner if constraints tighten?&quot;
+  ],
+  &quot;execution_tracks&quot;: [
+    {
+      &quot;name&quot;: &quot;Phase 1 - Wedge Selection&quot;,
+      &quot;focus&quot;: &quot;Choose the first workflow and define owner metrics., Instrument current-state baseline.&quot;,
+      &quot;success&quot;: &quot;workflow owner assigned, baseline captured&quot;
+    },
+    {
+      &quot;name&quot;: &quot;Phase 2 - Controlled Deployment&quot;,
+      &quot;focus&quot;: &quot;Launch with guardrails and evidence collection., Verify deployment and security readiness.&quot;,
+      &quot;success&quot;: &quot;deployment checklist passed, evidence bundle generated&quot;
+    },
+    {
+      &quot;name&quot;: &quot;Phase 3 - Expansion Playbook&quot;,
+      &quot;focus&quot;: &quot;Replicate the pattern to the next workflow., Use interop to accelerate ecosystem adoption.&quot;,
+      &quot;success&quot;: &quot;second workflow approved, interop bundle consumed&quot;
+    }
+  ],
+  &quot;benchmark_targets&quot;: [
+    {
+      &quot;name&quot;: &quot;GAIA&quot;,
+      &quot;fit&quot;: &quot;medium&quot;,
+      &quot;strength&quot;: &quot;Good match for evidence-backed multi-step reasoning.&quot;,
+      &quot;gap&quot;: &quot;Needs stronger open-web retrieval verification.&quot;,
+      &quot;current_status&quot;: &quot;mapped&quot;,
+      &quot;current_signal&quot;: &quot;release-gated with evidence&quot;
+    },
+    {
+      &quot;name&quot;: &quot;TAU-bench&quot;,
+      &quot;fit&quot;: &quot;high&quot;,
+      &quot;strength&quot;: &quot;Strong fit for enterprise workflow planning and tool orchestration.&quot;,
+      &quot;gap&quot;: &quot;Needs deeper real connector coverage.&quot;,
+      &quot;current_status&quot;: &quot;mapped&quot;,
+      &quot;current_signal&quot;: &quot;release-gated with evidence&quot;
+    },
+    {
+      &quot;name&quot;: &quot;TheAgentCompany&quot;,
+      &quot;fit&quot;: &quot;medium&quot;,
+      &quot;strength&quot;: &quot;Good fit for knowledge-work packaging and operating decisions.&quot;,
+      &quot;gap&quot;: &quot;Needs richer long-horizon workplace state.&quot;,
+      &quot;current_status&quot;: &quot;mapped&quot;,
+      &quot;current_signal&quot;: &quot;release-gated with evidence&quot;
+    }
+  ],
+  &quot;evidence_snapshot&quot;: {
+    &quot;record_count&quot;: 9,
+    &quot;citation_count&quot;: 5,
+    &quot;citations&quot;: [
+      &quot;internal://fintech/audit-readiness-checklist&quot;,
+      &quot;internal://enterprise/workflow-rollout-scorecard&quot;,
+      &quot;https://www.nist.gov/itl/ai-risk-management-framework&quot;,
+      &quot;https://owasp.org/www-project-top-10-for-large-language-model-applications/&quot;,
+      &quot;internal://fintech/human-override-policy&quot;
+    ]
+  },
+  &quot;decision&quot;: {
+    &quot;status&quot;: &quot;go&quot;,
+    &quot;reason&quot;: &quot;all_quality_gates_passed&quot;,
+    &quot;selected_candidate&quot;: &quot;balanced-auto&quot;,
+    &quot;value_index&quot;: 80.51
+  },
+  &quot;honest_boundary&quot;: &quot;Current strength is evidence-backed planning, governance framing, and packaged delivery. It is not yet a leaderboard winner on web navigation or code-fix benchmarks because the repo still lacks full browser-actuation loops and code-task specific execution traces.&quot;
+}</pre>
+  </details>
+  <details style="margin-top:12px">
+    <summary>Internal Skills And Tools</summary>
+    <table><thead><tr><th>Type</th><th>Name</th><th>Purpose</th></tr></thead><tbody><tr><td>Skill</td><td>compare_options</td><td>compare options</td></tr><tr><td>Skill</td><td>build_timeline</td><td>timeline planning</td></tr><tr><td>Discovery</td><td>api_skill_portfolio_optimizer</td><td>intent_match:comparison, mode_boost:deep_analysis</td></tr><tr><td>Discovery</td><td>code_experiment_design</td><td>intent_match:design, token_overlap:design</td></tr><tr><td>Discovery</td><td>external_resource_hub</td><td>intent_match:design</td></tr><tr><td>Discovery</td><td>code_router_blueprint</td><td>intent_match:design, token_overlap:design</td></tr><tr><td>Discovery</td><td>evidence_dossier_builder</td><td>intent_match:comparison</td></tr><tr><td>Executed Tool</td><td>memory_context_digest</td><td>memory context layer</td></tr><tr><td>Executed Tool</td><td>evidence_dossier_builder</td><td>evidence dossier builder</td></tr><tr><td>Executed Tool</td><td>policy_risk_matrix</td><td>policy risk matrix</td></tr><tr><td>Executed Tool</td><td>api_skill_portfolio_optimizer</td><td>portfolio optimizer</td></tr></tbody></table>
+  </details>
+  <details style="margin-top:12px">
+    <summary>Trace Snapshot</summary>
+    <pre>Routing Sankey
+========================================
+Query
+  -&gt; Agent Candidates: AnalysisAgent, DebugAgent, ResearchAgent, SummaryAgent, CreativeAgent, PlannerAgent
+  -&gt; Selected Agent: AnalysisAgent
+  -&gt; Skill Candidates: identify_risks, compare_options, extract_facts, detect_anomalies, validate_claims, build_timeline, executive_summary, generate_recommendations
+  -&gt; Selected Skills: compare_options, build_timeline
+
+Skill Matrix
+========================================
+identify_risks &lt;-&gt; executive_summary: 0.810
+identify_risks &lt;-&gt; risk_heatmap: 0.810
+identify_risks &lt;-&gt; scenario_generator: 0.810
+compare_options &lt;-&gt; extract_facts: 0.810
+compare_options &lt;-&gt; generate_recommendations: 0.810
+extract_facts &lt;-&gt; validate_claims: 0.810
+extract_facts &lt;-&gt; build_timeline: 0.810
+extract_facts &lt;-&gt; executive_summary: 0.810
+extract_facts &lt;-&gt; synthesize_perspectives: 0.810
+extract_facts &lt;-&gt; dependency_mapper: 0.810
+detect_anomalies &lt;-&gt; validate_claims: 0.810
+build_timeline &lt;-&gt; prioritize_items: 0.810
+
+Execution Gantt
+========================================
+compare_options        |####################|     0.0ms
+build_timeline         |##################--|     0.0ms
+
+Confidence Breakdown
+========================================
+routing_confidence              1.00  |####################|
+portfolio_confidence            0.33  |#######-------------|
+evidence_confidence             1.00  |####################|
+consistency_confidence          1.00  |####################|
+verification_confidence         1.00  |####################|
+calibration_adjusted_confidence  1.00  |####################|
+robustness_confidence           0.27  |#####---------------|
+
+Robustness Profile
+========================================
+enabled: True
+risk_aversion: 0.700
+reliability_floor: 0.640
+uncertainty_tolerance: 0.440
+robust_expected_utility: 0.638
+robust_worst_case_utility: 0.340
+avg_uncertainty: 0.210</pre>
+  </details>
+</section>
+<section class="card"><small>Generated at 2026-04-02T17:14:56.333380+00:00 | schema agent-harness-studio/v1 | query Design a 120-day enterprise AI operating layer rollout for finance, procurement, and internal workflow automation, balancing security review, shared tooling adoption, deployment readiness, and measurable productivity gains.</small></section>
+</div></body></html>

@@ -8,7 +8,7 @@
 </p>
 
 <p align="center">
-  <b>Agent Harness is an agent operating system for routing, executing, benchmarking, and shipping agent work as a product-grade bundle.</b>
+  <b>Agent Harness turns one request into a mission pack: deliverable, execution plan, evidence packet, benchmark posture, and ecosystem-portable bundle.</b>
 </p>
 
 <p align="center">
@@ -22,7 +22,7 @@
   <img src="https://img.shields.io/badge/Python-3.11%2B-3776AB?logo=python&logoColor=white"/>
   <img src="https://img.shields.io/badge/LangGraph-Orchestrated-0B1020"/>
   <img src="https://img.shields.io/badge/CLI-Typer-111827"/>
-  <img src="https://img.shields.io/badge/Tests-81%20passed-16a34a"/>
+  <img src="https://img.shields.io/badge/Tests-86%20passed-16a34a"/>
 </p>
 
 ---
@@ -33,14 +33,14 @@
 
 Agent Harness is built around one thesis:
 
-`User Request -> Agent Router -> Agent Council -> Skill Router -> Harness Engine -> Evidence / Lab / Showcase / Interop`
+`User Request -> Agent Router -> Agent Council -> Skill Router -> Harness Engine -> Mission Pack -> Evidence / Lab / Showcase / Interop`
 
 This repo is not just a router and not just a skill list. It is a system that:
 
 1. chooses better
 2. executes with evidence
-3. benchmarks before release
-4. packages outputs for launch
+3. benchmarks against the right benchmark family before release
+4. packages outputs as reusable mission artifacts
 5. exports capabilities into external ecosystems
 
 ---
@@ -53,16 +53,27 @@ Most projects in this space are strong in only one direction:
 - research-first systems are deep, weak at packaging
 - skill hubs are broad, weak at governance and release gating
 
-Agent Harness is designed to unify all three.
+Agent Harness is designed to unify all three with one output contract.
 
 It turns one request into:
 
 - a routing decision
 - an execution plan
-- an evidence bundle
-- a research-lab benchmark result
+- an evidence packet
+- a mission-specific deliverable set
+- a benchmark-fit statement with honest gaps
 - a launch-ready showcase
 - an interop export for outside ecosystems
+
+The important difference is that the front-end object is no longer "a proposal page".
+It is a `mission pack`, which can represent:
+
+- strategy rollout
+- research promotion packet
+- operations playbook
+- implementation spec
+
+That keeps the framework general instead of drifting into a one-demo toy.
 
 ---
 
@@ -77,24 +88,25 @@ Browse all tracked snapshots: [docs/demo/README.md](./docs/demo/README.md)
 <table>
   <tr>
     <td width="33%" valign="top">
-      <h3>Live Proposal Showcase</h3>
+      <h3>Live Fintech Launch</h3>
       <p><img src="./docs/demo/live/showcase.png" alt="Live showcase screenshot"></p>
-      <p>Front-page launch style HTML with proposal summary, rollout phases, evidence, framework comparison, and agent comparison.</p>
+      <p>Real API-backed regulated copilot launch pack with mission summary, evidence packet, benchmark fit, and release recommendation.</p>
       <p><a href="./docs/demo/live/showcase.html">Open HTML Snapshot</a></p>
       <p><a href="./docs/demo/live/press-brief.md">Open Press Brief</a></p>
     </td>
     <td width="33%" valign="top">
-      <h3>Baseline Launch Bundle</h3>
-      <p><img src="./docs/demo/press/showcase.png" alt="Baseline showcase screenshot"></p>
-      <p>Deterministic showcase bundle for reproducible demos and CI-safe product packaging.</p>
-      <p><a href="./docs/demo/press/showcase.html">Open HTML Snapshot</a></p>
-      <p><a href="./docs/demo/press/showcase.json">Open JSON</a></p>
+      <h3>Enterprise Rollout Pack</h3>
+      <p><img src="./docs/demo/enterprise/showcase.png" alt="Enterprise rollout screenshot"></p>
+      <p>Enterprise operating-layer rollout for internal workflows, showing deployment posture, governance gates, and portable capability export.</p>
+      <p><a href="./docs/demo/enterprise/showcase.html">Open HTML Snapshot</a></p>
+      <p><a href="./docs/demo/enterprise/press-brief.md">Open Press Brief</a></p>
     </td>
     <td width="33%" valign="top">
-      <h3>Ecosystem Export</h3>
-      <p><img src="./docs/demo/live/showcase.png" alt="Interop-backed launch artifact"></p>
-      <p>Interop bundle for OpenAI and Anthropic skill ecosystems, generated from the same project capabilities.</p>
-      <p><a href="./docs/demo/live/interop_bundle.json">Open Interop Bundle</a></p>
+      <h3>Research Promotion Pack</h3>
+      <p><img src="./docs/demo/research/showcase.png" alt="Research mission screenshot"></p>
+      <p>Applied research promotion artifact with benchmark readout, evidence-backed release packet, and promotion checklist.</p>
+      <p><a href="./docs/demo/research/showcase.html">Open HTML Snapshot</a></p>
+      <p><a href="./docs/demo/research/press-brief.md">Open Press Brief</a></p>
     </td>
   </tr>
 </table>
@@ -103,20 +115,14 @@ Browse all tracked snapshots: [docs/demo/README.md](./docs/demo/README.md)
 
 The current showcase UI is intentionally front-loaded with:
 
-1. proposal summary
-2. phased rollout
-3. evidence bundle
-4. framework comparison
-5. agent comparison
-6. appendix for internal skills and tools
+1. mission summary
+2. deliverable package
+3. phased rollout and execution tracks
+4. evidence bundle and external citations
+5. benchmark fit and honest capability boundary
+6. framework comparison, agent comparison, and appendix
 
-One recent route comparison surfaced:
-
-- Winner: `PlannerAgent`
-- Runner-up: `ResearchAgent`
-- Score gap: `0.0019`
-
-That is important because it shows the framework does not hide near-tie decisions. It exposes them.
+The live fintech snapshot is generated with real model calls. The enterprise and research snapshots are deterministic, so they can be shipped in-repo and stay reproducible.
 
 ---
 
@@ -131,6 +137,7 @@ That is important because it shows the framework does not hide near-tie decision
         <li>top-k or relevance-only skill choice</li>
         <li>answer generation without formal evidence</li>
         <li>ad hoc evaluation</li>
+        <li>one-off demos tied to a single output type</li>
         <li>closed internal ecosystem</li>
       </ul>
     </td>
@@ -139,6 +146,7 @@ That is important because it shows the framework does not hide near-tie decision
       <ul>
         <li>agent council and collaboration-aware routing</li>
         <li><code>robust_frontier</code> skill selection under uncertainty</li>
+        <li>mission-pack output contract across strategy, research, ops, and implementation tasks</li>
         <li>trace, response contract, and routing analysis</li>
         <li><code>harness-lab</code> leaderboard and release gate</li>
         <li>studio showcase and OpenAI / Anthropic interop export</li>
@@ -156,7 +164,7 @@ That is important because it shows the framework does not hide near-tie decision
 | Execution | tool loop | harness engine with tools, memory, guardrails, live API |
 | Evidence | partial logs | trace + response contract + routing analysis |
 | Evaluation | ad hoc | `harness-lab` with leaderboard + release gate |
-| Product output | answer only | HTML + JSON + press brief + manifest |
+| Product output | answer only | mission pack + HTML + JSON + press brief + manifest |
 | Ecosystem | closed | OpenAI / Anthropic skill interop |
 
 ---
@@ -206,10 +214,10 @@ This is why the repo is not just a router.
 
 ### Studio Layer
 
-`studio-showcase` turns runtime evidence into a launch-style visual product:
+`studio-showcase` turns runtime evidence into a mission-pack product:
 
-- proposal page
-- benchmark comparison
+- strategy / research / ops / implementation views
+- benchmark comparison and fit statement
 - agent comparison
 - generated result excerpt
 - appendix for internal skills and tools
@@ -252,6 +260,31 @@ The main exposed objectives are:
 
 ---
 
+## Benchmark Posture
+
+Agent Harness is benchmark-aware, not benchmark-maxed-out yet.
+
+Benchmark families this framework is built to map against:
+
+- `GAIA`: evidence-backed multi-step reasoning and retrieval-heavy tasks
+- `TAU-bench` and `TheAgentCompany`: enterprise workflow execution and knowledge-work packaging
+- `WebArena`: browser-actuated long-horizon workflows
+- `SWE-bench Verified`: code issue resolution with implementation proof
+
+Current strength:
+
+- turning reasoning into auditable mission artifacts
+- combining evidence, governance, and release gating in one pipeline
+- packaging the same capability set for external ecosystems
+
+Current honest gap:
+
+- no claim of state-of-the-art on browser benchmarks yet
+- no claim of state-of-the-art on code-fix benchmarks yet
+- real enterprise connectors still need to grow beyond skeleton providers
+
+---
+
 ## Quick Start
 
 ### 1. Install
@@ -278,13 +311,20 @@ python -m app.main harness "Prepare a governance-ready execution memo" --mode ba
 python -m app.main studio-showcase "Design a flagship AI operating plan" --mode deep --lab-preset broad --tag flagship
 ```
 
-### 5. Generate a launch demo
+### 5. Inspect generalized mission profiles
+
+```bash
+python -m app.main mission-profiles
+python -m app.main proposal-scenarios
+```
+
+### 6. Generate a launch demo
 
 ```bash
 python -m app.main launch-demo --output-dir reports/launch_demo --tag press
 ```
 
-### 6. Generate a live API launch demo
+### 7. Generate a live API launch demo
 
 Set environment variables first:
 
@@ -300,20 +340,20 @@ Then run:
 python -m app.main launch-demo --output-dir reports/live_launch_demo --tag live --live-agent --max-model-calls 6
 ```
 
-### 7. Run research lab
+### 8. Run research lab
 
 ```bash
 python -m app.main harness-lab --preset broad --repeats 2 --output reports/lab.json
 python -m app.main harness-lab-product --preset broad --repeats 2 --tag release --output-dir reports
 ```
 
-### 8. Export interop bundles
+### 9. Export interop bundles
 
 ```bash
 python -m app.main skills-interop-export --framework all --output-dir reports/skills_interop
 ```
 
-### 9. Run tests
+### 10. Run tests
 
 ```bash
 pytest -q
@@ -330,6 +370,7 @@ pytest -q
 | harness execution | `python -m app.main harness "<query>"` |
 | value card | `python -m app.main harness-value "<query>"` |
 | visual payload | `python -m app.main harness-visual "<query>" --output reports/visual.json` |
+| mission profiles | `python -m app.main mission-profiles` |
 | showcase | `python -m app.main studio-showcase "<query>" --tag demo` |
 | launch demo | `python -m app.main launch-demo --tag press` |
 | research lab | `python -m app.main harness-lab --preset broad` |
@@ -373,9 +414,10 @@ pytest -q
 - `robust_frontier` routing is implemented
 - agent council routing is implemented
 - harness engine and research lab are implemented
+- mission-pack output contract is implemented
 - studio showcase and launch demo are implemented
 - OpenAI / Anthropic interop export is implemented
-- current local test result: `81 passed`
+- current local test result: `86 passed`
 
 ---
 
@@ -388,8 +430,8 @@ python -m app.main studio-showcase "Design a flagship AI operating plan" --mode 
 
 Then open:
 
-- `docs/demo/press/showcase.html`
 - `docs/demo/live/showcase.html`
-- `docs/demo/live/press-brief.md`
+- `docs/demo/enterprise/showcase.html`
+- `docs/demo/research/showcase.html`
 
 These communicate the project better than a plain CLI trace.

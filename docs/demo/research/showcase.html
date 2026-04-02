@@ -1,0 +1,392 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8" /><meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Agent Harness Studio</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=IBM+Plex+Sans:wght@400;600&display=swap');
+:root{--bg:#07111d;--bg2:#10263b;--ink:#122233;--muted:#587086;--card:rgba(248,251,255,.92);--line:rgba(10,30,48,.12);--accent:#0ea5a6;--accent2:#f59e0b;--accent3:#38bdf8;--shadow:0 18px 50px rgba(4,18,30,.24);}
+*{box-sizing:border-box}body{margin:0;font-family:'IBM Plex Sans','Segoe UI',sans-serif;color:var(--ink);background:
+radial-gradient(circle at 10% 10%, rgba(14,165,166,.30), transparent 28%),
+radial-gradient(circle at 90% 8%, rgba(245,158,11,.20), transparent 24%),
+radial-gradient(circle at 78% 78%, rgba(56,189,248,.18), transparent 28%),
+linear-gradient(135deg,var(--bg),var(--bg2));padding:24px}
+.wrap{max-width:1240px;margin:0 auto;display:grid;gap:14px}
+.hero{position:relative;overflow:hidden;background:linear-gradient(135deg,rgba(7,17,29,.85),rgba(15,53,76,.78));color:#edf7ff;border:1px solid rgba(255,255,255,.12);border-radius:28px;padding:28px;box-shadow:var(--shadow)}
+.hero:before{content:'';position:absolute;inset:auto -60px -80px auto;width:280px;height:280px;background:radial-gradient(circle,rgba(245,158,11,.26),transparent 68%)} 
+.hero-grid{display:grid;grid-template-columns:1.35fr .95fr;gap:18px}@media(max-width:980px){.hero-grid{grid-template-columns:1fr}}
+.hero h1{font-family:'Space Grotesk','IBM Plex Sans',sans-serif;font-size:44px;line-height:1.05;margin:0 0 10px}
+.hero p{color:rgba(237,247,255,.82);margin:6px 0}
+.hero-panel{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);border-radius:20px;padding:16px}
+.card{background:var(--card);border:1px solid rgba(255,255,255,.55);border-radius:20px;padding:18px;box-shadow:var(--shadow)}
+.glass{background:linear-gradient(180deg,rgba(255,255,255,.92),rgba(245,249,252,.84))}
+h2,h3{font-family:'Space Grotesk','IBM Plex Sans',sans-serif;margin:0 0 10px}p{margin:5px 0;color:var(--muted)}ul{margin:8px 0 0;padding-left:18px}li{margin:6px 0}
+.grid{display:grid;grid-template-columns:1.2fr 1fr;gap:14px}@media(max-width:980px){.grid{grid-template-columns:1fr}}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}@media(max-width:980px){.grid3{grid-template-columns:1fr}}
+.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}@media(max-width:980px){.grid4{grid-template-columns:repeat(2,1fr)}}@media(max-width:700px){.grid4{grid-template-columns:1fr}}
+.badge{display:inline-block;padding:6px 11px;border-radius:999px;background:rgba(255,255,255,.10);border:1px solid rgba(255,255,255,.16);font-size:12px;margin:0 8px 8px 0;color:#edf7ff}
+.signal{padding:14px;border-radius:18px;background:linear-gradient(180deg,rgba(255,255,255,.72),rgba(255,255,255,.55));border:1px solid var(--line)}
+.signal .label{font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}.signal .value{font-size:28px;font-family:'Space Grotesk';margin-top:6px}
+.metric{margin:8px 0;padding:8px 10px;border:1px solid var(--line);border-radius:12px;background:rgba(255,255,255,.72)}
+.row{display:flex;justify-content:space-between;gap:12px;font-size:13px;color:var(--muted);margin-bottom:6px}.bar{height:8px;background:rgba(13,36,56,.10);border-radius:999px;overflow:hidden}
+.fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent3),var(--accent2))}
+.phase{position:relative;padding:16px 16px 16px 18px;border-radius:18px;background:linear-gradient(180deg,rgba(255,255,255,.90),rgba(246,250,252,.84));border:1px solid var(--line)}
+.phase:before{content:'';position:absolute;left:0;top:14px;bottom:14px;width:4px;border-radius:999px;background:linear-gradient(180deg,var(--accent),var(--accent2))}
+.kicker{font-size:12px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
+table{width:100%;border-collapse:collapse;font-size:13px}th,td{padding:8px 6px;text-align:left;border-bottom:1px solid var(--line);vertical-align:top}
+pre{margin:0;font-size:12px;white-space:pre-wrap;background:rgba(6,24,38,.96);color:#e7f7ff;border:1px solid rgba(255,255,255,.12);border-radius:14px;padding:12px;max-height:320px;overflow:auto}
+details{border:1px solid var(--line);border-radius:18px;background:rgba(255,255,255,.7);padding:14px}summary{cursor:pointer;font-weight:600}
+.muted{color:var(--muted)}
+</style></head><body><div class="wrap">
+<section class="hero">
+  <div class="hero-grid">
+    <div>
+      <div class="kicker">Mission Pack Demo</div>
+      <h1>Research promotion packet with experiment rationale, evidence, and release criteria.</h1>
+      <p><strong>Launching an applied research platform that must ship product value while preserving experimental rigor.</strong></p>
+      <p>Research-facing package for study design, evidence review, and promotion decisions.</p>
+      <div style="margin-top:14px">
+        <span class="badge">Release GO</span>
+        <span class="badge">Generation BASELINE</span>
+        <span class="badge">Model -</span>
+        <span class="badge">Frontier 0.726</span>
+      </div>
+      <div style="margin-top:14px" class="hero-panel">
+        <div class="kicker">Primary View</div>
+        <p><strong>Research Mission Pack</strong></p>
+        <p>The proposal connects experiment design, evidence review, and product rollout into one repeatable system.</p>
+      </div>
+    </div>
+    <div class="hero-panel">
+      <div class="kicker">Release Decision</div>
+      <div class="signal"><div class="label">Recommendation</div><div class="value">GO</div><p>all_quality_gates_passed</p></div>
+      <div class="grid4" style="margin-top:12px">
+        <div class="signal"><div class="label">Value Index</div><div class="value">82.5</div></div>
+        <div class="signal"><div class="label">Expected</div><div class="value">0.62</div></div>
+        <div class="signal"><div class="label">Worst Case</div><div class="value">0.33</div></div>
+        <div class="signal"><div class="label">Uncertainty</div><div class="value">0.21</div></div>
+      </div>
+    </div>
+  </div>
+</section>
+<section class="card glass">
+  <div class="kicker">Mission Summary</div>
+  <div class="grid">
+    <article>
+      <h2>Primary Deliverable</h2>
+      <p>Research promotion packet with experiment rationale, evidence, and release criteria.</p>
+      <ul><li>research lead</li><li>applied scientist</li><li>review committee</li><li>The proposal connects experiment design, evidence review, and product rollout into one repeatable system.</li></ul>
+    </article>
+    <article>
+      <h2>Output Views</h2>
+      <ul><li>research brief</li><li>benchmark report</li><li>promotion packet</li><li>risk register</li></ul>
+    </article>
+  </div>
+</section>
+<section class="card glass">
+  <div class="kicker">Deliverable Package</div>
+  <div class="grid4"><article class='card glass'><div class='kicker'>research committee</div><h2>Research Brief</h2><p>Hypothesis, operating thesis, and study implications.</p><p><strong>Status:</strong> ready</p><p><strong>Signal:</strong> </p></article><article class='card glass'><div class='kicker'>lab leadership</div><h2>Benchmark Readout</h2><p>Release gate, leaderboard, and evidence trail.</p><p><strong>Status:</strong> ready</p><p><strong>Signal:</strong> go</p></article><article class='card glass'><div class='kicker'>release committee</div><h2>Promotion Checklist</h2><p>What must pass before the result becomes default.</p><p><strong>Status:</strong> ready</p><p><strong>Signal:</strong> </p></article><article class='card glass'><div class='kicker'>reviewers</div><h2>Evidence Packet</h2><p>External and internal citations linked to the claim.</p><p><strong>Status:</strong> ready</p><p><strong>Signal:</strong> 12 records / 6 citations</p></article></div>
+</section>
+<section class="grid3">
+  <article class='card glass'><div class='kicker'>Research Throughput</div><h2>Research Throughput</h2><p>Increase experiment velocity without breaking comparability.</p><p><strong>Integration:</strong> Route candidate ideas into benchmark-ready release packets.</p></article><article class='card glass'><div class='kicker'>Governed Promotion</div><h2>Governed Promotion</h2><p>Promote only the candidates that pass quality and safety gates.</p><p><strong>Integration:</strong> Tie release promotion to the same benchmark trail.</p></article><article class='card glass'><div class='kicker'>Decision Readout</div><h2>Decision Readout</h2><p>Convert experiment evidence into board-readable launch claims.</p><p><strong>Integration:</strong> Attach lab and runtime evidence to the operating memo.</p></article>
+</section>
+<section class="card glass">
+  <div class="kicker">Three-Phase Rollout</div>
+  <div class="grid3"><article class='phase'><div class='kicker'>Phase 1 - Benchmark Foundation</div><h3>Phase 1 - Benchmark Foundation</h3><ul><li>Stabilize scenario suites and quality gates.</li><li>Define success metrics before scaling experiments.</li><li>understand intent</li></ul><p><strong>Success:</strong> scenario coverage complete, quality gates agreed</p></article><article class='phase'><div class='kicker'>Phase 2 - Candidate Promotion</div><h3>Phase 2 - Candidate Promotion</h3><ul><li>Run contenders through repeatable evaluation.</li><li>Package evidence for decision review.</li><li>collect supporting signals</li></ul><p><strong>Success:</strong> promotion packet complete, release committee review ready</p></article><article class='phase'><div class='kicker'>Phase 3 - Production Rollout</div><h3>Phase 3 - Production Rollout</h3><ul><li>Ship the winning candidate with monitoring hooks.</li><li>Track post-launch drift against lab expectations.</li><li>synthesize and evaluate</li></ul><p><strong>Success:</strong> post-launch drift within threshold, rollback plan validated</p></article></div>
+</section>
+<section class="card glass">
+  <div class="kicker">Execution Tracks</div>
+  <div class="grid3"><article class='phase'><div class='kicker'>Phase 1 - Benchmark Foundation</div><h3>Phase 1 - Benchmark Foundation</h3><p>Stabilize scenario suites and quality gates., Define success metrics before scaling experiments.</p><p><strong>Success:</strong> scenario coverage complete, quality gates agreed</p></article><article class='phase'><div class='kicker'>Phase 2 - Candidate Promotion</div><h3>Phase 2 - Candidate Promotion</h3><p>Run contenders through repeatable evaluation., Package evidence for decision review.</p><p><strong>Success:</strong> promotion packet complete, release committee review ready</p></article><article class='phase'><div class='kicker'>Phase 3 - Production Rollout</div><h3>Phase 3 - Production Rollout</h3><p>Ship the winning candidate with monitoring hooks., Track post-launch drift against lab expectations.</p><p><strong>Success:</strong> post-launch drift within threshold, rollback plan validated</p></article></div>
+</section>
+<section class="grid">
+  <article class="card glass">
+    <div class="kicker">Expected Impact</div>
+    <div class='metric'><div class='row'><span>Experiment throughput</span></div><strong>value index 82.5 and band gold</strong></div><div class='metric'><div class='row'><span>Evidence quality</span></div><strong>release decision go with reason all_quality_gates_passed</strong></div><div class='metric'><div class='row'><span>Release confidence</span></div><strong>completion score 1.00 and tool success 1.00</strong></div><div class='metric'><div class='row'><span>Stakeholder trust</span></div><strong>stakeholder packet ready for product, operations, and governance review</strong></div>
+  </article>
+  <article class="card glass">
+    <div class="kicker">Critical Risks To Watch</div>
+    <ul><li>Research signals look promising but do not translate to production operating constraints.</li><li>Benchmarks are strong but decision-makers cannot inspect the supporting evidence quickly enough.</li><li>Experimental branches proliferate faster than governance can review them.</li></ul>
+  </article>
+</section>
+<section class="card glass">
+  <div class="kicker">Evidence And Scores</div>
+  <div class="grid">
+    <article>
+      <h2>Evidence Bundle</h2>
+      <ul><li>Release decision: go (all_quality_gates_passed)</li><li>Frontier score: 0.726; bottleneck axis: orchestration_quality</li><li>Routing confidence: 1.000</li><li>Value index: 82.53 (gold)</li><li>Safety score: 0.72; reliability score: 0.84</li><li>Evidence packet: 12 records / 6 citations</li><li>Interop export: 2 frameworks / 36 skill entries</li></ul>
+      <h3 style="margin-top:14px">Execution Plan</h3>
+      <ul><li>understand intent</li><li>collect supporting signals</li><li>synthesize and evaluate</li><li>recipe:research-rig</li></ul>
+    </article>
+    <article>
+      <h2>Capability Vector</h2>
+      <div class='metric'><div class='row'><span>Orchestration Quality</span><strong>53.8%</strong></div><div class='bar'><div class='fill' style='width:53.8%'></div></div></div><div class='metric'><div class='row'><span>Research Rigor</span><strong>90.0%</strong></div><div class='bar'><div class='fill' style='width:90.0%'></div></div></div><div class='metric'><div class='row'><span>Ecosystem Leverage</span><strong>100.0%</strong></div><div class='bar'><div class='fill' style='width:100.0%'></div></div></div><div class='metric'><div class='row'><span>Governance Safety</span><strong>81.8%</strong></div><div class='bar'><div class='fill' style='width:81.8%'></div></div></div><div class='metric'><div class='row'><span>Product Readiness</span><strong>89.7%</strong></div><div class='bar'><div class='fill' style='width:89.7%'></div></div></div><div class='metric'><div class='row'><span>Interoperability</span><strong>100.0%</strong></div><div class='bar'><div class='fill' style='width:100.0%'></div></div></div>
+    </article>
+  </div>
+</section>
+<section class="card glass">
+  <div class="kicker">External Evidence</div>
+  <div class="grid">
+    <article>
+      <h2>Evidence Packet</h2>
+      <p>12 records and 6 citations injected into the run.</p>
+      <ul><li>internal://research/experiment-promotion-criteria</li><li>internal://cross/evidence-packet-template</li><li>https://modelcontextprotocol.io/specification/2025-06-18/architecture/index</li><li>https://docs.langchain.com/oss/python/langgraph/overview</li><li>internal://fintech/audit-readiness-checklist</li><li>https://www.nist.gov/itl/ai-risk-management-framework</li></ul>
+    </article>
+    <article>
+      <h2>Evidence Sources</h2>
+      <table><thead><tr><th>Source</th><th>Records</th></tr></thead><tbody><tr><td>built_in_catalog</td><td>6</td></tr><tr><td>repo_dossiers</td><td>6</td></tr></tbody></table>
+    </article>
+  </div>
+</section>
+<section class="card glass">
+  <div class="kicker">Benchmark Fit</div>
+  <div class="grid">
+    <article>
+      <h2>Relevant Benchmark Families</h2>
+      <table><thead><tr><th>Benchmark</th><th>Fit</th><th>Strength</th><th>Gap</th></tr></thead><tbody><tr><td>GAIA</td><td>high</td><td>Reasoning + retrieval alignment is directly relevant.</td><td>Needs public benchmark execution history.</td></tr><tr><td>TheAgentCompany</td><td>medium</td><td>Useful for broader knowledge-work research tasks.</td><td>Needs richer interactive environment state.</td></tr><tr><td>WebArena</td><td>low</td><td>Only partial overlap through retrieval and action planning.</td><td>Needs real browser action loops.</td></tr></tbody></table>
+    </article>
+    <article>
+      <h2>Honest Boundary</h2>
+      <p>Current strength is evidence-backed planning, governance framing, and packaged delivery. It is not yet a leaderboard winner on web navigation or code-fix benchmarks because the repo still lacks full browser-actuation loops and code-task specific execution traces.</p>
+      <h3 style="margin-top:14px">Review Questions</h3>
+      <ul><li>Is the claimed gain reproducible beyond the current scenario set?</li><li>Which missing evidence would most likely change the promotion decision?</li><li>What post-launch monitoring is required to validate the lab result?</li><li>all_quality_gates_passed</li><li>Does the evidence packet support expansion beyond research_ops_platform?</li><li>Is AnalysisAgent still the right owner if constraints tighten?</li></ul>
+    </article>
+  </div>
+</section>
+<section class="grid">
+  <article class="card glass">
+    <div class="kicker">Framework Comparison</div>
+    <h2>Ahead of deep-research by +0.202 frontier score.</h2>
+    <table><thead><tr><th>Archetype</th><th>Gap</th><th>Advantage</th><th>Wins</th></tr></thead><tbody><tr><td>deep-research</td><td>+0.2021</td><td>0.83</td><td>research_rigor, ecosystem_leverage, governance_safety, product_readiness, interoperability</td></tr><tr><td>data-flow</td><td>+0.1581</td><td>0.83</td><td>research_rigor, ecosystem_leverage, governance_safety, product_readiness, interoperability</td></tr><tr><td>skill-hub</td><td>+0.1464</td><td>0.83</td><td>research_rigor, ecosystem_leverage, governance_safety, product_readiness, interoperability</td></tr></tbody></table>
+  </article>
+  <article class="card glass">
+    <div class="kicker">Agent Comparison</div>
+    <h2>AnalysisAgent won the route</h2>
+    <p class="muted">Runner-up: ResearchAgent | score gap 0.0050</p>
+    <table><thead><tr><th>Agent</th><th>Score</th><th>Reason</th></tr></thead><tbody><tr><td>AnalysisAgent</td><td>0.2505</td><td>selected (score=0.250, complexity=moderate): best domain+intent match</td></tr><tr><td>ResearchAgent</td><td>0.2455</td><td>rejected (score=0.245): lower relevance</td></tr><tr><td>DebugAgent</td><td>0.2330</td><td>rejected (score=0.233): lower relevance</td></tr><tr><td>CreativeAgent</td><td>0.2276</td><td>rejected (score=0.228): lower relevance</td></tr><tr><td>AdvisorAgent</td><td>0.2276</td><td>rejected (score=0.228): lower relevance</td></tr><tr><td>PlannerAgent</td><td>0.2276</td><td>rejected (score=0.228): lower relevance</td></tr></tbody></table>
+  </article>
+</section>
+<section class="card glass">
+  <div class="kicker">Research Lab Leaderboard</div>
+  <table><thead><tr><th>Candidate</th><th>Composite</th><th>Value</th><th>Pass</th><th>Safety</th><th>Pareto</th></tr></thead><tbody>
+  <tr><td>balanced-auto</td><td>0.8325</td><td>72.13</td><td>0.800</td><td>1.000</td><td>no</td></tr><tr><td>daily-operator</td><td>0.7824</td><td>70.69</td><td>0.800</td><td>1.000</td><td>yes</td></tr><tr><td>enterprise-ops</td><td>0.7732</td><td>72.35</td><td>0.800</td><td>1.000</td><td>no</td></tr><tr><td>creative-studio</td><td>0.7703</td><td>72.94</td><td>0.800</td><td>1.000</td><td>yes</td></tr><tr><td>research-rig</td><td>0.7565</td><td>71.86</td><td>0.800</td><td>1.000</td><td>no</td></tr></tbody></table>
+</section>
+<section class="card glass">
+  <div class="kicker">Why This System Wins</div>
+  <ul><li>Concentrated value axis: ecosystem_leverage=1.00, interoperability=1.00, research_rigor=0.90.</li><li>Frontier score=0.726 with bottleneck `orchestration_quality`.</li><li>Ahead of deep-research by +0.202 frontier score.</li><li>Method edge: robust_frontier routing optimizes expected value and downside case under uncertainty.</li><li>Same command emits narrative report, quantitative leaderboard, and OpenAI/Anthropic skill bundle.</li></ul>
+</section>
+<section class="card glass">
+  <div class="kicker">Appendix</div>
+  <details>
+    <summary>Generated Business Brief</summary>
+    <pre>Applied Research Delivery Operating Plan
+Scenario: Launching an applied research platform that must ship product value while preserving experimental rigor.
+Decision: go (all_quality_gates_passed)
+Request: Design an applied research promotion pack for a model-evaluation platform, balancing experiment throughput, reproducibility, benchmark credibility, and production release criteria.
+Operating Thesis:
+- The proposal connects experiment design, evidence review, and product rollout into one repeatable system.
+Business Summary:
+- Move from isolated experiments to a governed release pipeline.
+- Treat reproducibility and benchmark history as launch requirements.
+- Use staged release criteria so research wins can survive real production scrutiny.
+- Evidence base: 12 records and 6 citations were injected into the launch packet.
+Phased Rollout:
+- Phase 1 - Benchmark Foundation: Stabilize scenario suites and quality gates., Define success metrics before scaling experiments., understand intent
+- Phase 2 - Candidate Promotion: Run contenders through repeatable evaluation., Package evidence for decision review., collect supporting signals
+- Phase 3 - Production Rollout: Ship the winning candidate with monitoring hooks., Track post-launch drift against lab expectations., synthesize and evaluate
+Expected Impact:
+- Experiment throughput: value index 82.5 and band gold
+- Evidence quality: release decision go with reason all_quality_gates_passed
+- Release confidence: completion score 1.00 and tool success 1.00
+- Stakeholder trust: stakeholder packet ready for product, operations, and governance review
+Critical Risks:
+- Research signals look promising but do not translate to production operating constraints.
+- Benchmarks are strong but decision-makers cannot inspect the supporting evidence quickly enough.
+- Experimental branches proliferate faster than governance can review them.
+Evidence Citations:
+- internal://research/experiment-promotion-criteria
+- internal://cross/evidence-packet-template
+- https://modelcontextprotocol.io/specification/2025-06-18/architecture/index
+- https://docs.langchain.com/oss/python/langgraph/overview
+Execution Backbone:
+- understand intent
+- collect supporting signals
+- synthesize and evaluate
+- recipe:research-rig</pre>
+  </details>
+  <details style="margin-top:12px">
+    <summary>Mission Pack JSON</summary>
+    <pre>{
+  &quot;name&quot;: &quot;research_pack&quot;,
+  &quot;title&quot;: &quot;Research Mission Pack&quot;,
+  &quot;summary&quot;: &quot;Research-facing package for study design, evidence review, and promotion decisions.&quot;,
+  &quot;primary_deliverable&quot;: &quot;Research promotion packet with experiment rationale, evidence, and release criteria.&quot;,
+  &quot;query&quot;: &quot;Design an applied research promotion pack for a model-evaluation platform, balancing experiment throughput, reproducibility, benchmark credibility, and production release criteria.&quot;,
+  &quot;target_users&quot;: [
+    &quot;research lead&quot;,
+    &quot;applied scientist&quot;,
+    &quot;review committee&quot;,
+    &quot;The proposal connects experiment design, evidence review, and product rollout into one repeatable system.&quot;
+  ],
+  &quot;output_views&quot;: [
+    &quot;research brief&quot;,
+    &quot;benchmark report&quot;,
+    &quot;promotion packet&quot;,
+    &quot;risk register&quot;
+  ],
+  &quot;deliverables&quot;: [
+    {
+      &quot;title&quot;: &quot;Research Brief&quot;,
+      &quot;description&quot;: &quot;Hypothesis, operating thesis, and study implications.&quot;,
+      &quot;audience&quot;: &quot;research committee&quot;,
+      &quot;status&quot;: &quot;ready&quot;,
+      &quot;evidence_hint&quot;: &quot;&quot;
+    },
+    {
+      &quot;title&quot;: &quot;Benchmark Readout&quot;,
+      &quot;description&quot;: &quot;Release gate, leaderboard, and evidence trail.&quot;,
+      &quot;audience&quot;: &quot;lab leadership&quot;,
+      &quot;status&quot;: &quot;ready&quot;,
+      &quot;evidence_hint&quot;: &quot;go&quot;
+    },
+    {
+      &quot;title&quot;: &quot;Promotion Checklist&quot;,
+      &quot;description&quot;: &quot;What must pass before the result becomes default.&quot;,
+      &quot;audience&quot;: &quot;release committee&quot;,
+      &quot;status&quot;: &quot;ready&quot;,
+      &quot;evidence_hint&quot;: &quot;&quot;
+    },
+    {
+      &quot;title&quot;: &quot;Evidence Packet&quot;,
+      &quot;description&quot;: &quot;External and internal citations linked to the claim.&quot;,
+      &quot;audience&quot;: &quot;reviewers&quot;,
+      &quot;status&quot;: &quot;ready&quot;,
+      &quot;evidence_hint&quot;: &quot;12 records / 6 citations&quot;
+    }
+  ],
+  &quot;review_questions&quot;: [
+    &quot;Is the claimed gain reproducible beyond the current scenario set?&quot;,
+    &quot;Which missing evidence would most likely change the promotion decision?&quot;,
+    &quot;What post-launch monitoring is required to validate the lab result?&quot;,
+    &quot;all_quality_gates_passed&quot;,
+    &quot;Does the evidence packet support expansion beyond research_ops_platform?&quot;,
+    &quot;Is AnalysisAgent still the right owner if constraints tighten?&quot;
+  ],
+  &quot;execution_tracks&quot;: [
+    {
+      &quot;name&quot;: &quot;Phase 1 - Benchmark Foundation&quot;,
+      &quot;focus&quot;: &quot;Stabilize scenario suites and quality gates., Define success metrics before scaling experiments.&quot;,
+      &quot;success&quot;: &quot;scenario coverage complete, quality gates agreed&quot;
+    },
+    {
+      &quot;name&quot;: &quot;Phase 2 - Candidate Promotion&quot;,
+      &quot;focus&quot;: &quot;Run contenders through repeatable evaluation., Package evidence for decision review.&quot;,
+      &quot;success&quot;: &quot;promotion packet complete, release committee review ready&quot;
+    },
+    {
+      &quot;name&quot;: &quot;Phase 3 - Production Rollout&quot;,
+      &quot;focus&quot;: &quot;Ship the winning candidate with monitoring hooks., Track post-launch drift against lab expectations.&quot;,
+      &quot;success&quot;: &quot;post-launch drift within threshold, rollback plan validated&quot;
+    }
+  ],
+  &quot;benchmark_targets&quot;: [
+    {
+      &quot;name&quot;: &quot;GAIA&quot;,
+      &quot;fit&quot;: &quot;high&quot;,
+      &quot;strength&quot;: &quot;Reasoning + retrieval alignment is directly relevant.&quot;,
+      &quot;gap&quot;: &quot;Needs public benchmark execution history.&quot;,
+      &quot;current_status&quot;: &quot;mapped&quot;,
+      &quot;current_signal&quot;: &quot;release-gated with evidence&quot;
+    },
+    {
+      &quot;name&quot;: &quot;TheAgentCompany&quot;,
+      &quot;fit&quot;: &quot;medium&quot;,
+      &quot;strength&quot;: &quot;Useful for broader knowledge-work research tasks.&quot;,
+      &quot;gap&quot;: &quot;Needs richer interactive environment state.&quot;,
+      &quot;current_status&quot;: &quot;mapped&quot;,
+      &quot;current_signal&quot;: &quot;release-gated with evidence&quot;
+    },
+    {
+      &quot;name&quot;: &quot;WebArena&quot;,
+      &quot;fit&quot;: &quot;low&quot;,
+      &quot;strength&quot;: &quot;Only partial overlap through retrieval and action planning.&quot;,
+      &quot;gap&quot;: &quot;Needs real browser action loops.&quot;,
+      &quot;current_status&quot;: &quot;mapped&quot;,
+      &quot;current_signal&quot;: &quot;partially covered&quot;
+    }
+  ],
+  &quot;evidence_snapshot&quot;: {
+    &quot;record_count&quot;: 12,
+    &quot;citation_count&quot;: 6,
+    &quot;citations&quot;: [
+      &quot;internal://research/experiment-promotion-criteria&quot;,
+      &quot;internal://cross/evidence-packet-template&quot;,
+      &quot;https://modelcontextprotocol.io/specification/2025-06-18/architecture/index&quot;,
+      &quot;https://docs.langchain.com/oss/python/langgraph/overview&quot;,
+      &quot;internal://fintech/audit-readiness-checklist&quot;,
+      &quot;https://www.nist.gov/itl/ai-risk-management-framework&quot;
+    ]
+  },
+  &quot;decision&quot;: {
+    &quot;status&quot;: &quot;go&quot;,
+    &quot;reason&quot;: &quot;all_quality_gates_passed&quot;,
+    &quot;selected_candidate&quot;: &quot;balanced-auto&quot;,
+    &quot;value_index&quot;: 82.53
+  },
+  &quot;honest_boundary&quot;: &quot;Current strength is evidence-backed planning, governance framing, and packaged delivery. It is not yet a leaderboard winner on web navigation or code-fix benchmarks because the repo still lacks full browser-actuation loops and code-task specific execution traces.&quot;
+}</pre>
+  </details>
+  <details style="margin-top:12px">
+    <summary>Internal Skills And Tools</summary>
+    <table><thead><tr><th>Type</th><th>Name</th><th>Purpose</th></tr></thead><tbody><tr><td>Skill</td><td>build_timeline</td><td>timeline planning</td></tr><tr><td>Skill</td><td>synthesize_perspectives</td><td>perspective synthesis</td></tr><tr><td>Discovery</td><td>code_experiment_design</td><td>intent_match:research,design, token_overlap:benchmark,design,evaluation,research</td></tr><tr><td>Discovery</td><td>external_resource_hub</td><td>intent_match:research,design</td></tr><tr><td>Discovery</td><td>api_skill_portfolio_optimizer</td><td>intent_match:research, mode_boost:deep_analysis</td></tr><tr><td>Discovery</td><td>code_router_blueprint</td><td>intent_match:design, token_overlap:design</td></tr><tr><td>Discovery</td><td>evidence_dossier_builder</td><td>intent_match:research</td></tr><tr><td>Executed Tool</td><td>browser_trending_scan</td><td>browser trending scan</td></tr><tr><td>Executed Tool</td><td>evidence_dossier_builder</td><td>evidence dossier builder</td></tr><tr><td>Executed Tool</td><td>external_resource_hub</td><td>external validation hub</td></tr><tr><td>Executed Tool</td><td>code_experiment_design</td><td>experiment design workbench</td></tr></tbody></table>
+  </details>
+  <details style="margin-top:12px">
+    <summary>Trace Snapshot</summary>
+    <pre>Routing Sankey
+========================================
+Query
+  -&gt; Agent Candidates: AnalysisAgent, ResearchAgent, DebugAgent, CreativeAgent, AdvisorAgent, PlannerAgent
+  -&gt; Selected Agent: AnalysisAgent
+  -&gt; Skill Candidates: identify_risks, compare_options, extract_facts, detect_anomalies, validate_claims, synthesize_perspectives, build_timeline, executive_summary
+  -&gt; Selected Skills: build_timeline, synthesize_perspectives
+
+Skill Matrix
+========================================
+identify_risks &lt;-&gt; executive_summary: 0.810
+identify_risks &lt;-&gt; risk_heatmap: 0.810
+identify_risks &lt;-&gt; scenario_generator: 0.810
+compare_options &lt;-&gt; extract_facts: 0.810
+compare_options &lt;-&gt; generate_recommendations: 0.810
+extract_facts &lt;-&gt; validate_claims: 0.810
+extract_facts &lt;-&gt; synthesize_perspectives: 0.810
+extract_facts &lt;-&gt; build_timeline: 0.810
+extract_facts &lt;-&gt; executive_summary: 0.810
+extract_facts &lt;-&gt; dependency_mapper: 0.810
+detect_anomalies &lt;-&gt; validate_claims: 0.810
+synthesize_perspectives &lt;-&gt; brainstorm_ideas: 0.810
+
+Execution Gantt
+========================================
+build_timeline         |#################---|     0.0ms
+synthesize_perspectives |####################|     0.0ms
+
+Confidence Breakdown
+========================================
+routing_confidence              1.00  |####################|
+portfolio_confidence            0.33  |#######-------------|
+evidence_confidence             1.00  |####################|
+consistency_confidence          1.00  |####################|
+verification_confidence         1.00  |####################|
+calibration_adjusted_confidence  0.93  |###################-|
+robustness_confidence           0.26  |#####---------------|
+
+Robustness Profile
+========================================
+enabled: True
+risk_aversion: 0.700
+reliability_floor: 0.640
+uncertainty_tolerance: 0.440
+robust_expected_utility: 0.620
+robust_worst_case_utility: 0.330
+avg_uncertainty: 0.210</pre>
+  </details>
+</section>
+<section class="card"><small>Generated at 2026-04-02T17:09:56.248565+00:00 | schema agent-harness-studio/v1 | query Design an applied research promotion pack for a model-evaluation platform, balancing experiment throughput, reproducibility, benchmark credibility, and production release criteria.</small></section>
+</div></body></html>
