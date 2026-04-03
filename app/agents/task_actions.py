@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import time
 from typing import Any
 
 from app.agents.sandbox import ThreadSandbox
@@ -23,6 +24,10 @@ class TaskGraphActionMapper:
         context = context or {}
         node_id = str(node.get("node_id", "node"))
         node_type = str(node.get("node_type", "artifact"))
+        metrics = node.get("metrics", {}) if isinstance(node.get("metrics", {}), dict) else {}
+        delay_ms = max(0.0, float(metrics.get("delay_ms", 0.0)))
+        if delay_ms:
+            time.sleep(delay_ms / 1000.0)
         body = self._render_payload(node=node, graph=graph, context=context)
         relative_path = f"executions/{execution_id}/{node_id}.json"
         target = sandbox.write_text(relative_path, json.dumps(body, indent=2, default=str), area="outputs")

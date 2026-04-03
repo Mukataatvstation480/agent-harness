@@ -6,8 +6,11 @@ import copy
 import json
 import re
 import uuid
+from concurrent.futures import Future, ThreadPoolExecutor, TimeoutError as FuturesTimeoutError
 from datetime import datetime, timezone
 from pathlib import Path
+from threading import Lock
+import time
 from typing import Any
 
 from app.agents.sandbox import LocalThreadSandboxProvider, ThreadSandboxProvider
@@ -39,6 +42,10 @@ class AgentThreadRuntime:
         self.root.mkdir(parents=True, exist_ok=True)
         self.sandbox_provider = sandbox_provider or LocalThreadSandboxProvider()
         self.action_mapper = action_mapper or TaskGraphActionMapper()
+        self._executor = ThreadPoolExecutor(max_workers=4, thread_name_prefix="agent-thread-runtime")
+        self._futures: dict[str, Future[Any]] = {}
+        self._futures_lock = Lock()
+        self._io_lock = Lock()
 
     def create_thread(
         self,
@@ -142,7 +149,15 @@ class AgentThreadRuntime:
         path = self.root / thread_id / "thread.json"
         if not path.exists():
             return None
-        return json.loads(path.read_text(encoding="utf-8"))
+        for attempt in range(3):
+            try:
+                with self._io_lock:
+                    return json.loads(path.read_text(encoding="utf-8"))
+            except json.JSONDecodeError:
+                if attempt >= 2:
+                    raise
+                time.sleep(0.01)
+        return None
 
     def get_runtime_context(self, thread_id: str, limit: int = 8) -> dict[str, Any]:
         payload = self.load_thread(thread_id) or self.ensure_thread(thread_id)
@@ -245,10 +260,12 @@ class AgentThreadRuntime:
         if execution is None:
             execution = self._create_execution(graph=graph, execution_label=execution_label)
             payload.setdefault("executions", []).append(execution)
+        execution["status"] = "running"
+        execution["updated_at"] = _utc_now()
         payload["status"] = "running"
         payload.setdefault("control", {})
         payload["control"]["active_execution_id"] = execution["execution_id"]
-        self._save_thread_payload(thread_id, payload)
+        self._save_execution(thread_id, payload, execution)
 
         sandbox = self._sandbox(thread_id)
         processed = 0
@@ -367,6 +384,71 @@ class AgentThreadRuntime:
             execution_label=str(execution.get("label", "")),
             execution_id=execution_id,
         )
+
+    def start_task_graph_async(
+        self,
+        thread_id: str,
+        *,
+        graph: dict[str, Any],
+        execution_label: str = "",
+        context: dict[str, Any] | None = None,
+        max_nodes: int = 0,
+        execution_id: str | None = None,
+    ) -> dict[str, Any]:
+        payload = self.ensure_thread(thread_id)
+        execution = self._get_execution(payload, execution_id)
+        if execution is None:
+            execution = self._create_execution(graph=graph, execution_label=execution_label)
+            execution["status"] = "queued"
+            payload.setdefault("executions", []).append(execution)
+            self._save_thread_payload(thread_id, payload)
+        future = self._executor.submit(
+            self.execute_task_graph,
+            thread_id,
+            graph=execution["graph"],
+            execution_label=str(execution.get("label", execution_label)),
+            context=context,
+            max_nodes=max_nodes,
+            execution_id=execution["execution_id"],
+        )
+        with self._futures_lock:
+            self._futures[execution["execution_id"]] = future
+        self.append_event(
+            thread_id,
+            {
+                "event": "execution_queued",
+                "execution_id": execution["execution_id"],
+                "label": execution.get("label", execution_label),
+            },
+        )
+        return self.load_thread(thread_id) or payload
+
+    def wait_for_execution(
+        self,
+        thread_id: str,
+        execution_id: str,
+        timeout_seconds: float = 30.0,
+    ) -> dict[str, Any]:
+        future: Future[Any] | None
+        with self._futures_lock:
+            future = self._futures.get(execution_id)
+        if future is None:
+            payload = self.ensure_thread(thread_id)
+            execution = self._get_execution(payload, execution_id)
+            if execution is None:
+                raise ValueError(f"unknown execution: {execution_id}")
+            return execution
+        try:
+            result = future.result(timeout=max(0.1, timeout_seconds))
+        except FuturesTimeoutError:
+            payload = self.ensure_thread(thread_id)
+            execution = self._get_execution(payload, execution_id)
+            return execution or {"execution_id": execution_id, "status": "waiting"}
+        finally:
+            if future.done():
+                with self._futures_lock:
+                    self._futures.pop(execution_id, None)
+        return result
 
     def retry_execution(self, thread_id: str, execution_id: str, from_node_id: str = "") -> dict[str, Any]:
         payload = self.ensure_thread(thread_id)
@@ -574,6 +656,15 @@ class AgentThreadRuntime:
         return None
 
     def _save_execution(self, thread_id: str, payload: dict[str, Any], execution: dict[str, Any]) -> None:
+        current = self.load_thread(thread_id)
+        if current:
+            current_control = current.get("control", {})
+            if current_control:
+                payload["control"] = dict(current_control)
+            if len(current.get("events", [])) > len(payload.get("events", [])):
+                payload["events"] = list(current.get("events", []))
+            if len(current.get("messages", [])) > len(payload.get("messages", [])):
+                payload["messages"] = list(current.get("messages", []))
         for index, current in enumerate(payload.get("executions", [])):
             if str(current.get("execution_id", "")) == str(execution.get("execution_id", "")):
                 payload["executions"][index] = execution
@@ -602,4 +693,9 @@ class AgentThreadRuntime:
         payload["message_count"] = len(payload.get("messages", []))
         payload["artifact_count"] = len(payload.get("artifacts", []))
         payload["updated_at"] = _utc_now()
-        (thread_dir / "thread.json").write_text(json.dumps(payload, indent=2, default=str), encoding="utf-8")
+        content = json.dumps(payload, indent=2, default=str)
+        target = thread_dir / "thread.json"
+        temp = thread_dir / "thread.json.tmp"
+        with self._io_lock:
+            temp.write_text(content, encoding="utf-8")
+            temp.replace(target)

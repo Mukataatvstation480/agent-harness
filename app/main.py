@@ -137,6 +137,64 @@ def _default_live_experiment_queries() -> list[str]:
     ]
 
 
+def _build_subagent_graphs_from_mission(mission: dict[str, Any]) -> list[dict[str, Any]]:
+    tracks = mission.get("execution_tracks", []) if isinstance(mission.get("execution_tracks", []), list) else []
+    if not tracks:
+        tracks = [
+            {"name": "Track 1", "focus": mission.get("primary_deliverable", "mission"), "success": mission.get("summary", "")}
+        ]
+    graphs: list[dict[str, Any]] = []
+    for index, item in enumerate(tracks[:3], start=1):
+        label = str(item.get("name", f"Subagent {index}"))
+        focus = str(item.get("focus", mission.get("primary_deliverable", "")))
+        success = str(item.get("success", ""))
+        graphs.append(
+            {
+                "name": label,
+                "graph": {
+                    "graph_id": f"subagent-{index}",
+                    "nodes": [
+                        {
+                            "node_id": f"scope_{index}",
+                            "title": f"{label} Scope",
+                            "node_type": "routing",
+                            "status": "ready",
+                            "depends_on": [],
+                            "commands": [],
+                            "notes": [focus],
+                            "artifacts": [],
+                            "metrics": {},
+                        },
+                        {
+                            "node_id": f"execute_{index}",
+                            "title": f"{label} Execute",
+                            "node_type": "execution_plan",
+                            "status": "ready",
+                            "depends_on": [f"scope_{index}"],
+                            "commands": [focus],
+                            "notes": [success],
+                            "artifacts": [],
+                            "metrics": {},
+                        },
+                        {
+                            "node_id": f"report_{index}",
+                            "title": f"{label} Report",
+                            "node_type": "review",
+                            "status": "ready",
+                            "depends_on": [f"execute_{index}"],
+                            "commands": [],
+                            "notes": [success],
+                            "artifacts": [],
+                            "metrics": {},
+                        },
+                    ],
+                },
+                "context": {"mission_name": mission.get("name", ""), "track": item},
+            }
+        )
+    return graphs
+
+
 def _build_reasoning_path(payload: dict) -> list[dict]:
     """Build a lightweight reasoning path for trace/analyze commands."""
 
@@ -1279,6 +1337,31 @@ def agent_thread_exec_mission_command(
     console.print_json(json.dumps(payload, indent=2, default=str))
 
 
+@app.command("agent-thread-exec-mission-async")
+def agent_thread_exec_mission_async_command(
+    thread_id: str = typer.Argument(..., help="Persistent thread id"),
+    query: str = typer.Argument(..., help="Task query"),
+    mode: str = typer.Option("balanced", "--mode", "-m", help="Execution mode"),
+    max_nodes: int = typer.Option(0, "--max-nodes", help="Optional execution slice size"),
+) -> None:
+    """Run harness, then queue the mission task graph for background execution."""
+
+    run = HARNESS.run(
+        query=query,
+        mode=_parse_mode(mode).value,
+        thread_id=thread_id,
+    )
+    mission = HARNESS.build_mission_pack(run)
+    payload = HARNESS.start_thread_task_graph_async(
+        thread_id,
+        mission.get("task_graph", {}),
+        execution_label=mission.get("name", "mission"),
+        context={"mission": mission, "query": query},
+        max_nodes=max(0, max_nodes),
+    )
+    console.print_json(json.dumps(payload, indent=2, default=str))
+
+
 @app.command("agent-thread-resume")
 def agent_thread_resume_command(
     thread_id: str = typer.Argument(..., help="Persistent thread id"),
@@ -1287,6 +1370,106 @@ def agent_thread_resume_command(
     """Resume a paused or interrupted execution inside a persistent thread."""
 
     payload = HARNESS.resume_thread_execution(thread_id, execution_id)
+    console.print_json(json.dumps(payload, indent=2, default=str))
+
+
+@app.command("agent-thread-wait")
+def agent_thread_wait_command(
+    thread_id: str = typer.Argument(..., help="Persistent thread id"),
+    execution_id: str = typer.Argument(..., help="Execution id"),
+    timeout_seconds: float = typer.Option(30.0, "--timeout", help="Wait timeout seconds"),
+) -> None:
+    """Wait for a background execution to finish or return its latest state."""
+
+    payload = HARNESS.wait_for_thread_execution(thread_id, execution_id, timeout_seconds=timeout_seconds)
+    console.print_json(json.dumps(payload, indent=2, default=str))
+
+
+@app.command("agent-thread-recoverables")
+def agent_thread_recoverables_command(
+    limit: int = typer.Option(50, "--limit", "-n", help="Max executions to list"),
+) -> None:
+    """List recoverable thread executions."""
+
+    console.print_json(json.dumps({"recoverable": HARNESS.list_recoverable_thread_executions(limit=limit)}, indent=2, default=str))
+
+
+@app.command("agent-thread-recover")
+def agent_thread_recover_command(
+    thread_id: str = typer.Argument(..., help="Persistent thread id"),
+    execution_id: str = typer.Argument(..., help="Execution id"),
+    async_mode: bool = typer.Option(True, "--async/--sync", help="Recover in background or foreground"),
+) -> None:
+    """Recover one incomplete execution."""
+
+    payload = HARNESS.recover_thread_execution(thread_id, execution_id, async_mode=async_mode)
+    console.print_json(json.dumps(payload, indent=2, default=str))
+
+
+@app.command("agent-thread-recover-all")
+def agent_thread_recover_all_command(
+    async_mode: bool = typer.Option(True, "--async/--sync", help="Recover in background or foreground"),
+    limit: int = typer.Option(50, "--limit", "-n", help="Max recoveries"),
+) -> None:
+    """Recover all incomplete executions."""
+
+    payload = HARNESS.recover_all_thread_executions(async_mode=async_mode, limit=limit)
+    console.print_json(json.dumps(payload, indent=2, default=str))
+
+
+@app.command("agent-thread-workspace-view")
+def agent_thread_workspace_view_command(
+    thread_id: str = typer.Argument(..., help="Persistent thread id"),
+    html_output: str = typer.Option("", "--html-output", help="Optional HTML output file"),
+    json_output: str = typer.Option("", "--json-output", help="Optional JSON output file"),
+) -> None:
+    """Build workspace stream payload and optional HTML snapshot for one thread."""
+
+    stream_payload = HARNESS.build_thread_workspace_stream(thread_id)
+    if json_output:
+        path = Path(json_output)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(json.dumps(stream_payload, indent=2, default=str), encoding="utf-8")
+    if html_output:
+        path = Path(html_output)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(HARNESS.render_thread_workspace_html(thread_id), encoding="utf-8")
+    if html_output or json_output:
+        console.print_json(
+            json.dumps(
+                {
+                    "thread_id": thread_id,
+                    "json_output": json_output,
+                    "html_output": html_output,
+                },
+                indent=2,
+                default=str,
+            )
+        )
+        return
+    console.print_json(json.dumps(stream_payload, indent=2, default=str))
+
+
+@app.command("agent-thread-subagents")
+def agent_thread_subagents_command(
+    thread_id: str = typer.Argument(..., help="Persistent thread id"),
+    query: str = typer.Argument(..., help="Task query"),
+    mode: str = typer.Option("balanced", "--mode", "-m", help="Execution mode"),
+    wait_timeout: float = typer.Option(30.0, "--wait-timeout", help="Wait timeout seconds"),
+) -> None:
+    """Run parallel subagents derived from the mission execution tracks."""
+
+    run = HARNESS.run(
+        query=query,
+        mode=_parse_mode(mode).value,
+        thread_id=thread_id,
+    )
+    mission = HARNESS.build_mission_pack(run)
+    payload = HARNESS.run_parallel_subagents(
+        thread_id,
+        _build_subagent_graphs_from_mission(mission),
+        wait_timeout_seconds=max(0.1, wait_timeout),
+    )
     console.print_json(json.dumps(payload, indent=2, default=str))
 
 

@@ -8,6 +8,9 @@ from pathlib import Path
 from typing import Any
 
 from app.agents.runtime import AgentThreadRuntime
+from app.agents.scheduler import AgentExecutionScheduler
+from app.agents.subagents import ParallelSubagentExecutor
+from app.agents.workspace_view import ThreadWorkspaceStreamBuilder
 from app.core.state import GraphState
 from app.graph import build_graph
 from app.core.mission import MissionRegistry
@@ -43,6 +46,9 @@ class HarnessEngine:
     def __init__(self) -> None:
         self.graph = build_graph()
         self.thread_runtime = AgentThreadRuntime()
+        self.scheduler = AgentExecutionScheduler(self.thread_runtime)
+        self.subagents = ParallelSubagentExecutor(self.thread_runtime)
+        self.workspace_view = ThreadWorkspaceStreamBuilder()
         self.planner = HarnessPlanner()
         self.tools = ToolRegistry()
         self.memory = HarnessMemoryStore()
@@ -389,6 +395,26 @@ class HarnessEngine:
             execution_id=execution_id,
         )
 
+    def start_thread_task_graph_async(
+        self,
+        thread_id: str,
+        graph: dict[str, Any],
+        execution_label: str = "",
+        context: dict[str, Any] | None = None,
+        max_nodes: int = 0,
+        execution_id: str | None = None,
+    ) -> dict[str, Any]:
+        """Queue one task graph for background execution inside a persistent thread."""
+
+        return self.thread_runtime.start_task_graph_async(
+            thread_id,
+            graph=graph,
+            execution_label=execution_label,
+            context=context,
+            max_nodes=max_nodes,
+            execution_id=execution_id,
+        )
+
     def resume_thread_execution(self, thread_id: str, execution_id: str) -> dict[str, Any]:
         """Resume a paused or interrupted thread execution."""
 
@@ -403,6 +429,71 @@ class HarnessEngine:
         """Retry a prior execution, optionally from a selected node."""
 
         return self.thread_runtime.retry_execution(thread_id, execution_id, from_node_id=from_node_id)
+
+    def wait_for_thread_execution(
+        self,
+        thread_id: str,
+        execution_id: str,
+        timeout_seconds: float = 30.0,
+    ) -> dict[str, Any]:
+        """Wait for one background execution to finish or return its latest state."""
+
+        return self.thread_runtime.wait_for_execution(thread_id, execution_id, timeout_seconds=timeout_seconds)
+
+    def list_recoverable_thread_executions(self, limit: int = 50) -> list[dict[str, Any]]:
+        """List executions that can be recovered or resumed."""
+
+        self.scheduler.runtime = self.thread_runtime
+        return self.scheduler.list_recoverable(limit=limit)
+
+    def recover_thread_execution(
+        self,
+        thread_id: str,
+        execution_id: str,
+        async_mode: bool = True,
+    ) -> dict[str, Any]:
+        """Recover one incomplete execution."""
+
+        self.scheduler.runtime = self.thread_runtime
+        return self.scheduler.recover_execution(thread_id, execution_id, async_mode=async_mode)
+
+    def recover_all_thread_executions(
+        self,
+        async_mode: bool = True,
+        limit: int = 50,
+    ) -> dict[str, Any]:
+        """Recover all incomplete executions."""
+
+        self.scheduler.runtime = self.thread_runtime
+        return self.scheduler.recover_all(async_mode=async_mode, limit=limit)
+
+    def run_parallel_subagents(
+        self,
+        thread_id: str,
+        subagents: list[dict[str, Any]],
+        wait_timeout_seconds: float = 30.0,
+    ) -> dict[str, Any]:
+        """Run multiple subagent graphs concurrently inside one thread."""
+
+        self.subagents.runtime = self.thread_runtime
+        return self.subagents.run_parallel(
+            thread_id,
+            subagents=subagents,
+            wait_timeout_seconds=wait_timeout_seconds,
+        )
+
+    def build_thread_workspace_stream(self, thread_id: str) -> dict[str, Any]:
+        """Build front-end friendly workspace stream payload for one thread."""
+
+        payload = self.get_thread(thread_id)
+        if not payload:
+            raise ValueError(f"unknown thread: {thread_id}")
+        return self.workspace_view.build(payload)
+
+    def render_thread_workspace_html(self, thread_id: str) -> str:
+        """Render workspace/artifact HTML snapshot for one thread."""
+
+        return self.workspace_view.to_html(self.build_thread_workspace_stream(thread_id))
 
     def run(
         self,
