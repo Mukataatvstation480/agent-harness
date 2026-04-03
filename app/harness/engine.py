@@ -10,6 +10,7 @@ from typing import Any
 from app.core.state import GraphState
 from app.graph import build_graph
 from app.core.mission import MissionRegistry
+from app.harness.code_mission import CodeMissionPackBuilder
 from app.harness.discovery import DiscoveredTool, ToolDiscoveryEngine
 from app.harness.evaluator import HarnessEvaluator
 from app.harness.guardrails import GuardrailEngine
@@ -57,6 +58,7 @@ class HarnessEngine:
         self.redteam = HarnessRedTeam()
         self.reporter = HarnessReportBuilder()
         self.missions = MissionRegistry()
+        self.code_mission = CodeMissionPackBuilder()
         self.value = HarnessValueScorer()
         self.visuals = HarnessVisualProtocol()
         self.showcase = HarnessShowcaseBuilder()
@@ -150,6 +152,12 @@ class HarnessEngine:
 
         summary = self.reporter.summary(run)
         return summary.get("mission", {}) if isinstance(summary, dict) else {}
+
+    def build_code_mission_pack(self, run: HarnessRun, workspace: str | Path = ".") -> dict[str, Any]:
+        """Build engineering mission pack with patch/tests/trace/validation artifacts."""
+
+        summary = self.reporter.summary(run)
+        return self.code_mission.build(query=run.query, run=run, run_summary=summary, workspace=workspace)
 
     def build_visual_payload(
         self,

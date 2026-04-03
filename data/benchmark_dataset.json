@@ -1,0 +1,36 @@
+{
+  "items": [
+    {
+      "query": "Summarize the report and highlight main risks.",
+      "optimal_skills": [
+        "identify_risks",
+        "executive_summary",
+        "extract_facts"
+      ]
+    },
+    {
+      "query": "Compare option A and B, and recommend one.",
+      "optimal_skills": [
+        "compare_options",
+        "generate_recommendations",
+        "extract_facts"
+      ]
+    },
+    {
+      "query": "Create a concise board brief with key decision points.",
+      "optimal_skills": [
+        "executive_summary",
+        "board_brief",
+        "generate_recommendations"
+      ]
+    },
+    {
+      "query": "Extract evidence and assess uncertainty in claims.",
+      "optimal_skills": [
+        "extract_facts",
+        "evidence_matrix",
+        "compare_options"
+      ]
+    }
+  ]
+}

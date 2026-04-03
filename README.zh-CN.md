@@ -22,7 +22,7 @@
   <img src="https://img.shields.io/badge/Python-3.11%2B-3776AB?logo=python&logoColor=white"/>
   <img src="https://img.shields.io/badge/LangGraph-Orchestrated-0B1020"/>
   <img src="https://img.shields.io/badge/CLI-Typer-111827"/>
-  <img src="https://img.shields.io/badge/Tests-87%20passed-16a34a"/>
+  <img src="https://img.shields.io/badge/Tests-91%20passed-16a34a"/>
 </p>
 
 ---
@@ -208,6 +208,9 @@ python -m app.main harness "Prepare a governance-ready execution memo" --mode ba
 python -m app.main mission-profiles
 python -m app.main proposal-scenarios
 python -m app.main harness-mission "Design an implementation roadmap with migration risks and validation gates."
+python -m app.main harness-code-pack "Implement a safer migration path and validation plan" --workspace .
+python -m app.main benchmark-suite --adapters routing_internal,lab_daily
+python -m app.main benchmark-ablation --scenarios daily-001,research-001
 ```
 
 ### 5. 生成 showcase
@@ -230,6 +233,20 @@ python -m app.main launch-demo --output-dir reports/live_launch_demo --tag live 
 ```bash
 pytest -q
 ```
+
+### 命令地图
+
+| 目标 | 命令 |
+|---|---|
+| 基础路由 | `python -m app.main run "<query>"` |
+| harness 执行 | `python -m app.main harness "<query>"` |
+| mission pack | `python -m app.main harness-mission "<query>"` |
+| code mission pack | `python -m app.main harness-code-pack "<query>" --workspace .` |
+| value card | `python -m app.main harness-value "<query>"` |
+| benchmark adapter 列表 | `python -m app.main benchmark-adapters` |
+| benchmark suite | `python -m app.main benchmark-suite --adapters routing_internal,lab_daily` |
+| benchmark ablation | `python -m app.main benchmark-ablation --scenarios daily-001,research-001` |
+| showcase | `python -m app.main studio-showcase "<query>" --tag demo` |
 
 ---
 
@@ -270,9 +287,11 @@ pytest -q
 - agent council routing 已实现
 - harness engine 与 research lab 已实现
 - mission-pack output contract 已实现
+- code mission pack 已实现
+- benchmark adapter 与 ablation runner 已实现
 - studio showcase 与 launch demo 已实现
 - OpenAI / Anthropic interop export 已实现
-- 当前本地测试结果：`87 passed`
+- 当前本地测试结果：`91 passed`
 
 ---
 

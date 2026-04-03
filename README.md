@@ -22,7 +22,7 @@
   <img src="https://img.shields.io/badge/Python-3.11%2B-3776AB?logo=python&logoColor=white"/>
   <img src="https://img.shields.io/badge/LangGraph-Orchestrated-0B1020"/>
   <img src="https://img.shields.io/badge/CLI-Typer-111827"/>
-  <img src="https://img.shields.io/badge/Tests-87%20passed-16a34a"/>
+  <img src="https://img.shields.io/badge/Tests-91%20passed-16a34a"/>
 </p>
 
 ---
@@ -317,6 +317,9 @@ python -m app.main studio-showcase "Design a flagship AI operating plan" --mode 
 python -m app.main mission-profiles
 python -m app.main proposal-scenarios
 python -m app.main harness-mission "Design an implementation roadmap with migration risks and validation gates."
+python -m app.main harness-code-pack "Implement a safer migration path and validation plan" --workspace .
+python -m app.main benchmark-suite --adapters routing_internal,lab_daily
+python -m app.main benchmark-ablation --scenarios daily-001,research-001
 ```
 
 ### 6. Generate a launch demo
@@ -370,9 +373,13 @@ pytest -q
 | trace and reasoning | `python -m app.main trace "<query>" --views` |
 | harness execution | `python -m app.main harness "<query>"` |
 | mission pack | `python -m app.main harness-mission "<query>"` |
+| code mission pack | `python -m app.main harness-code-pack "<query>" --workspace .` |
 | value card | `python -m app.main harness-value "<query>"` |
 | visual payload | `python -m app.main harness-visual "<query>" --output reports/visual.json` |
 | mission profiles | `python -m app.main mission-profiles` |
+| benchmark adapters | `python -m app.main benchmark-adapters` |
+| benchmark suite | `python -m app.main benchmark-suite --adapters routing_internal,lab_daily` |
+| benchmark ablation | `python -m app.main benchmark-ablation --scenarios daily-001,research-001` |
 | showcase | `python -m app.main studio-showcase "<query>" --tag demo` |
 | launch demo | `python -m app.main launch-demo --tag press` |
 | research lab | `python -m app.main harness-lab --preset broad` |
@@ -417,9 +424,11 @@ pytest -q
 - agent council routing is implemented
 - harness engine and research lab are implemented
 - mission-pack output contract is implemented
+- code mission pack is implemented
+- benchmark adapter + ablation runner is implemented
 - studio showcase and launch demo are implemented
 - OpenAI / Anthropic interop export is implemented
-- current local test result: `87 passed`
+- current local test result: `91 passed`
 
 ---
 

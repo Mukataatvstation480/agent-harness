@@ -7,6 +7,7 @@ from pathlib import Path
 
 import typer
 
+from app.benchmark.adapters import BenchmarkAdapterRunner
 from app.benchmark.evaluate import run_benchmark
 from app.core.state import AgentStyle, GraphState
 from app.core.mission import MissionRegistry
@@ -69,6 +70,7 @@ HARNESS = HarnessEngine()
 PROPOSALS = ProposalRegistry()
 MISSIONS = MissionRegistry()
 STUDIO = StudioShowcaseBuilder(harness=HARNESS)
+BENCHMARK_ADAPTERS = BenchmarkAdapterRunner()
 
 
 def _parse_style(style: str) -> AgentStyle | None:
@@ -269,6 +271,55 @@ def benchmark_command() -> None:
 
     result = run_benchmark()
     print_benchmark_results(result)
+
+
+@app.command("benchmark-adapters")
+def benchmark_adapters_command() -> None:
+    """List unified benchmark adapters."""
+
+    console.print_json(json.dumps({"adapters": BENCHMARK_ADAPTERS.list_adapters()}, indent=2, default=str))
+
+
+@app.command("benchmark-suite")
+def benchmark_suite_command(
+    adapters: str = typer.Option("", "--adapters", help="Comma-separated adapter names"),
+    repeats: int = typer.Option(1, "--repeats", help="Repeat count for harness-lab adapters"),
+    output: str = typer.Option("", "--output", "-o", help="Optional output JSON file"),
+) -> None:
+    """Run unified benchmark suite across internal adapters."""
+
+    selected = [item.strip() for item in adapters.split(",") if item.strip()] if adapters else None
+    payload = BENCHMARK_ADAPTERS.run_suite(engine=HARNESS, adapters=selected, repeats=max(1, repeats))
+    if output:
+        path = Path(output)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(json.dumps(payload, indent=2, default=str), encoding="utf-8")
+        console.print(f"[green]Benchmark suite written:[/] {path}")
+        return
+    console.print_json(json.dumps(payload, indent=2, default=str))
+
+
+@app.command("benchmark-ablation")
+def benchmark_ablation_command(
+    repeats: int = typer.Option(1, "--repeats", help="Repeat count for ablation study"),
+    scenarios: str = typer.Option("", "--scenarios", help="Comma-separated scenario ids"),
+    output: str = typer.Option("", "--output", "-o", help="Optional output JSON file"),
+) -> None:
+    """Run standardized ablation study and failure clustering."""
+
+    scenario_ids = [item.strip() for item in scenarios.split(",") if item.strip()] if scenarios else None
+    payload = BENCHMARK_ADAPTERS.run_ablation(
+        engine=HARNESS,
+        repeats=max(1, repeats),
+        scenario_ids=scenario_ids,
+    )
+    if output:
+        path = Path(output)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(json.dumps(payload, indent=2, default=str), encoding="utf-8")
+        console.print(f"[green]Benchmark ablation written:[/] {path}")
+        return
+    console.print_json(json.dumps(payload, indent=2, default=str))
 
 
 @app.command("market-search")
@@ -1105,6 +1156,56 @@ def harness_mission_command(
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(json.dumps(payload, indent=2, default=str), encoding="utf-8")
         console.print(f"[green]Mission pack written:[/] {path}")
+        return
+    console.print_json(json.dumps(payload, indent=2, default=str))
+
+
+@app.command("harness-code-pack")
+def harness_code_pack_command(
+    query: str = typer.Argument(..., help="Implementation or code task query"),
+    mode: str = typer.Option("balanced", "--mode", "-m", help="Execution mode"),
+    recipe: str = typer.Option("", "--recipe", "-r", help="Built-in recipe name"),
+    recipe_path: str = typer.Option("", "--recipe-path", help="Path to recipe file"),
+    workspace: str = typer.Option(".", "--workspace", "-w", help="Workspace root for code artifact discovery"),
+    live_agent: bool = typer.Option(False, "--live-agent", help="Enable real-model agent enhancement"),
+    max_model_calls: int = typer.Option(8, "--max-model-calls", help="Live model calls per run (<=50)"),
+    model_base_url: str = typer.Option("", "--model-base-url", help="Model API base URL"),
+    model_api_key: str = typer.Option("", "--model-api-key", help="Model API key"),
+    model_name: str = typer.Option("", "--model-name", help="Model name"),
+    model_timeout: int = typer.Option(45, "--model-timeout", help="Model timeout seconds"),
+    model_temperature: float = typer.Option(0.15, "--model-temperature", help="Model temperature"),
+    model_max_tokens: int = typer.Option(1400, "--model-max-tokens", help="Model max tokens"),
+    output: str = typer.Option("", "--output", "-o", help="Optional output JSON file"),
+) -> None:
+    """Run harness and emit a code mission pack with patch/test/trace artifacts."""
+
+    overrides = _build_live_model_overrides(
+        model_base_url=model_base_url,
+        model_api_key=model_api_key,
+        model_name=model_name,
+        timeout_seconds=model_timeout,
+        temperature=model_temperature,
+        max_tokens=model_max_tokens,
+    )
+    run = HARNESS.run(
+        query=query,
+        mode=_parse_mode(mode).value,
+        recipe=recipe or None,
+        recipe_path=recipe_path or None,
+        constraints=HarnessConstraints(
+            enable_live_agent=live_agent,
+            max_live_agent_calls=max(1, min(max_model_calls, 50)),
+            live_agent_temperature=max(0.0, min(model_temperature, 1.5)),
+            live_agent_timeout_seconds=max(5, min(model_timeout, 300)),
+        ),
+        live_model=overrides if overrides else None,
+    )
+    payload = HARNESS.build_code_mission_pack(run, workspace=workspace)
+    if output:
+        path = Path(output)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(json.dumps(payload, indent=2, default=str), encoding="utf-8")
+        console.print(f"[green]Code mission pack written:[/] {path}")
         return
     console.print_json(json.dumps(payload, indent=2, default=str))
 
