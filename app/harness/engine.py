@@ -7,6 +7,7 @@ from dataclasses import asdict
 from pathlib import Path
 from typing import Any
 
+from app.agents.runtime import AgentThreadRuntime
 from app.core.state import GraphState
 from app.graph import build_graph
 from app.core.mission import MissionRegistry
@@ -41,6 +42,7 @@ class HarnessEngine:
 
     def __init__(self) -> None:
         self.graph = build_graph()
+        self.thread_runtime = AgentThreadRuntime()
         self.planner = HarnessPlanner()
         self.tools = ToolRegistry()
         self.memory = HarnessMemoryStore()
@@ -153,11 +155,26 @@ class HarnessEngine:
         summary = self.reporter.summary(run)
         return summary.get("mission", {}) if isinstance(summary, dict) else {}
 
-    def build_code_mission_pack(self, run: HarnessRun, workspace: str | Path = ".") -> dict[str, Any]:
+    def build_code_mission_pack(
+        self,
+        run: HarnessRun,
+        workspace: str | Path = ".",
+        execute_validation: bool = False,
+        validation_timeout_seconds: int = 180,
+        max_validation_commands: int = 3,
+    ) -> dict[str, Any]:
         """Build engineering mission pack with patch/tests/trace/validation artifacts."""
 
         summary = self.reporter.summary(run)
-        return self.code_mission.build(query=run.query, run=run, run_summary=summary, workspace=workspace)
+        return self.code_mission.build(
+            query=run.query,
+            run=run,
+            run_summary=summary,
+            workspace=workspace,
+            execute_validation=execute_validation,
+            validation_timeout_seconds=validation_timeout_seconds,
+            max_validation_commands=max_validation_commands,
+        )
 
     def build_visual_payload(
         self,
@@ -327,6 +344,66 @@ class HarnessEngine:
             return self.reporter.summary(run)
         return self.reporter.to_markdown(run)
 
+    def create_thread(
+        self,
+        title: str = "",
+        agent_name: str = "",
+        metadata: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
+        """Create a persistent generic agent thread."""
+
+        return self.thread_runtime.create_thread(title=title, agent_name=agent_name, metadata=metadata)
+
+    def list_threads(self, limit: int = 20) -> list[dict[str, Any]]:
+        """List persistent generic agent threads."""
+
+        return self.thread_runtime.list_threads(limit=limit)
+
+    def get_thread(self, thread_id: str) -> dict[str, Any] | None:
+        """Load one persistent generic agent thread."""
+
+        return self.thread_runtime.load_thread(thread_id)
+
+    def request_thread_interrupt(self, thread_id: str, reason: str = "manual") -> dict[str, Any]:
+        """Request interrupt for one persistent thread."""
+
+        return self.thread_runtime.request_interrupt(thread_id, reason=reason)
+
+    def execute_thread_task_graph(
+        self,
+        thread_id: str,
+        graph: dict[str, Any],
+        execution_label: str = "",
+        context: dict[str, Any] | None = None,
+        max_nodes: int = 0,
+        execution_id: str | None = None,
+    ) -> dict[str, Any]:
+        """Execute one task graph inside a persistent thread runtime."""
+
+        return self.thread_runtime.execute_task_graph(
+            thread_id,
+            graph=graph,
+            execution_label=execution_label,
+            context=context,
+            max_nodes=max_nodes,
+            execution_id=execution_id,
+        )
+
+    def resume_thread_execution(self, thread_id: str, execution_id: str) -> dict[str, Any]:
+        """Resume a paused or interrupted thread execution."""
+
+        return self.thread_runtime.resume_execution(thread_id, execution_id)
+
+    def retry_thread_execution(
+        self,
+        thread_id: str,
+        execution_id: str,
+        from_node_id: str = "",
+    ) -> dict[str, Any]:
+        """Retry a prior execution, optionally from a selected node."""
+
+        return self.thread_runtime.retry_execution(thread_id, execution_id, from_node_id=from_node_id)
+
     def run(
         self,
         query: str,
@@ -335,11 +412,19 @@ class HarnessEngine:
         recipe: str | None = None,
         recipe_path: str | None = None,
         live_model: dict[str, Any] | None = None,
+        thread_id: str | None = None,
+        thread_title: str = "",
     ) -> HarnessRun:
         """Run harness loop around the core agent graph."""
 
         constraints = constraints or HarnessConstraints()
-        session_id = hashlib.sha1(query.encode("utf-8")).hexdigest()[:12]
+        session_id = thread_id or hashlib.sha1(query.encode("utf-8")).hexdigest()[:12]
+        thread_context: dict[str, Any] = {}
+        if thread_id:
+            thread_context = self.thread_runtime.ensure_thread(
+                thread_id,
+                title=thread_title or query[:80],
+            )
         previous_context = self.memory.read_recent(session_id, limit=8)
 
         preflight = self.security.preflight(query, constraints)
@@ -358,6 +443,7 @@ class HarnessEngine:
                 previous_context=previous_context,
                 preflight=preflight,
                 active_recipe=active_recipe,
+                thread_context=thread_context,
             )
 
         safe_query = preflight.redacted_query or query
@@ -572,6 +658,12 @@ class HarnessEngine:
                     "notes": [],
                     "errors": [],
                 },
+                "thread": {
+                    "thread_id": thread_id or "",
+                    "workspace": thread_context.get("workspace", {}),
+                }
+                if thread_id
+                else {},
             },
         )
         run.eval_metrics = self.evaluator.evaluate(run)
@@ -582,6 +674,15 @@ class HarnessEngine:
             run=run,
             run_summary=self.reporter.summary(run),
         )
+        if thread_id:
+            self.thread_runtime.record_harness_run(
+                thread_id,
+                query=query,
+                run=run,
+                mission=run.mission,
+                report_json=self.reporter.summary(run),
+                report_markdown=self.reporter.to_markdown(run),
+            )
         return run
 
     @staticmethod
@@ -814,6 +915,7 @@ class HarnessEngine:
         previous_context: list[dict[str, Any]],
         preflight: SecurityDecision,
         active_recipe: HarnessRecipe | None,
+        thread_context: dict[str, Any] | None = None,
     ) -> HarnessRun:
         step = HarnessStep(
             step=1,
@@ -859,11 +961,22 @@ class HarnessEngine:
                     "notes": [],
                     "errors": [],
                 },
+                "thread": {
+                    "thread_id": str((thread_context or {}).get("thread_id", "")),
+                    "workspace": dict((thread_context or {}).get("workspace", {})),
+                }
+                if thread_context
+                else {},
             },
         )
         run.eval_metrics = self.evaluator.evaluate(run)
         run.metadata["value_card"] = self.build_value_card(run)
         run.metadata["visual_hooks"] = run.metadata["value_card"].get("visual_hooks", [])
+        run.mission = self.missions.build_runtime_pack(
+            query=query,
+            run=run,
+            run_summary=self.reporter.summary(run),
+        )
         self.memory.append_event(
             session_id,
             {
@@ -876,4 +989,13 @@ class HarnessEngine:
                 "blocked": True,
             },
         )
+        if thread_context and thread_context.get("thread_id"):
+            self.thread_runtime.record_harness_run(
+                str(thread_context["thread_id"]),
+                query=query,
+                run=run,
+                mission=run.mission,
+                report_json=self.reporter.summary(run),
+                report_markdown=self.reporter.to_markdown(run),
+            )
         return run

@@ -674,6 +674,56 @@ def mission_profiles_command() -> None:
     console.print_json(json.dumps({"missions": MISSIONS.list_cards()}, indent=2, default=str))
 
 
+@app.command("agent-thread-create")
+def agent_thread_create_command(
+    title: str = typer.Argument("", help="Optional thread title"),
+    agent_name: str = typer.Option("", "--agent", help="Optional preferred agent name"),
+    output: str = typer.Option("", "--output", "-o", help="Optional output JSON file"),
+) -> None:
+    """Create a persistent generic agent thread with workspace and outputs."""
+
+    payload = HARNESS.create_thread(title=title, agent_name=agent_name)
+    if output:
+        path = Path(output)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(json.dumps(payload, indent=2, default=str), encoding="utf-8")
+        console.print(f"[green]Thread written:[/] {path}")
+        return
+    console.print_json(json.dumps(payload, indent=2, default=str))
+
+
+@app.command("agent-threads")
+def agent_threads_command(
+    limit: int = typer.Option(20, "--limit", "-n", help="Max threads to list"),
+) -> None:
+    """List persistent generic agent threads."""
+
+    console.print_json(json.dumps({"threads": HARNESS.list_threads(limit=limit)}, indent=2, default=str))
+
+
+@app.command("agent-thread-show")
+def agent_thread_show_command(
+    thread_id: str = typer.Argument(..., help="Thread id"),
+) -> None:
+    """Show one persistent generic agent thread."""
+
+    payload = HARNESS.get_thread(thread_id)
+    if not payload:
+        raise typer.BadParameter(f"Unknown thread id: {thread_id}")
+    console.print_json(json.dumps(payload, indent=2, default=str))
+
+
+@app.command("agent-thread-interrupt")
+def agent_thread_interrupt_command(
+    thread_id: str = typer.Argument(..., help="Thread id"),
+    reason: str = typer.Option("manual", "--reason", help="Interrupt reason"),
+) -> None:
+    """Request interrupt for one persistent generic agent thread."""
+
+    payload = HARNESS.request_thread_interrupt(thread_id, reason=reason)
+    console.print_json(json.dumps(payload, indent=2, default=str))
+
+
 @app.command("harness")
 def harness_command(
     query: str = typer.Argument(..., help="Task query to run through harness"),
@@ -1160,6 +1210,98 @@ def harness_mission_command(
     console.print_json(json.dumps(payload, indent=2, default=str))
 
 
+@app.command("agent-thread-run")
+def agent_thread_run_command(
+    thread_id: str = typer.Argument(..., help="Persistent thread id"),
+    query: str = typer.Argument(..., help="Task query"),
+    mode: str = typer.Option("balanced", "--mode", "-m", help="Execution mode"),
+    recipe: str = typer.Option("", "--recipe", "-r", help="Built-in recipe name"),
+    recipe_path: str = typer.Option("", "--recipe-path", help="Path to recipe file"),
+    output: str = typer.Option("", "--output", "-o", help="Optional output JSON file"),
+) -> None:
+    """Run harness inside a persistent generic agent thread."""
+
+    run = HARNESS.run(
+        query=query,
+        mode=_parse_mode(mode).value,
+        recipe=recipe or None,
+        recipe_path=recipe_path or None,
+        thread_id=thread_id,
+    )
+    payload = {
+        "thread": HARNESS.get_thread(thread_id),
+        "mission": HARNESS.build_mission_pack(run),
+        "report": HARNESS.build_report(run, fmt="json"),
+    }
+    if output:
+        path = Path(output)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(json.dumps(payload, indent=2, default=str), encoding="utf-8")
+        console.print(f"[green]Thread run written:[/] {path}")
+        return
+    console.print_json(json.dumps(payload, indent=2, default=str))
+
+
+@app.command("agent-thread-exec-mission")
+def agent_thread_exec_mission_command(
+    thread_id: str = typer.Argument(..., help="Persistent thread id"),
+    query: str = typer.Argument(..., help="Task query"),
+    mode: str = typer.Option("balanced", "--mode", "-m", help="Execution mode"),
+    max_nodes: int = typer.Option(0, "--max-nodes", help="Optional execution slice size"),
+    output: str = typer.Option("", "--output", "-o", help="Optional output JSON file"),
+) -> None:
+    """Run harness, then execute the mission task graph inside the persistent thread runtime."""
+
+    run = HARNESS.run(
+        query=query,
+        mode=_parse_mode(mode).value,
+        thread_id=thread_id,
+    )
+    mission = HARNESS.build_mission_pack(run)
+    execution = HARNESS.execute_thread_task_graph(
+        thread_id,
+        mission.get("task_graph", {}),
+        execution_label=mission.get("name", "mission"),
+        context={"mission": mission, "query": query},
+        max_nodes=max(0, max_nodes),
+    )
+    payload = {
+        "thread": HARNESS.get_thread(thread_id),
+        "mission": mission,
+        "execution": execution,
+    }
+    if output:
+        path = Path(output)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(json.dumps(payload, indent=2, default=str), encoding="utf-8")
+        console.print(f"[green]Thread execution written:[/] {path}")
+        return
+    console.print_json(json.dumps(payload, indent=2, default=str))
+
+
+@app.command("agent-thread-resume")
+def agent_thread_resume_command(
+    thread_id: str = typer.Argument(..., help="Persistent thread id"),
+    execution_id: str = typer.Argument(..., help="Execution id"),
+) -> None:
+    """Resume a paused or interrupted execution inside a persistent thread."""
+
+    payload = HARNESS.resume_thread_execution(thread_id, execution_id)
+    console.print_json(json.dumps(payload, indent=2, default=str))
+
+
+@app.command("agent-thread-retry")
+def agent_thread_retry_command(
+    thread_id: str = typer.Argument(..., help="Persistent thread id"),
+    execution_id: str = typer.Argument(..., help="Execution id"),
+    from_node_id: str = typer.Option("", "--from-node", help="Optional node id to restart from"),
+) -> None:
+    """Retry an execution inside a persistent thread."""
+
+    payload = HARNESS.retry_thread_execution(thread_id, execution_id, from_node_id=from_node_id)
+    console.print_json(json.dumps(payload, indent=2, default=str))
+
+
 @app.command("harness-code-pack")
 def harness_code_pack_command(
     query: str = typer.Argument(..., help="Implementation or code task query"),
@@ -1167,6 +1309,9 @@ def harness_code_pack_command(
     recipe: str = typer.Option("", "--recipe", "-r", help="Built-in recipe name"),
     recipe_path: str = typer.Option("", "--recipe-path", help="Path to recipe file"),
     workspace: str = typer.Option(".", "--workspace", "-w", help="Workspace root for code artifact discovery"),
+    execute_validation: bool = typer.Option(False, "--execute-validation", help="Run inferred validation commands"),
+    validation_timeout: int = typer.Option(180, "--validation-timeout", help="Per-command validation timeout seconds"),
+    max_validation_commands: int = typer.Option(3, "--max-validation-commands", help="Max validation commands to execute"),
     live_agent: bool = typer.Option(False, "--live-agent", help="Enable real-model agent enhancement"),
     max_model_calls: int = typer.Option(8, "--max-model-calls", help="Live model calls per run (<=50)"),
     model_base_url: str = typer.Option("", "--model-base-url", help="Model API base URL"),
@@ -1200,7 +1345,13 @@ def harness_code_pack_command(
         ),
         live_model=overrides if overrides else None,
     )
-    payload = HARNESS.build_code_mission_pack(run, workspace=workspace)
+    payload = HARNESS.build_code_mission_pack(
+        run,
+        workspace=workspace,
+        execute_validation=execute_validation,
+        validation_timeout_seconds=max(5, min(validation_timeout, 1800)),
+        max_validation_commands=max(1, min(max_validation_commands, 8)),
+    )
     if output:
         path = Path(output)
         path.parent.mkdir(parents=True, exist_ok=True)

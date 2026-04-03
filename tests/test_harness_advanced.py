@@ -98,6 +98,7 @@ def test_report_builder_generates_markdown() -> None:
     assert isinstance(report, str)
     assert "# Harness Run Report" in report
     assert "## Mission Pack" in report
+    assert "## Executable Task Graph" in report
     assert "## Metrics" in report
 
 
@@ -110,9 +111,12 @@ def test_harness_run_contains_core_mission_pack() -> None:
     assert run.mission
     assert run.mission.get("name") == "implementation_pack"
     assert run.mission.get("primary_deliverable")
+    assert run.mission.get("task_graph", {}).get("schema") == "agent-harness-executable-task-graph/v1"
+    assert run.mission.get("task_graph", {}).get("summary", {}).get("node_count", 0) >= 5
     summary = engine.build_report(run, fmt="json")
     assert isinstance(summary, dict)
     assert summary.get("mission", {}).get("benchmark_targets")
+    assert summary.get("mission", {}).get("task_graph", {}).get("nodes")
 
 
 def test_recipe_registry_suggests_daily_and_research_workflows() -> None:

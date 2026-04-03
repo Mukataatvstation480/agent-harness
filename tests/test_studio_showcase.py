@@ -35,6 +35,8 @@ def test_build_showcase_payload_shape() -> None:
     assert payload["mission"]["primary_deliverable"]
     assert len(payload["mission"].get("deliverables", [])) >= 3
     assert len(payload["mission"].get("benchmark_targets", [])) >= 2
+    assert payload["mission"].get("task_graph", {}).get("schema") == "agent-harness-executable-task-graph/v1"
+    assert payload["mission"].get("task_graph", {}).get("summary", {}).get("node_count", 0) >= 5
     assert len(payload["story"].get("strategy_plan", [])) >= 3
     assert "harness" in payload and "plan" in payload["harness"]
     assert "final_answer_excerpt" in payload["harness"]
@@ -115,3 +117,4 @@ def test_fintech_demo_query_maps_to_regulated_scenario_with_evidence() -> None:
     assert payload["proposal"]["headline"] == "90-Day Launch Plan for a Regulated AI Support Copilot"
     assert payload["mission"]["name"] == "strategy_pack"
     assert payload["harness"]["run_summary"]["evidence"]["record_count"] >= 1
+    assert payload["mission"].get("task_graph", {}).get("nodes")

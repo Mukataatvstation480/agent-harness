@@ -78,6 +78,7 @@ class HarnessReportBuilder:
     def to_markdown(self, run: HarnessRun) -> str:
         data = self.summary(run)
         mission = data.get("mission", {}) if isinstance(data.get("mission", {}), dict) else {}
+        task_graph = mission.get("task_graph", {}) if isinstance(mission.get("task_graph", {}), dict) else {}
 
         lines = [
             "# Harness Run Report",
@@ -93,6 +94,7 @@ class HarnessReportBuilder:
             f"- Type: `{mission.get('title', '')}`",
             f"- Primary Deliverable: `{mission.get('primary_deliverable', '')}`",
             f"- Decision: `{mission.get('decision', {}).get('status', '')}`",
+            f"- Task Graph: `{task_graph.get('summary', {}).get('node_count', 0)}` nodes / `{task_graph.get('summary', {}).get('completed_nodes', 0)}` completed",
             "",
             "## Plan",
         ]
@@ -123,6 +125,21 @@ class HarnessReportBuilder:
             for item in mission.get("benchmark_targets", [])[:4]:
                 lines.append(
                     f"- `{item.get('name', '')}` fit={item.get('fit', '')} gap={item.get('gap', '')}"
+                )
+        else:
+            lines.append("- none")
+
+        lines.extend(
+            [
+                "",
+                "## Executable Task Graph",
+            ]
+        )
+        if task_graph.get("nodes"):
+            for node in task_graph.get("nodes", [])[:6]:
+                lines.append(
+                    f"- `{node.get('node_id', '')}` type={node.get('node_type', '')} "
+                    f"status={node.get('status', '')} depends_on={','.join(node.get('depends_on', [])) or '-'}"
                 )
         else:
             lines.append("- none")

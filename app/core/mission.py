@@ -6,6 +6,8 @@ import re
 from dataclasses import dataclass, field
 from typing import Any
 
+from app.core.task_graph import ExecutableTaskGraph, TaskGraphArtifact, TaskGraphNode
+
 
 def _clean_text(value: object) -> str:
     text = str(value or "").strip()
@@ -169,7 +171,7 @@ class MissionRegistry:
             evidence=evidence,
         )
         honest_boundary = self._runtime_boundary(profile)
-        return {
+        pack = {
             "name": profile.name,
             "title": profile.title,
             "summary": profile.summary,
@@ -195,6 +197,18 @@ class MissionRegistry:
             },
             "honest_boundary": honest_boundary,
         }
+        pack["task_graph"] = self._runtime_task_graph(
+            query=query,
+            profile=profile,
+            runtime_state=runtime_state,
+            execution_plan=execution_plan,
+            deliverables=deliverables,
+            benchmark_targets=benchmark_targets,
+            evidence=pack["evidence_snapshot"],
+            decision=pack["decision"],
+            execution_tracks=execution_tracks,
+        )
+        return pack
 
     def build_release_pack(
         self,
@@ -261,6 +275,19 @@ class MissionRegistry:
                     "headline": _clean_text(proposal.get("headline", "")),
                 },
             }
+        )
+        base["task_graph"] = self._release_task_graph(
+            query=query,
+            profile=profile or self.infer(query),
+            execution_plan=execution_plan,
+            deliverables=deliverables,
+            benchmark_targets=benchmark_targets,
+            evidence=base.get("evidence_snapshot", {}),
+            decision=base.get("decision", {}),
+            release_context=base.get("release_context", {}),
+            execution_tracks=base.get("execution_tracks", []),
+            release=release,
+            proposal=proposal,
         )
         return base
 
@@ -419,6 +446,315 @@ class MissionRegistry:
             if release:
                 row["current_signal"] += f"; release={release.get('decision', 'block')}"
             rows.append(row)
+        return rows
+
+    def _runtime_task_graph(
+        self,
+        query: str,
+        profile: MissionProfile,
+        runtime_state: dict[str, Any],
+        execution_plan: list[str],
+        deliverables: list[dict[str, Any]],
+        benchmark_targets: list[dict[str, Any]],
+        evidence: dict[str, Any],
+        decision: dict[str, Any],
+        execution_tracks: list[dict[str, Any]],
+    ) -> dict[str, Any]:
+        completed = bool(runtime_state.get("completed", False))
+        evidence_count = int(evidence.get("record_count", 0))
+        citation_count = int(evidence.get("citation_count", 0))
+        evidence_status = "completed" if evidence_count or citation_count or completed else "ready"
+        selected_skills = runtime_state.get("selected_skills", [])
+        recipe = runtime_state.get("recipe", {}) if isinstance(runtime_state.get("recipe", {}), dict) else {}
+        recipe_name = _clean_text(recipe.get("name", ""))
+        recipe_progress = f"{int(recipe.get('executed_steps', 0))}/{int(recipe.get('total_steps', 0))}"
+
+        nodes = [
+            TaskGraphNode(
+                node_id="scope_mission",
+                title="Scope mission and choose operator",
+                node_type="routing",
+                status="completed" if runtime_state.get("selected_agent") else "ready",
+                notes=[
+                    f"selected agent: {runtime_state.get('selected_agent', '') or 'pending'}",
+                    f"mode: {runtime_state.get('mode', '') or 'balanced'}",
+                    f"skills: {len(selected_skills)}",
+                ],
+                artifacts=[
+                    TaskGraphArtifact(
+                        kind="routing_contract",
+                        label="Mission routing",
+                        status="completed" if runtime_state.get("selected_agent") else "ready",
+                        summary=f"recipe={recipe_name or 'auto'} progress={recipe_progress}",
+                    )
+                ],
+                metrics={
+                    "selected_skills": len(selected_skills),
+                    "value_index": float(runtime_state.get("value_index", 0.0)),
+                },
+            ),
+            TaskGraphNode(
+                node_id="assemble_evidence",
+                title="Assemble evidence and runtime signals",
+                node_type="evidence",
+                status=evidence_status,
+                depends_on=["scope_mission"],
+                notes=[
+                    f"records={evidence_count}",
+                    f"citations={citation_count}",
+                ],
+                artifacts=[
+                    TaskGraphArtifact(
+                        kind="evidence_packet",
+                        label="Evidence packet",
+                        status=evidence_status,
+                        summary=f"{evidence_count} records / {citation_count} citations",
+                    )
+                ],
+                metrics={
+                    "record_count": evidence_count,
+                    "citation_count": citation_count,
+                },
+            ),
+            TaskGraphNode(
+                node_id="build_primary",
+                title=f"Build {profile.primary_deliverable}",
+                node_type="synthesis",
+                status="completed" if completed else "ready",
+                depends_on=["scope_mission", "assemble_evidence"],
+                commands=execution_plan[:3],
+                notes=[
+                    f"risk level: {runtime_state.get('risk_level', '') or 'unknown'}",
+                    f"band: {runtime_state.get('band', '') or 'unscored'}",
+                ],
+                artifacts=[
+                    TaskGraphArtifact(
+                        kind="primary_deliverable",
+                        label=profile.primary_deliverable,
+                        status="completed" if completed else "ready",
+                        summary=profile.summary,
+                    )
+                ],
+                metrics={
+                    "plan_steps": len(execution_plan),
+                    "track_count": len(execution_tracks),
+                },
+            ),
+            TaskGraphNode(
+                node_id="package_views",
+                title="Package user-facing deliverable bundle",
+                node_type="packaging",
+                status="completed" if completed else "ready",
+                depends_on=["build_primary"],
+                notes=[f"output views: {len(profile.output_views)}"],
+                artifacts=self._deliverable_artifacts(deliverables),
+                metrics={
+                    "deliverable_count": len(deliverables),
+                    "ready_deliverables": sum(1 for item in deliverables if item.get("status") == "ready"),
+                },
+            ),
+            TaskGraphNode(
+                node_id="benchmark_gate",
+                title="Map benchmark and verification gate",
+                node_type="evaluation",
+                status="completed" if benchmark_targets else "ready",
+                depends_on=["build_primary"],
+                notes=[
+                    str(item.get("current_signal", ""))
+                    for item in benchmark_targets[:3]
+                    if str(item.get("current_signal", ""))
+                ],
+                artifacts=self._benchmark_artifacts(benchmark_targets),
+                metrics={"benchmark_targets": len(benchmark_targets)},
+            ),
+            TaskGraphNode(
+                node_id="governance_review",
+                title="Governance and publish review",
+                node_type="review",
+                status="completed" if decision.get("status") == "ready" else "ready",
+                depends_on=["package_views", "benchmark_gate"],
+                notes=[
+                    f"decision={decision.get('status', '')}",
+                    f"reason={decision.get('reason', '')}",
+                ],
+                artifacts=[
+                    TaskGraphArtifact(
+                        kind="decision_gate",
+                        label="Mission decision",
+                        status="completed" if decision.get("status") == "ready" else "ready",
+                        summary=f"{decision.get('status', '')}: {decision.get('reason', '')}",
+                    )
+                ],
+                metrics={
+                    "execution_tracks": len(execution_tracks),
+                },
+            ),
+        ]
+        graph = ExecutableTaskGraph(
+            graph_id=f"{profile.name}-runtime-graph",
+            mission_type=profile.name,
+            query=query,
+            nodes=nodes,
+        )
+        return graph.to_dict()
+
+    def _release_task_graph(
+        self,
+        query: str,
+        profile: MissionProfile,
+        execution_plan: list[str],
+        deliverables: list[dict[str, Any]],
+        benchmark_targets: list[dict[str, Any]],
+        evidence: dict[str, Any],
+        decision: dict[str, Any],
+        release_context: dict[str, Any],
+        execution_tracks: list[dict[str, Any]],
+        release: dict[str, Any],
+        proposal: dict[str, Any],
+    ) -> dict[str, Any]:
+        release_status = _clean_text(release.get("decision", decision.get("status", "")))
+        evidence_count = int(evidence.get("record_count", 0))
+        citation_count = int(evidence.get("citation_count", 0))
+        evidence_status = "completed" if evidence_count or citation_count or release_status else "ready"
+        phases = proposal.get("phases", []) if isinstance(proposal, dict) else []
+
+        nodes = [
+            TaskGraphNode(
+                node_id="frame_release",
+                title="Frame release narrative and scenario boundary",
+                node_type="framing",
+                status="completed" if release_context else "ready",
+                notes=[
+                    f"scenario={release_context.get('scenario_name', '')}",
+                    f"theme={release_context.get('theme', '')}",
+                    f"headline={release_context.get('headline', '')}",
+                ],
+                artifacts=[
+                    TaskGraphArtifact(
+                        kind="release_context",
+                        label="Release framing",
+                        status="completed" if release_context else "ready",
+                        summary=_clean_text(release_context.get("headline", profile.primary_deliverable)),
+                    )
+                ],
+                metrics={"phase_count": len(phases)},
+            ),
+            TaskGraphNode(
+                node_id="collect_evidence",
+                title="Collect release-grade evidence bundle",
+                node_type="evidence",
+                status=evidence_status,
+                depends_on=["frame_release"],
+                notes=[f"records={evidence_count}", f"citations={citation_count}"],
+                artifacts=[
+                    TaskGraphArtifact(
+                        kind="evidence_packet",
+                        label="Evidence bundle",
+                        status=evidence_status,
+                        summary=f"{evidence_count} records / {citation_count} citations",
+                    )
+                ],
+                metrics={"record_count": evidence_count, "citation_count": citation_count},
+            ),
+            TaskGraphNode(
+                node_id="orchestrate_tracks",
+                title="Orchestrate multi-track execution",
+                node_type="execution_plan",
+                status="completed" if execution_tracks or execution_plan else "ready",
+                depends_on=["frame_release"],
+                commands=execution_plan[:4],
+                notes=[
+                    _clean_text(f"{item.get('name', '')}: {item.get('focus', '')}")
+                    for item in execution_tracks[:3]
+                ],
+                artifacts=[
+                    TaskGraphArtifact(
+                        kind="execution_tracks",
+                        label="Execution tracks",
+                        status="completed" if execution_tracks or execution_plan else "ready",
+                        summary=f"{len(execution_tracks) or min(len(execution_plan), 3)} tracks prepared",
+                    )
+                ],
+                metrics={"track_count": len(execution_tracks), "plan_steps": len(execution_plan)},
+            ),
+            TaskGraphNode(
+                node_id="package_release",
+                title="Package release deliverables",
+                node_type="packaging",
+                status="completed" if deliverables else "ready",
+                depends_on=["collect_evidence", "orchestrate_tracks"],
+                artifacts=self._deliverable_artifacts(deliverables),
+                metrics={"deliverable_count": len(deliverables)},
+            ),
+            TaskGraphNode(
+                node_id="evaluate_benchmarks",
+                title="Evaluate benchmark positioning and release gate",
+                node_type="evaluation",
+                status="completed" if benchmark_targets else "ready",
+                depends_on=["package_release"],
+                notes=[
+                    str(item.get("current_signal", ""))
+                    for item in benchmark_targets[:3]
+                    if str(item.get("current_signal", ""))
+                ],
+                artifacts=self._benchmark_artifacts(benchmark_targets),
+                metrics={"benchmark_targets": len(benchmark_targets)},
+            ),
+            TaskGraphNode(
+                node_id="release_decision",
+                title="Finalize promotion or block decision",
+                node_type="review",
+                status="completed" if release_status in {"promote", "ship", "ready", "approve"} else "ready",
+                depends_on=["evaluate_benchmarks"],
+                notes=[
+                    f"decision={release_status or 'block'}",
+                    f"reason={decision.get('reason', '')}",
+                ],
+                artifacts=[
+                    TaskGraphArtifact(
+                        kind="release_decision",
+                        label="Release decision",
+                        status="completed" if release_status in {"promote", "ship", "ready", "approve"} else "ready",
+                        summary=f"{release_status or 'block'}: {decision.get('reason', '')}",
+                    )
+                ],
+                metrics={"phases": len(phases)},
+            ),
+        ]
+        graph = ExecutableTaskGraph(
+            graph_id=f"{profile.name}-release-graph",
+            mission_type=f"{profile.name}_release",
+            query=query,
+            nodes=nodes,
+        )
+        return graph.to_dict()
+
+    @staticmethod
+    def _deliverable_artifacts(deliverables: list[dict[str, Any]]) -> list[TaskGraphArtifact]:
+        rows: list[TaskGraphArtifact] = []
+        for item in deliverables[:6]:
+            rows.append(
+                TaskGraphArtifact(
+                    kind="deliverable",
+                    label=str(item.get("title", "")),
+                    status=str(item.get("status", "draft")),
+                    summary=_clean_text(str(item.get("description", "")) or str(item.get("evidence_hint", ""))),
+                )
+            )
+        return rows
+
+    @staticmethod
+    def _benchmark_artifacts(benchmark_targets: list[dict[str, Any]]) -> list[TaskGraphArtifact]:
+        rows: list[TaskGraphArtifact] = []
+        for item in benchmark_targets[:5]:
+            rows.append(
+                TaskGraphArtifact(
+                    kind="benchmark_target",
+                    label=str(item.get("name", "")),
+                    status=str(item.get("current_status", "mapped")),
+                    summary=_clean_text(str(item.get("current_signal", "")) or str(item.get("gap", ""))),
+                )
+            )
         return rows
 
     @staticmethod
