@@ -270,6 +270,24 @@
         "success": true,
         "latency_ms": 2.92,
         "evidence_count": 5
+      },
+      {
+        "step": 1,
+        "tool": "api_market_discover",
+        "source": "recipe:risk-radar",
+        "score": 0.0,
+        "success": true,
+        "latency_ms": 1.01,
+        "evidence_count": 0
+      },
+      {
+        "step": 2,
+        "tool": "evidence_dossier_builder",
+        "source": "recipe:risk-radar",
+        "score": 0.0,
+        "success": true,
+        "latency_ms": 2.02,
+        "evidence_count": 5
       }
     ],
     "a0eb41902abd": [
@@ -811,6 +829,42 @@
         "score": 0.794,
         "success": true,
         "latency_ms": 2.76,
+        "evidence_count": 6
+      },
+      {
+        "step": 1,
+        "tool": "api_market_discover",
+        "source": "dynamic_discovery",
+        "score": 0.736,
+        "success": true,
+        "latency_ms": 0.95,
+        "evidence_count": 0
+      },
+      {
+        "step": 2,
+        "tool": "api_skill_portfolio_optimizer",
+        "source": "dynamic_discovery",
+        "score": 0.906,
+        "success": true,
+        "latency_ms": 2.07,
+        "evidence_count": 0
+      },
+      {
+        "step": 3,
+        "tool": "task_graph_builder",
+        "source": "dynamic_discovery",
+        "score": 0.799,
+        "success": true,
+        "latency_ms": 164.91,
+        "evidence_count": 0
+      },
+      {
+        "step": 4,
+        "tool": "external_resource_hub",
+        "source": "dynamic_discovery",
+        "score": 0.794,
+        "success": true,
+        "latency_ms": 2.04,
         "evidence_count": 6
       }
     ],
@@ -1354,6 +1408,42 @@
         "success": true,
         "latency_ms": 2.72,
         "evidence_count": 6
+      },
+      {
+        "step": 1,
+        "tool": "api_market_discover",
+        "source": "dynamic_discovery",
+        "score": 0.736,
+        "success": true,
+        "latency_ms": 1.0,
+        "evidence_count": 0
+      },
+      {
+        "step": 2,
+        "tool": "api_skill_portfolio_optimizer",
+        "source": "dynamic_discovery",
+        "score": 0.726,
+        "success": true,
+        "latency_ms": 2.24,
+        "evidence_count": 0
+      },
+      {
+        "step": 3,
+        "tool": "task_graph_builder",
+        "source": "dynamic_discovery",
+        "score": 0.619,
+        "success": true,
+        "latency_ms": 152.83,
+        "evidence_count": 0
+      },
+      {
+        "step": 4,
+        "tool": "external_resource_hub",
+        "source": "dynamic_discovery",
+        "score": 0.614,
+        "success": true,
+        "latency_ms": 2.1,
+        "evidence_count": 6
       }
     ],
     "a7fc930f6d2f": [
@@ -1590,9 +1680,36 @@
         "success": true,
         "latency_ms": 2.76,
         "evidence_count": 4
+      },
+      {
+        "step": 1,
+        "tool": "api_market_discover",
+        "source": "recipe:test-recipe",
+        "score": 0.736,
+        "success": true,
+        "latency_ms": 1.05,
+        "evidence_count": 0
+      },
+      {
+        "step": 2,
+        "tool": "policy_risk_matrix",
+        "source": "recipe:test-recipe",
+        "score": 0.865,
+        "success": true,
+        "latency_ms": 2.17,
+        "evidence_count": 4
       }
     ],
     "943ba523f580": [
+      {
+        "step": 0,
+        "tool": "preflight",
+        "source": "security",
+        "score": 4.5,
+        "success": false,
+        "latency_ms": 0.0,
+        "blocked": true
+      },
       {
         "step": 0,
         "tool": "preflight",
@@ -2062,6 +2179,33 @@
         "success": true,
         "latency_ms": 212.94,
         "evidence_count": 0
+      },
+      {
+        "step": 1,
+        "tool": "api_market_discover",
+        "source": "dynamic_discovery",
+        "score": 0.736,
+        "success": true,
+        "latency_ms": 1.03,
+        "evidence_count": 0
+      },
+      {
+        "step": 2,
+        "tool": "api_skill_portfolio_optimizer",
+        "source": "dynamic_discovery",
+        "score": 0.906,
+        "success": true,
+        "latency_ms": 2.06,
+        "evidence_count": 0
+      },
+      {
+        "step": 3,
+        "tool": "task_graph_builder",
+        "source": "dynamic_discovery",
+        "score": 0.799,
+        "success": true,
+        "latency_ms": 152.41,
+        "evidence_count": 0
       }
     ],
     "e1c281732c77": [
@@ -2414,6 +2558,33 @@
         "score": 0.745,
         "success": true,
         "latency_ms": 2.79,
+        "evidence_count": 4
+      },
+      {
+        "step": 1,
+        "tool": "api_market_discover",
+        "source": "recipe:risk-radar",
+        "score": 0.0,
+        "success": true,
+        "latency_ms": 1.01,
+        "evidence_count": 0
+      },
+      {
+        "step": 2,
+        "tool": "evidence_dossier_builder",
+        "source": "recipe:risk-radar",
+        "score": 0.0,
+        "success": true,
+        "latency_ms": 1.95,
+        "evidence_count": 5
+      },
+      {
+        "step": 3,
+        "tool": "policy_risk_matrix",
+        "source": "recipe:risk-radar",
+        "score": 0.745,
+        "success": true,
+        "latency_ms": 2.14,
         "evidence_count": 4
       }
     ],
@@ -2768,6 +2939,33 @@
         "success": true,
         "latency_ms": 2.8,
         "evidence_count": 4
+      },
+      {
+        "step": 1,
+        "tool": "api_market_discover",
+        "source": "recipe:risk-radar",
+        "score": 0.736,
+        "success": true,
+        "latency_ms": 1.28,
+        "evidence_count": 0
+      },
+      {
+        "step": 2,
+        "tool": "evidence_dossier_builder",
+        "source": "recipe:risk-radar",
+        "score": 0.761,
+        "success": true,
+        "latency_ms": 2.1,
+        "evidence_count": 5
+      },
+      {
+        "step": 3,
+        "tool": "policy_risk_matrix",
+        "source": "recipe:risk-radar",
+        "score": 0.805,
+        "success": true,
+        "latency_ms": 2.24,
+        "evidence_count": 4
       }
     ],
     "7bdb33a6d2db": [
@@ -3121,6 +3319,33 @@
         "success": true,
         "latency_ms": 1.24,
         "evidence_count": 0
+      },
+      {
+        "step": 1,
+        "tool": "browser_trending_scan",
+        "source": "recipe:ecosystem-hunter",
+        "score": 0.735,
+        "success": true,
+        "latency_ms": 1.19,
+        "evidence_count": 0
+      },
+      {
+        "step": 2,
+        "tool": "ecosystem_provider_radar",
+        "source": "recipe:ecosystem-hunter",
+        "score": 0.9555,
+        "success": true,
+        "latency_ms": 4.89,
+        "evidence_count": 0
+      },
+      {
+        "step": 3,
+        "tool": "code_skill_search",
+        "source": "recipe:ecosystem-hunter",
+        "score": 0.0,
+        "success": true,
+        "latency_ms": 0.9,
+        "evidence_count": 0
       }
     ],
     "920219d6132c": [
@@ -3473,6 +3698,33 @@
         "score": 0.745,
         "success": true,
         "latency_ms": 2.85,
+        "evidence_count": 4
+      },
+      {
+        "step": 1,
+        "tool": "api_market_discover",
+        "source": "recipe:risk-radar",
+        "score": 0.736,
+        "success": true,
+        "latency_ms": 1.01,
+        "evidence_count": 0
+      },
+      {
+        "step": 2,
+        "tool": "evidence_dossier_builder",
+        "source": "recipe:risk-radar",
+        "score": 0.761,
+        "success": true,
+        "latency_ms": 1.98,
+        "evidence_count": 5
+      },
+      {
+        "step": 3,
+        "tool": "policy_risk_matrix",
+        "source": "recipe:risk-radar",
+        "score": 0.745,
+        "success": true,
+        "latency_ms": 2.16,
         "evidence_count": 4
       }
     ],
@@ -4151,6 +4403,60 @@
         "success": true,
         "latency_ms": 3.0,
         "evidence_count": 4
+      },
+      {
+        "step": 1,
+        "tool": "api_market_discover",
+        "source": "recipe:risk-radar",
+        "score": 0.0,
+        "success": true,
+        "latency_ms": 1.04,
+        "evidence_count": 0
+      },
+      {
+        "step": 2,
+        "tool": "evidence_dossier_builder",
+        "source": "recipe:risk-radar",
+        "score": 0.0,
+        "success": true,
+        "latency_ms": 2.1,
+        "evidence_count": 5
+      },
+      {
+        "step": 3,
+        "tool": "policy_risk_matrix",
+        "source": "recipe:risk-radar",
+        "score": 0.0,
+        "success": true,
+        "latency_ms": 2.21,
+        "evidence_count": 4
+      },
+      {
+        "step": 1,
+        "tool": "api_market_discover",
+        "source": "recipe:risk-radar",
+        "score": 0.0,
+        "success": true,
+        "latency_ms": 1.29,
+        "evidence_count": 0
+      },
+      {
+        "step": 2,
+        "tool": "evidence_dossier_builder",
+        "source": "recipe:risk-radar",
+        "score": 0.0,
+        "success": true,
+        "latency_ms": 2.02,
+        "evidence_count": 5
+      },
+      {
+        "step": 3,
+        "tool": "policy_risk_matrix",
+        "source": "recipe:risk-radar",
+        "score": 0.0,
+        "success": true,
+        "latency_ms": 2.08,
+        "evidence_count": 4
       }
     ],
     "e45b87bd3025": [
@@ -4611,6 +4917,42 @@
         "score": 0.0,
         "success": true,
         "latency_ms": 2.91,
+        "evidence_count": 4
+      },
+      {
+        "step": 4,
+        "tool": "code_router_blueprint",
+        "source": "recipe:daily-operator",
+        "score": 0.0,
+        "success": true,
+        "latency_ms": 0.0,
+        "evidence_count": 0
+      },
+      {
+        "step": 1,
+        "tool": "memory_context_digest",
+        "source": "recipe:daily-operator",
+        "score": 0.757,
+        "success": true,
+        "latency_ms": 0.02,
+        "evidence_count": 0
+      },
+      {
+        "step": 2,
+        "tool": "api_skill_portfolio_optimizer",
+        "source": "recipe:daily-operator",
+        "score": 0.786,
+        "success": true,
+        "latency_ms": 1.9,
+        "evidence_count": 0
+      },
+      {
+        "step": 3,
+        "tool": "policy_risk_matrix",
+        "source": "recipe:daily-operator",
+        "score": 0.0,
+        "success": true,
+        "latency_ms": 2.04,
         "evidence_count": 4
       },
       {
@@ -5091,6 +5433,42 @@
         "success": true,
         "latency_ms": 0.01,
         "evidence_count": 0
+      },
+      {
+        "step": 1,
+        "tool": "browser_trending_scan",
+        "source": "recipe:research-rig",
+        "score": 0.0,
+        "success": true,
+        "latency_ms": 0.81,
+        "evidence_count": 0
+      },
+      {
+        "step": 2,
+        "tool": "evidence_dossier_builder",
+        "source": "recipe:research-rig",
+        "score": 0.761,
+        "success": true,
+        "latency_ms": 1.93,
+        "evidence_count": 6
+      },
+      {
+        "step": 3,
+        "tool": "external_resource_hub",
+        "source": "recipe:research-rig",
+        "score": 0.794,
+        "success": true,
+        "latency_ms": 1.97,
+        "evidence_count": 6
+      },
+      {
+        "step": 4,
+        "tool": "code_experiment_design",
+        "source": "recipe:research-rig",
+        "score": 0.957,
+        "success": true,
+        "latency_ms": 0.01,
+        "evidence_count": 0
       }
     ],
     "3e86861a27a1": [
@@ -5560,6 +5938,42 @@
         "score": 0.794,
         "success": true,
         "latency_ms": 2.85,
+        "evidence_count": 6
+      },
+      {
+        "step": 1,
+        "tool": "browser_trending_scan",
+        "source": "recipe:creative-studio",
+        "score": 0.0,
+        "success": true,
+        "latency_ms": 0.79,
+        "evidence_count": 0
+      },
+      {
+        "step": 2,
+        "tool": "api_skill_portfolio_optimizer",
+        "source": "recipe:creative-studio",
+        "score": 0.0,
+        "success": true,
+        "latency_ms": 2.17,
+        "evidence_count": 0
+      },
+      {
+        "step": 3,
+        "tool": "code_router_blueprint",
+        "source": "recipe:creative-studio",
+        "score": 0.7875,
+        "success": true,
+        "latency_ms": 0.0,
+        "evidence_count": 0
+      },
+      {
+        "step": 4,
+        "tool": "external_resource_hub",
+        "source": "recipe:creative-studio",
+        "score": 0.794,
+        "success": true,
+        "latency_ms": 1.97,
         "evidence_count": 6
       }
     ],
@@ -6031,6 +6445,42 @@
         "success": true,
         "latency_ms": 2.64,
         "evidence_count": 0
+      },
+      {
+        "step": 1,
+        "tool": "memory_context_digest",
+        "source": "recipe:enterprise-ops",
+        "score": 0.757,
+        "success": true,
+        "latency_ms": 0.01,
+        "evidence_count": 0
+      },
+      {
+        "step": 2,
+        "tool": "evidence_dossier_builder",
+        "source": "recipe:enterprise-ops",
+        "score": 0.821,
+        "success": true,
+        "latency_ms": 2.61,
+        "evidence_count": 5
+      },
+      {
+        "step": 3,
+        "tool": "policy_risk_matrix",
+        "source": "recipe:enterprise-ops",
+        "score": 0.805,
+        "success": true,
+        "latency_ms": 2.39,
+        "evidence_count": 4
+      },
+      {
+        "step": 4,
+        "tool": "api_skill_portfolio_optimizer",
+        "source": "recipe:enterprise-ops",
+        "score": 0.726,
+        "success": true,
+        "latency_ms": 1.96,
+        "evidence_count": 0
       }
     ],
     "8c0b7cf33bfa": [
@@ -6501,6 +6951,78 @@
         "success": true,
         "latency_ms": 1.28,
         "evidence_count": 0
+      },
+      {
+        "step": 1,
+        "tool": "api_market_discover",
+        "source": "recipe:risk-radar",
+        "score": 0.0,
+        "success": true,
+        "latency_ms": 1.1,
+        "evidence_count": 0
+      },
+      {
+        "step": 2,
+        "tool": "evidence_dossier_builder",
+        "source": "recipe:risk-radar",
+        "score": 0.761,
+        "success": true,
+        "latency_ms": 2.36,
+        "evidence_count": 5
+      },
+      {
+        "step": 3,
+        "tool": "policy_risk_matrix",
+        "source": "recipe:risk-radar",
+        "score": 0.745,
+        "success": true,
+        "latency_ms": 2.08,
+        "evidence_count": 4
+      },
+      {
+        "step": 4,
+        "tool": "api_skill_dependency_graph",
+        "source": "recipe:risk-radar",
+        "score": 0.7165,
+        "success": true,
+        "latency_ms": 0.93,
+        "evidence_count": 0
+      },
+      {
+        "step": 1,
+        "tool": "api_market_discover",
+        "source": "recipe:risk-radar",
+        "score": 0.0,
+        "success": true,
+        "latency_ms": 1.07,
+        "evidence_count": 0
+      },
+      {
+        "step": 2,
+        "tool": "evidence_dossier_builder",
+        "source": "recipe:risk-radar",
+        "score": 0.761,
+        "success": true,
+        "latency_ms": 2.13,
+        "evidence_count": 5
+      },
+      {
+        "step": 3,
+        "tool": "policy_risk_matrix",
+        "source": "recipe:risk-radar",
+        "score": 0.745,
+        "success": true,
+        "latency_ms": 2.98,
+        "evidence_count": 4
+      },
+      {
+        "step": 4,
+        "tool": "api_skill_dependency_graph",
+        "source": "recipe:risk-radar",
+        "score": 0.7165,
+        "success": true,
+        "latency_ms": 1.08,
+        "evidence_count": 0
       }
     ],
     "4522a617bc52": [
@@ -6970,6 +7492,78 @@
         "score": 0.726,
         "success": true,
         "latency_ms": 2.7,
+        "evidence_count": 0
+      },
+      {
+        "step": 1,
+        "tool": "memory_context_digest",
+        "source": "recipe:enterprise-ops",
+        "score": 0.0,
+        "success": true,
+        "latency_ms": 0.02,
+        "evidence_count": 0
+      },
+      {
+        "step": 2,
+        "tool": "evidence_dossier_builder",
+        "source": "recipe:enterprise-ops",
+        "score": 0.821,
+        "success": true,
+        "latency_ms": 3.35,
+        "evidence_count": 5
+      },
+      {
+        "step": 3,
+        "tool": "policy_risk_matrix",
+        "source": "recipe:enterprise-ops",
+        "score": 0.805,
+        "success": true,
+        "latency_ms": 2.69,
+        "evidence_count": 4
+      },
+      {
+        "step": 4,
+        "tool": "api_skill_portfolio_optimizer",
+        "source": "recipe:enterprise-ops",
+        "score": 0.726,
+        "success": true,
+        "latency_ms": 2.07,
+        "evidence_count": 0
+      },
+      {
+        "step": 1,
+        "tool": "memory_context_digest",
+        "source": "recipe:enterprise-ops",
+        "score": 0.0,
+        "success": true,
+        "latency_ms": 0.01,
+        "evidence_count": 0
+      },
+      {
+        "step": 2,
+        "tool": "evidence_dossier_builder",
+        "source": "recipe:enterprise-ops",
+        "score": 0.821,
+        "success": true,
+        "latency_ms": 2.05,
+        "evidence_count": 5
+      },
+      {
+        "step": 3,
+        "tool": "policy_risk_matrix",
+        "source": "recipe:enterprise-ops",
+        "score": 0.805,
+        "success": true,
+        "latency_ms": 2.09,
+        "evidence_count": 4
+      },
+      {
+        "step": 4,
+        "tool": "api_skill_portfolio_optimizer",
+        "source": "recipe:enterprise-ops",
+        "score": 0.726,
+        "success": true,
+        "latency_ms": 2.04,
         "evidence_count": 0
       }
     ],
@@ -7873,6 +8467,114 @@
         "success": true,
         "latency_ms": 1.34,
         "evidence_count": 0
+      },
+      {
+        "step": 1,
+        "tool": "api_market_discover",
+        "source": "recipe:risk-radar",
+        "score": 0.0,
+        "success": true,
+        "latency_ms": 1.1,
+        "evidence_count": 0
+      },
+      {
+        "step": 2,
+        "tool": "evidence_dossier_builder",
+        "source": "recipe:risk-radar",
+        "score": 0.941,
+        "success": true,
+        "latency_ms": 2.63,
+        "evidence_count": 5
+      },
+      {
+        "step": 3,
+        "tool": "policy_risk_matrix",
+        "source": "recipe:risk-radar",
+        "score": 0.805,
+        "success": true,
+        "latency_ms": 2.37,
+        "evidence_count": 4
+      },
+      {
+        "step": 4,
+        "tool": "api_skill_dependency_graph",
+        "source": "recipe:risk-radar",
+        "score": 0.0,
+        "success": true,
+        "latency_ms": 1.05,
+        "evidence_count": 0
+      },
+      {
+        "step": 1,
+        "tool": "api_market_discover",
+        "source": "recipe:risk-radar",
+        "score": 0.0,
+        "success": true,
+        "latency_ms": 1.27,
+        "evidence_count": 0
+      },
+      {
+        "step": 2,
+        "tool": "evidence_dossier_builder",
+        "source": "recipe:risk-radar",
+        "score": 0.941,
+        "success": true,
+        "latency_ms": 2.28,
+        "evidence_count": 5
+      },
+      {
+        "step": 3,
+        "tool": "policy_risk_matrix",
+        "source": "recipe:risk-radar",
+        "score": 0.805,
+        "success": true,
+        "latency_ms": 2.26,
+        "evidence_count": 4
+      },
+      {
+        "step": 4,
+        "tool": "api_skill_dependency_graph",
+        "source": "recipe:risk-radar",
+        "score": 0.0,
+        "success": true,
+        "latency_ms": 0.93,
+        "evidence_count": 0
+      },
+      {
+        "step": 1,
+        "tool": "api_market_discover",
+        "source": "recipe:risk-radar",
+        "score": 0.0,
+        "success": true,
+        "latency_ms": 1.07,
+        "evidence_count": 0
+      },
+      {
+        "step": 2,
+        "tool": "evidence_dossier_builder",
+        "source": "recipe:risk-radar",
+        "score": 0.941,
+        "success": true,
+        "latency_ms": 2.26,
+        "evidence_count": 5
+      },
+      {
+        "step": 3,
+        "tool": "policy_risk_matrix",
+        "source": "recipe:risk-radar",
+        "score": 0.805,
+        "success": true,
+        "latency_ms": 2.23,
+        "evidence_count": 4
+      },
+      {
+        "step": 4,
+        "tool": "api_skill_dependency_graph",
+        "source": "recipe:risk-radar",
+        "score": 0.0,
+        "success": true,
+        "latency_ms": 0.92,
+        "evidence_count": 0
       }
     ],
     "32ea5da5a1fc4eaa": [
@@ -8179,6 +8881,42 @@
         "score": 0.906,
         "success": true,
         "latency_ms": 2.76,
+        "evidence_count": 0
+      },
+      {
+        "step": 1,
+        "tool": "memory_context_digest",
+        "source": "recipe:enterprise-ops",
+        "score": 0.0,
+        "success": true,
+        "latency_ms": 0.02,
+        "evidence_count": 0
+      },
+      {
+        "step": 2,
+        "tool": "evidence_dossier_builder",
+        "source": "recipe:enterprise-ops",
+        "score": 0.881,
+        "success": true,
+        "latency_ms": 2.43,
+        "evidence_count": 5
+      },
+      {
+        "step": 3,
+        "tool": "policy_risk_matrix",
+        "source": "recipe:enterprise-ops",
+        "score": 0.805,
+        "success": true,
+        "latency_ms": 2.22,
+        "evidence_count": 4
+      },
+      {
+        "step": 4,
+        "tool": "api_skill_portfolio_optimizer",
+        "source": "recipe:enterprise-ops",
+        "score": 0.906,
+        "success": true,
+        "latency_ms": 2.05,
         "evidence_count": 0
       }
     ]

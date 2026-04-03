@@ -91,10 +91,13 @@ def test_write_showcase_with_interop_bundle(tmp_path: Path) -> None:
     html_content = html_path.read_text(encoding="utf-8")
     assert "Agent Harness Studio" in html_content
     assert "Primary Deliverable" in html_content
+    assert "Case Study And Runtime" in html_content
+    assert "Artifact Explorer" in html_content
     assert "Deliverable Package" in html_content
     assert "Three-Phase Rollout" in html_content
     assert "Benchmark Fit" in html_content
     assert "Agent Comparison" in html_content
+    assert "Score Provenance" in html_content
     assert "Appendix" in html_content
     assert "Generated Business Brief" in html_content
 

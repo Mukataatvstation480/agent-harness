@@ -10,8 +10,8 @@
         "governance"
       ],
       "installs": 120,
-      "uses": 617,
-      "success": 607,
+      "uses": 666,
+      "success": 656,
       "failures": 10,
       "avg_rating": 4.6,
       "rating_count": 29,
@@ -97,8 +97,8 @@
         "comparison"
       ],
       "installs": 95,
-      "uses": 109,
-      "success": 103,
+      "uses": 113,
+      "success": 107,
       "failures": 6,
       "avg_rating": 4.4,
       "rating_count": 22,
@@ -114,7 +114,7 @@
         "validate_claims"
       ],
       "last_updated": "2026-02-03",
-      "trending_score": 0.5900000000000003,
+      "trending_score": 0.6300000000000003,
       "metadata": {
         "name": "evidence_matrix",
         "description": "Build claim-evidence-confidence matrix from source text.",
@@ -186,8 +186,8 @@
         "brief"
       ],
       "installs": 180,
-      "uses": 314,
-      "success": 297,
+      "uses": 326,
+      "success": 309,
       "failures": 17,
       "avg_rating": 4.8,
       "rating_count": 55,
@@ -364,8 +364,8 @@
         "mapping"
       ],
       "installs": 68,
-      "uses": 208,
-      "success": 202,
+      "uses": 226,
+      "success": 220,
       "failures": 6,
       "avg_rating": 4.1,
       "rating_count": 15,

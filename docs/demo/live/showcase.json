@@ -1582,7 +1582,7 @@
         "calls_used": 3,
         "call_budget": 6,
         "model": "deepseek-chat",
-        "base_url": "https://yunwu.ai/v1",
+        "base_url": "https://your-endpoint/v1",
         "success": true,
         "latency_ms": 64334.22,
         "analysis": {
@@ -2029,7 +2029,7 @@
       "live_agent_configured": true,
       "live_agent_success": true,
       "model": "deepseek-chat",
-      "base_url": "https://yunwu.ai/v1",
+      "base_url": "https://your-endpoint/v1",
       "calls_used": 3,
       "call_budget": 6,
       "notes": [

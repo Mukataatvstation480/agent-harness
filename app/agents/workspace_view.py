@@ -60,6 +60,7 @@ class ThreadWorkspaceStreamBuilder:
         artifacts = payload.get("artifacts", []) if isinstance(payload.get("artifacts", []), list) else []
         executions = payload.get("executions", []) if isinstance(payload.get("executions", []), list) else []
         events = payload.get("stream_events", []) if isinstance(payload.get("stream_events", []), list) else []
+        workspace = payload.get("workspace", {}) if isinstance(payload.get("workspace", {}), dict) else {}
         return f"""<!doctype html>
 <html lang="en">
 <head>
@@ -105,6 +106,8 @@ class ThreadWorkspaceStreamBuilder:
     .hero-grid {{ display:grid; grid-template-columns: 1.4fr 0.9fr; gap: 18px; margin-top: 18px; }}
     .mini-panel {{ background: rgba(255,255,255,0.52); border: 1px solid var(--line); border-radius: 18px; padding: 16px; }}
     .quote {{ font-size: 17px; line-height: 1.7; white-space: pre-wrap; }}
+    table {{ width:100%; border-collapse: collapse; font-size: 14px; }}
+    th, td {{ padding: 8px 6px; text-align: left; border-bottom: 1px solid var(--line); vertical-align: top; }}
     @media (max-width: 980px) {{
       .grid {{ grid-template-columns: 1fr; }}
       .span-3, .span-4, .span-6, .span-8, .span-12 {{ grid-column: span 1; }}
@@ -125,13 +128,29 @@ class ThreadWorkspaceStreamBuilder:
       </div>
       <div class="hero-grid">
         <div class="mini-panel">
-          <div class="title">What Was Produced</div>
+          <div class="title">Artifact Focus</div>
           <ul>{"".join(f"<li>{html.escape(item)}</li>" for item in showcase.get("deliverables", [])) or "<li>No deliverables summarized.</li>"}</ul>
         </div>
         <div class="mini-panel">
           <div class="title">Why It Matters</div>
           <ul>{"".join(f"<li>{html.escape(item)}</li>" for item in showcase.get("value_points", [])) or "<li>No value points summarized.</li>"}</ul>
         </div>
+      </div>
+    </section>
+    <section class="grid">
+      <div class="card span-6">
+        <div class="title">Agent Computer</div>
+        <h3 class="section-title">Workspace Environment</h3>
+        <table><thead><tr><th>Area</th><th>Path</th></tr></thead><tbody>
+          <tr><td>workspace</td><td><code>{html.escape(str(workspace.get("workspace", "")))}</code></td></tr>
+          <tr><td>outputs</td><td><code>{html.escape(str(workspace.get("outputs", "")))}</code></td></tr>
+          <tr><td>uploads</td><td><code>{html.escape(str(workspace.get("uploads", "")))}</code></td></tr>
+        </tbody></table>
+      </div>
+      <div class="card span-6">
+        <div class="title">Artifact Rail</div>
+        <h3 class="section-title">What You Can Open</h3>
+        <table><thead><tr><th>Artifact</th><th>Kind</th><th>Summary</th></tr></thead><tbody>{"".join(f"<tr><td><code>{html.escape(str(item.get('relative_path', item.get('name',''))))}</code></td><td>{html.escape(str(item.get('kind','')))}</td><td>{html.escape(str(item.get('summary','')))}</td></tr>" for item in artifacts) or "<tr><td colspan='3'>No artifacts.</td></tr>"}</tbody></table>
       </div>
     </section>
     <section class="grid">
@@ -203,12 +222,13 @@ class ThreadWorkspaceStreamBuilder:
             [
                 "This run produced inspectable artifacts, not just a final answer string.",
                 "The result can be resumed, retried, and audited inside persistent thread state.",
+                "Workspace paths and artifact files are exposed directly so the user can inspect the agent computer state.",
             ]
         )
         summary = (
-            f"This thread executed a generic agent task against a real workspace. "
-            f"It inspected project files, discovered usable tools, produced a structured task brief, "
-            f"and wrote a reviewable report artifact."
+            f"This thread executed a concrete task inside a persistent agent workspace. "
+            f"It grounded on local files, generated reviewable artifacts, and exposed the execution computer "
+            f"through workspace paths, event history, and artifact outputs."
         )
         result_body = report_text or str(plan_payload.get("output", "No report generated.")) if plan_payload else "No report generated."
         result_body = result_body[:1200]

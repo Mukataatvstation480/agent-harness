@@ -972,6 +972,7 @@ class StudioShowcaseBuilder:
         delivery = payload.get("harness", {})
         generation = delivery.get("generation", {}) if isinstance(delivery, dict) else {}
         evidence = delivery.get("run_summary", {}).get("evidence", {}) if isinstance(delivery, dict) else {}
+        run_summary = delivery.get("run_summary", {}) if isinstance(delivery, dict) else {}
         router_quality = payload.get("router", {}).get("analysis", {}).get("quality", {})
         robust_expected = _safe_float(router_quality.get("robust_expected_utility", 0.0))
         robust_worst_case = _safe_float(router_quality.get("robust_worst_case_utility", 0.0))
@@ -1062,8 +1063,47 @@ details{{border:1px solid var(--line);border-radius:18px;background:rgba(255,255
   </div>
 </section>
 <section class="card glass">
+  <div class="kicker">Case Study And Runtime</div>
+  <div class="grid">
+    <article>
+      <h2>Case Study</h2>
+      <p><strong>Request:</strong> {html.escape(str(query.get("text", "")))}</p>
+      <p><strong>Why now:</strong> {html.escape(str(story.get("release_need", "")))}</p>
+      <p><strong>Audience takeaway:</strong> {html.escape(str(story.get("audience_takeaway", "")))}</p>
+      <h3 style="margin-top:14px">Output Modes</h3>
+      <div>{self._chip_cloud(mission.get("output_views", []), tone="bright")}</div>
+    </article>
+    <article>
+      <h2>Runtime Computer</h2>
+      <div class="grid4">
+        {self._runtime_signal_cards(
+            run_summary=run_summary,
+            generation=generation,
+            interop=interop,
+            evidence=evidence,
+        )}
+      </div>
+      <h3 style="margin-top:14px">Selected Skills</h3>
+      <div>{self._chip_cloud(query.get("selected_skills", []), tone="muted")}</div>
+    </article>
+  </div>
+</section>
+<section class="card glass">
   <div class="kicker">Deliverable Package</div>
   <div class="grid4">{self._deliverable_cards(mission.get("deliverables", []))}</div>
+</section>
+<section class="card glass">
+  <div class="kicker">Artifact Explorer</div>
+  <div class="grid">
+    <article>
+      <h2>What Opens For The User</h2>
+      <table><thead><tr><th>Artifact</th><th>Purpose</th></tr></thead><tbody>{self._artifact_family_rows(mission, interop)}</tbody></table>
+    </article>
+    <article>
+      <h2>Execution Backbone</h2>
+      <ul>{"".join(f"<li>{html.escape(str(item))}</li>" for item in delivery.get("plan", []))}</ul>
+    </article>
+  </div>
 </section>
 <section class="grid3">
   {self._pillar_cards(proposal.get("pillars", []))}
@@ -1508,6 +1548,75 @@ details{{border:1px solid var(--line);border-radius:18px;background:rgba(255,255
                 "</div>"
             )
         return "".join(parts)
+
+    @staticmethod
+    def _chip_cloud(items: list[Any], tone: str = "muted") -> str:
+        values = [str(item).strip() for item in items if str(item).strip()]
+        if not values:
+            return "<span class='badge'>No items</span>"
+        background = "rgba(255,255,255,.10)" if tone == "bright" else "rgba(10,30,48,.06)"
+        color = "#edf7ff" if tone == "bright" else "#24445f"
+        border = "rgba(255,255,255,.16)" if tone == "bright" else "rgba(10,30,48,.10)"
+        return "".join(
+            f"<span class='badge' style='background:{background};color:{color};border-color:{border}'>{html.escape(value)}</span>"
+            for value in values[:12]
+        )
+
+    @staticmethod
+    def _runtime_signal_cards(
+        *,
+        run_summary: dict[str, Any],
+        generation: dict[str, Any],
+        interop: dict[str, Any],
+        evidence: dict[str, Any],
+    ) -> str:
+        metrics = run_summary.get("metrics", {}) if isinstance(run_summary, dict) else {}
+        cards = [
+            ("Model", str(generation.get("model", "")) or "baseline"),
+            ("Live Calls", str(int(generation.get("calls_used", 0)))),
+            ("Evidence", str(int(evidence.get("record_count", 0)))),
+            ("Interop", str(int(interop.get("framework_count", 0)))),
+            ("Tool Success", f"{_safe_float(metrics.get('tool_success_rate', 0.0)):.2f}"),
+            ("Completion", f"{_safe_float(metrics.get('completion_score', 0.0)):.2f}"),
+        ]
+        return "".join(
+            "<div class='signal'>"
+            f"<div class='label'>{html.escape(label)}</div>"
+            f"<div class='value'>{html.escape(value)}</div>"
+            "</div>"
+            for label, value in cards
+        )
+
+    @staticmethod
+    def _artifact_family_rows(mission: dict[str, Any], interop: dict[str, Any]) -> str:
+        deliverables = mission.get("deliverables", []) if isinstance(mission.get("deliverables", []), list) else []
+        rows: list[str] = []
+        for item in deliverables[:6]:
+            if not isinstance(item, dict):
+                continue
+            rows.append(
+                "<tr>"
+                f"<td>{html.escape(str(item.get('title', 'Deliverable')))}</td>"
+                f"<td>{html.escape(str(item.get('description', '')))}</td>"
+                "</tr>"
+            )
+        output_views = mission.get("output_views", []) if isinstance(mission.get("output_views", []), list) else []
+        for view in output_views[:4]:
+            rows.append(
+                "<tr>"
+                f"<td>{html.escape(str(view))}</td>"
+                "<td>User-facing output format in the generated bundle.</td>"
+                "</tr>"
+            )
+        rows.append(
+            "<tr>"
+            "<td>OpenAI / Anthropic Skill Export</td>"
+            f"<td>{int(interop.get('framework_count', 0))} framework bundle(s) and {int(interop.get('total_skill_entries', 0))} exported entries.</td>"
+            "</tr>"
+        )
+        if not rows:
+            return "<tr><td colspan='2'>No artifact families.</td></tr>"
+        return "".join(rows)
 
     @staticmethod
     def _benchmark_rows(rows: list[dict[str, Any]]) -> str:
