@@ -4,11 +4,15 @@ from __future__ import annotations
 
 from typing import Any
 
+from app.core.mission import MissionRegistry
 from app.harness.models import HarnessRun
 
 
 class HarnessReportBuilder:
     """Build summary reports from harness runs."""
+
+    def __init__(self) -> None:
+        self.missions = MissionRegistry()
 
     def summary(self, run: HarnessRun) -> dict[str, Any]:
         security = run.metadata.get("security", {})
@@ -45,7 +49,7 @@ class HarnessReportBuilder:
                         }
                     )
 
-        return {
+        summary = {
             "query": run.query,
             "completed": run.completed,
             "plan": run.plan,
@@ -64,9 +68,16 @@ class HarnessReportBuilder:
             "steps": step_rows,
             "memory_snapshot_size": len(run.memory_snapshot),
         }
+        summary["mission"] = (
+            run.mission
+            if isinstance(run.mission, dict) and run.mission
+            else self.missions.build_runtime_pack(run.query, run=run, run_summary=summary)
+        )
+        return summary
 
     def to_markdown(self, run: HarnessRun) -> str:
         data = self.summary(run)
+        mission = data.get("mission", {}) if isinstance(data.get("mission", {}), dict) else {}
 
         lines = [
             "# Harness Run Report",
@@ -78,10 +89,43 @@ class HarnessReportBuilder:
             f"- Live Agent Calls: `{data.get('live_agent', {}).get('calls_used', 0)}`",
             f"- Evidence Records: `{data.get('evidence', {}).get('record_count', 0)}`",
             "",
+            "## Mission Pack",
+            f"- Type: `{mission.get('title', '')}`",
+            f"- Primary Deliverable: `{mission.get('primary_deliverable', '')}`",
+            f"- Decision: `{mission.get('decision', {}).get('status', '')}`",
+            "",
             "## Plan",
         ]
         for item in data["plan"]:
             lines.append(f"- {item}")
+
+        lines.extend(
+            [
+                "",
+                "## Deliverables",
+            ]
+        )
+        if mission.get("deliverables"):
+            for item in mission.get("deliverables", [])[:4]:
+                lines.append(
+                    f"- `{item.get('title', '')}` status={item.get('status', '')} signal={item.get('evidence_hint', '-')}"
+                )
+        else:
+            lines.append("- none")
+
+        lines.extend(
+            [
+                "",
+                "## Benchmark Fit",
+            ]
+        )
+        if mission.get("benchmark_targets"):
+            for item in mission.get("benchmark_targets", [])[:4]:
+                lines.append(
+                    f"- `{item.get('name', '')}` fit={item.get('fit', '')} gap={item.get('gap', '')}"
+                )
+        else:
+            lines.append("- none")
 
         lines.extend(
             [

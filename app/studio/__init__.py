@@ -5,7 +5,7 @@ from app.studio.flagship import (
     FLAGSHIP_ONE_LINER,
     StudioShowcaseBuilder,
 )
-from app.studio.mission import MissionRegistry
+from app.core.mission import MissionRegistry
 from app.studio.proposals import ProposalRegistry
 
 __all__ = [

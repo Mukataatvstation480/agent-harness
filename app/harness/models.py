@@ -86,4 +86,5 @@ class HarnessRun:
     completed: bool
     eval_metrics: dict[str, float]
     memory_snapshot: list[dict[str, Any]] = field(default_factory=list)
+    mission: dict[str, Any] = field(default_factory=dict)
     metadata: dict[str, Any] = field(default_factory=dict)

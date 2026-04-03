@@ -11,13 +11,13 @@ from pathlib import Path
 from typing import Any
 
 from app.core.state import GraphState
+from app.core.mission import MissionRegistry
 from app.ecosystem.marketplace import discover_for_query, get_provider_stats, get_trending_skills
 from app.graph import build_graph
 from app.harness import HarnessConstraints
 from app.harness.engine import HarnessEngine
 from app.policy.center import normalize_mode, policy_for_mode
 from app.skills.interop import export_interop_all, write_interop_bundle
-from app.studio.mission import MissionRegistry
 from app.studio.proposals import ProposalRegistry, ProposalScenario
 from app.tracing.analyzer import RoutingAnalyzer
 from app.tracing.visualizer import render_trace_views
@@ -230,15 +230,16 @@ class StudioShowcaseBuilder:
             scenario=scenario,
         )
         agent_comparison = self._agent_comparison(router_payload)
-        mission_pack = self.missions.build_pack(
+        mission_pack = self.missions.build_release_pack(
             query=query,
-            profile=mission_profile,
+            run=run,
             scenario=scenario.to_dict(),
             story=story,
             proposal=proposal,
             run_summary=run_summary,
             lab_payload=lab_payload,
             agent_comparison=agent_comparison,
+            profile=mission_profile,
         )
         delivery_brief_excerpt = self._delivery_brief(
             query=query,

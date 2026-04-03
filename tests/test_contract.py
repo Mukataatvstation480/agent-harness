@@ -11,6 +11,7 @@ def test_response_contract_exists() -> None:
     assert "user" in contract
     assert "debug" in contract
     assert "evaluation" in contract
+    assert "delivery_contract" in contract.get("user", {})
     assert "robustness_confidence" in contract.get("evaluation", {}).get("confidence_components", {})
 
 

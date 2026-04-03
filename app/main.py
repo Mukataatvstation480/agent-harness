@@ -9,6 +9,7 @@ import typer
 
 from app.benchmark.evaluate import run_benchmark
 from app.core.state import AgentStyle, GraphState
+from app.core.mission import MissionRegistry
 from app.demo import (
     demo_benchmark,
     demo_conflict_resolution,
@@ -40,7 +41,6 @@ from app.skills.registry import (
 )
 from app.skills.interop import export_interop_all, export_interop_catalog, write_interop_bundle
 from app.studio.flagship import StudioShowcaseBuilder
-from app.studio.mission import MissionRegistry
 from app.studio.proposals import ProposalRegistry
 from app.tracing.analyzer import RoutingAnalyzer
 from app.tracing.store import list_recent_traces, load_trace, save_trace
@@ -1058,6 +1058,55 @@ def harness_value_command(
     console.print(f"[bold]Narrative:[/] {card.get('narrative', '')}")
     for item in card.get("dimensions", []):
         console.print(f"- {item.get('name')}: {round(float(item.get('score', 0.0)) * 100, 1)}%")
+
+
+@app.command("harness-mission")
+def harness_mission_command(
+    query: str = typer.Argument(..., help="Task query"),
+    mode: str = typer.Option("balanced", "--mode", "-m", help="Execution mode"),
+    recipe: str = typer.Option("", "--recipe", "-r", help="Built-in recipe name"),
+    recipe_path: str = typer.Option("", "--recipe-path", help="Path to recipe file"),
+    live_agent: bool = typer.Option(False, "--live-agent", help="Enable real-model agent enhancement"),
+    max_model_calls: int = typer.Option(8, "--max-model-calls", help="Live model calls per run (<=50)"),
+    model_base_url: str = typer.Option("", "--model-base-url", help="Model API base URL"),
+    model_api_key: str = typer.Option("", "--model-api-key", help="Model API key"),
+    model_name: str = typer.Option("", "--model-name", help="Model name"),
+    model_timeout: int = typer.Option(45, "--model-timeout", help="Model timeout seconds"),
+    model_temperature: float = typer.Option(0.15, "--model-temperature", help="Model temperature"),
+    model_max_tokens: int = typer.Option(1400, "--model-max-tokens", help="Model max tokens"),
+    output: str = typer.Option("", "--output", "-o", help="Optional output JSON file"),
+) -> None:
+    """Run harness and emit the shared mission-pack artifact."""
+
+    overrides = _build_live_model_overrides(
+        model_base_url=model_base_url,
+        model_api_key=model_api_key,
+        model_name=model_name,
+        timeout_seconds=model_timeout,
+        temperature=model_temperature,
+        max_tokens=model_max_tokens,
+    )
+    run = HARNESS.run(
+        query=query,
+        mode=_parse_mode(mode).value,
+        recipe=recipe or None,
+        recipe_path=recipe_path or None,
+        constraints=HarnessConstraints(
+            enable_live_agent=live_agent,
+            max_live_agent_calls=max(1, min(max_model_calls, 50)),
+            live_agent_temperature=max(0.0, min(model_temperature, 1.5)),
+            live_agent_timeout_seconds=max(5, min(model_timeout, 300)),
+        ),
+        live_model=overrides if overrides else None,
+    )
+    payload = HARNESS.build_mission_pack(run)
+    if output:
+        path = Path(output)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(json.dumps(payload, indent=2, default=str), encoding="utf-8")
+        console.print(f"[green]Mission pack written:[/] {path}")
+        return
+    console.print_json(json.dumps(payload, indent=2, default=str))
 
 
 @app.command("harness-visual")

@@ -22,7 +22,7 @@
   <img src="https://img.shields.io/badge/Python-3.11%2B-3776AB?logo=python&logoColor=white"/>
   <img src="https://img.shields.io/badge/LangGraph-Orchestrated-0B1020"/>
   <img src="https://img.shields.io/badge/CLI-Typer-111827"/>
-  <img src="https://img.shields.io/badge/Tests-86%20passed-16a34a"/>
+  <img src="https://img.shields.io/badge/Tests-87%20passed-16a34a"/>
 </p>
 
 ---
@@ -316,6 +316,7 @@ python -m app.main studio-showcase "Design a flagship AI operating plan" --mode 
 ```bash
 python -m app.main mission-profiles
 python -m app.main proposal-scenarios
+python -m app.main harness-mission "Design an implementation roadmap with migration risks and validation gates."
 ```
 
 ### 6. Generate a launch demo
@@ -368,6 +369,7 @@ pytest -q
 | basic routing | `python -m app.main run "<query>"` |
 | trace and reasoning | `python -m app.main trace "<query>" --views` |
 | harness execution | `python -m app.main harness "<query>"` |
+| mission pack | `python -m app.main harness-mission "<query>"` |
 | value card | `python -m app.main harness-value "<query>"` |
 | visual payload | `python -m app.main harness-visual "<query>" --output reports/visual.json` |
 | mission profiles | `python -m app.main mission-profiles` |
@@ -417,7 +419,7 @@ pytest -q
 - mission-pack output contract is implemented
 - studio showcase and launch demo are implemented
 - OpenAI / Anthropic interop export is implemented
-- current local test result: `86 passed`
+- current local test result: `87 passed`
 
 ---
 

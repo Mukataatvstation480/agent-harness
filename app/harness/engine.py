@@ -9,6 +9,7 @@ from typing import Any
 
 from app.core.state import GraphState
 from app.graph import build_graph
+from app.core.mission import MissionRegistry
 from app.harness.discovery import DiscoveredTool, ToolDiscoveryEngine
 from app.harness.evaluator import HarnessEvaluator
 from app.harness.guardrails import GuardrailEngine
@@ -55,6 +56,7 @@ class HarnessEngine:
         self.recipes = RecipeRegistry()
         self.redteam = HarnessRedTeam()
         self.reporter = HarnessReportBuilder()
+        self.missions = MissionRegistry()
         self.value = HarnessValueScorer()
         self.visuals = HarnessVisualProtocol()
         self.showcase = HarnessShowcaseBuilder()
@@ -142,6 +144,12 @@ class HarnessEngine:
         """Build value card used for demo-level storytelling and ranking."""
 
         return self.value.score_run(run, manifests=self.manifests)
+
+    def build_mission_pack(self, run: HarnessRun) -> dict[str, Any]:
+        """Build shared mission-pack artifact from a run."""
+
+        summary = self.reporter.summary(run)
+        return summary.get("mission", {}) if isinstance(summary, dict) else {}
 
     def build_visual_payload(
         self,
@@ -561,6 +569,11 @@ class HarnessEngine:
         run.eval_metrics = self.evaluator.evaluate(run)
         run.metadata["value_card"] = self.build_value_card(run)
         run.metadata["visual_hooks"] = run.metadata["value_card"].get("visual_hooks", [])
+        run.mission = self.missions.build_runtime_pack(
+            query=query,
+            run=run,
+            run_summary=self.reporter.summary(run),
+        )
         return run
 
     @staticmethod

@@ -22,7 +22,7 @@
   <img src="https://img.shields.io/badge/Python-3.11%2B-3776AB?logo=python&logoColor=white"/>
   <img src="https://img.shields.io/badge/LangGraph-Orchestrated-0B1020"/>
   <img src="https://img.shields.io/badge/CLI-Typer-111827"/>
-  <img src="https://img.shields.io/badge/Tests-86%20passed-16a34a"/>
+  <img src="https://img.shields.io/badge/Tests-87%20passed-16a34a"/>
 </p>
 
 ---
@@ -207,6 +207,7 @@ python -m app.main harness "Prepare a governance-ready execution memo" --mode ba
 ```bash
 python -m app.main mission-profiles
 python -m app.main proposal-scenarios
+python -m app.main harness-mission "Design an implementation roadmap with migration risks and validation gates."
 ```
 
 ### 5. 生成 showcase
@@ -271,7 +272,7 @@ pytest -q
 - mission-pack output contract 已实现
 - studio showcase 与 launch demo 已实现
 - OpenAI / Anthropic interop export 已实现
-- 当前本地测试结果：`86 passed`
+- 当前本地测试结果：`87 passed`
 
 ---
 

@@ -97,7 +97,22 @@ def test_report_builder_generates_markdown() -> None:
     report = engine.build_report(run, fmt="markdown")
     assert isinstance(report, str)
     assert "# Harness Run Report" in report
+    assert "## Mission Pack" in report
     assert "## Metrics" in report
+
+
+def test_harness_run_contains_core_mission_pack() -> None:
+    engine = HarnessEngine()
+    run = engine.run(
+        query="Design an implementation roadmap with migration risks and validation gates.",
+        constraints=HarnessConstraints(max_steps=3, max_tool_calls=3),
+    )
+    assert run.mission
+    assert run.mission.get("name") == "implementation_pack"
+    assert run.mission.get("primary_deliverable")
+    summary = engine.build_report(run, fmt="json")
+    assert isinstance(summary, dict)
+    assert summary.get("mission", {}).get("benchmark_targets")
 
 
 def test_recipe_registry_suggests_daily_and_research_workflows() -> None:

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
+from app.core.mission import MissionRegistry
 from app.core.state import GraphState
 
 
@@ -43,6 +44,7 @@ def build_response_contract(state: GraphState) -> dict[str, Any]:
 
     components = _build_confidence_components(state)
     overall_conf = sum(components.values()) / max(len(components), 1)
+    mission = MissionRegistry().infer(state.query).to_dict()
 
     agent_trace = state.routing_trace.get("agent_decision", {})
     agent_scores = agent_trace.get("scores", {})
@@ -74,6 +76,11 @@ def build_response_contract(state: GraphState) -> dict[str, Any]:
                 "Validate high-impact conclusions with additional evidence.",
                 "Escalate to human review for critical decisions.",
             ],
+            "delivery_contract": {
+                "mission_type": mission.get("title", ""),
+                "primary_deliverable": mission.get("primary_deliverable", ""),
+                "output_views": mission.get("output_views", []),
+            },
             "trace_summary": {
                 "trace_id": state.trace_id,
                 "events": len(state.reasoning_path),
