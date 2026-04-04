@@ -342,6 +342,7 @@ def test_engine_executes_generic_task_graph_inside_thread_workspace(tmp_path: Pa
         target="code",
     )
     persisted = engine.get_thread(thread["thread_id"])
+    stream = engine.build_thread_workspace_stream(thread["thread_id"])
 
     assert payload["execution"]["status"] == "completed"
     assert payload["graph"]["summary"]["node_count"] >= 5
@@ -358,6 +359,9 @@ def test_engine_executes_generic_task_graph_inside_thread_workspace(tmp_path: Pa
     assert packet["summary"]["artifact_count"] >= 3
     assert any("patch-draft.diff" in str(item.get("path", "")) for item in packet["delivered_artifacts"])
     assert any(item.get("kind") == "completion_packet" for item in packet["task_spec"]["artifact_contracts"])
+    assert stream["completion_packet"]["schema"] == "agent-harness-completion-packet/v1"
+    assert stream["showcase"]["primary_artifact"]["kind"] == "completion_packet"
+    assert "completion packet" in stream["showcase"]["summary"].lower()
 
 
 def test_engine_executes_benchmark_actions_and_dataset_spec(tmp_path: Path) -> None:

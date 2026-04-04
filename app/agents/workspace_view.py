@@ -18,6 +18,7 @@ class ThreadWorkspaceStreamBuilder:
         artifacts = thread_payload.get("artifacts", []) if isinstance(thread_payload.get("artifacts", []), list) else []
         messages = thread_payload.get("messages", []) if isinstance(thread_payload.get("messages", []), list) else []
         events = thread_payload.get("events", []) if isinstance(thread_payload.get("events", []), list) else []
+        completion_packet = self._read_completion_packet(artifacts)
         showcase = self._build_showcase(thread_payload, executions, artifacts)
         timeline = self._build_timeline(events)
         return {
@@ -36,6 +37,7 @@ class ThreadWorkspaceStreamBuilder:
                 "execution_count": len(executions),
                 "event_count": len(events),
             },
+            "completion_packet": completion_packet,
             "showcase": showcase,
             "messages": messages[-8:],
             "artifacts": artifacts[-12:],
@@ -201,6 +203,7 @@ class ThreadWorkspaceStreamBuilder:
         latest_execution = executions[-1] if executions else {}
         graph = latest_execution.get("graph", {}) if isinstance(latest_execution.get("graph", {}), dict) else {}
         task = str(graph.get("query", "") or thread_payload.get("latest_query", "")).strip()
+        completion_packet = self._read_completion_packet(artifacts)
         report_text = self._read_text_artifact(artifacts, preferred_kind="file_artifact")
         plan_payload = self._read_json_artifact(artifacts, preferred_kind="skill_result")
         workspace_payload = self._read_json_artifact(artifacts, preferred_kind="workspace_snapshot")
@@ -208,6 +211,49 @@ class ThreadWorkspaceStreamBuilder:
         deliverables: list[str] = []
         value_points: list[str] = []
         artifact_family_notes = self._artifact_family_notes(artifacts)
+        preview_title = "Artifact Preview"
+        preview_body = ""
+        summary = (
+            f"This thread executed a concrete task inside a persistent agent workspace. "
+            f"It grounded on local files, generated reviewable artifacts, and exposed the execution computer "
+            f"through workspace paths, event history, and artifact outputs."
+        )
+        if completion_packet:
+            packet_summary = completion_packet.get("summary", {}) if isinstance(completion_packet.get("summary", {}), dict) else {}
+            delivered = completion_packet.get("delivered_artifacts", []) if isinstance(completion_packet.get("delivered_artifacts", []), list) else []
+            state_gap = completion_packet.get("state_gap", {}) if isinstance(completion_packet.get("state_gap", {}), dict) else {}
+            validation = completion_packet.get("validation", {}) if isinstance(completion_packet.get("validation", {}), dict) else {}
+            evidence = completion_packet.get("evidence", {}) if isinstance(completion_packet.get("evidence", {}), dict) else {}
+            deliverables.append(
+                f"Closed the run into a completion packet with {int(packet_summary.get('artifact_count', len(delivered)))} artifact(s)."
+            )
+            if delivered:
+                deliverables.extend(
+                    f"Delivered {Path(str(item.get('path', 'artifact'))).name}."
+                    for item in delivered[:3]
+                    if isinstance(item, dict)
+                )
+            value_points.append(
+                f"Validation status: {str(validation.get('status', 'unknown')).replace('_', ' ')}."
+            )
+            value_points.append(
+                f"Evidence count: {int(evidence.get('record_count', 0))}, citations: {int(evidence.get('citation_count', 0))}."
+            )
+            open_gap_count = (
+                len(state_gap.get("missing_channels", [])) if isinstance(state_gap.get("missing_channels", []), list) else 0
+            ) + (
+                len(state_gap.get("missing_artifacts", [])) if isinstance(state_gap.get("missing_artifacts", []), list) else 0
+            ) + (
+                len(state_gap.get("failure_types", [])) if isinstance(state_gap.get("failure_types", []), list) else 0
+            ) + (1 if state_gap.get("missing_validation") else 0)
+            value_points.append(f"Open execution gaps: {open_gap_count}.")
+            preview_title = "Completion Packet"
+            preview_body = self._format_completion_packet_preview(completion_packet)
+            summary = (
+                f"This thread produced a unified completion packet for the task, making the result auditable as a task closure "
+                f"instead of leaving the user with disconnected node logs. It records delivered artifacts, evidence, validation, "
+                f"risk, and remaining gaps in one inspectable object."
+            )
         if workspace_payload:
             deliverables.append(
                 f"Scanned workspace and found {int(workspace_payload.get('file_count', 0))} relevant file(s)."
@@ -235,27 +281,30 @@ class ThreadWorkspaceStreamBuilder:
                 "Workspace paths and artifact files are exposed directly so the user can inspect the agent computer state.",
             ]
         )
-        preview = self._read_preview_artifact(artifacts)
         plan_output = str(plan_payload.get("output", "")).strip() if plan_payload else ""
-        preview_body = report_text or preview.get("content", "") or plan_output or "No report generated."
-        preview_title = preview.get("title", "Artifact Preview")
+        if not preview_body:
+            preview = self._read_preview_artifact(artifacts)
+            preview_body = report_text or preview.get("content", "") or plan_output or "No report generated."
+            preview_title = preview.get("title", "Artifact Preview")
         summary_focus = ", ".join(item["family"] for item in artifact_family_notes[:3])
-        summary = (
-            f"This thread executed a concrete task inside a persistent agent workspace. "
-            f"It grounded on local files, generated reviewable artifacts, and exposed the execution computer "
-            f"through workspace paths, event history, and artifact outputs."
-        )
         if summary_focus:
             summary += f" Primary artifact families: {summary_focus}."
         result_body = preview_body[:1200]
+        prioritized_deliverables = list(
+            dict.fromkeys([item["deliverable"] for item in artifact_family_notes] + deliverables)
+        )
         return {
             "title": str(thread_payload.get("title", "") or "Agent Result"),
             "task": task or "No task captured.",
             "summary": summary,
-            "deliverables": deliverables[:4],
+            "deliverables": prioritized_deliverables[:4],
             "value_points": value_points[:4],
             "result_title": preview_title,
             "result_body": result_body,
+            "primary_artifact": {
+                "kind": "completion_packet" if completion_packet else "",
+                "path": str(completion_packet.get("_artifact_path", "")) if completion_packet else "",
+            },
         }
 
     @staticmethod
@@ -305,6 +354,53 @@ class ThreadWorkspaceStreamBuilder:
                 seen.add(family)
                 rows.append({"family": family, "deliverable": deliverable, "value": value})
         return rows
+
+    @staticmethod
+    def _read_completion_packet(artifacts: list[dict[str, Any]]) -> dict[str, Any]:
+        for artifact in reversed(artifacts):
+            rel = str(artifact.get("relative_path", artifact.get("name", ""))).replace("\\", "/").lower()
+            if "packets/completion-packet.json" not in rel:
+                continue
+            path = Path(str(artifact.get("path", "")))
+            if not path.exists():
+                continue
+            try:
+                payload = json.loads(path.read_text(encoding="utf-8"))
+            except Exception:
+                continue
+            if not isinstance(payload, dict):
+                continue
+            payload["_artifact_path"] = str(path)
+            return payload
+        return {}
+
+    @staticmethod
+    def _format_completion_packet_preview(packet: dict[str, Any]) -> str:
+        summary = packet.get("summary", {}) if isinstance(packet.get("summary", {}), dict) else {}
+        validation = packet.get("validation", {}) if isinstance(packet.get("validation", {}), dict) else {}
+        evidence = packet.get("evidence", {}) if isinstance(packet.get("evidence", {}), dict) else {}
+        risk = packet.get("risk", {}) if isinstance(packet.get("risk", {}), dict) else {}
+        next_steps = packet.get("next_steps", []) if isinstance(packet.get("next_steps", []), list) else []
+        delivered = packet.get("delivered_artifacts", []) if isinstance(packet.get("delivered_artifacts", []), list) else []
+        lines = [
+            f"Task: {packet.get('query', '')}",
+            f"Artifacts: {int(summary.get('artifact_count', len(delivered)))}",
+            f"Validation: {validation.get('status', 'unknown')}",
+            f"Evidence records: {int(evidence.get('record_count', 0))}",
+            f"Risk items: {int(risk.get('count', 0))}",
+            "",
+            "Delivered artifacts:",
+        ]
+        for item in delivered[:5]:
+            if not isinstance(item, dict):
+                continue
+            lines.append(f"- {Path(str(item.get('path', 'artifact'))).name}: {item.get('summary', '')}")
+        if next_steps:
+            lines.append("")
+            lines.append("Next steps:")
+            for item in next_steps[:4]:
+                lines.append(f"- {item}")
+        return "\n".join(lines).strip()
 
     @staticmethod
     def _read_preview_artifact(artifacts: list[dict[str, Any]]) -> dict[str, str]:
