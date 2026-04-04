@@ -613,7 +613,7 @@ def test_engine_executes_generic_task_graph_inside_thread_workspace(tmp_path: Pa
     assert any("patch-draft.diff" in str(item.get("path", "")) for item in bundle["artifact_manifest"])
     assert stream["completion_packet"]["schema"] == "agent-harness-completion-packet/v1"
     assert stream["delivery_bundle"]["schema"] == "agent-harness-delivery-bundle/v1"
-    assert stream["showcase"]["primary_artifact"]["kind"] in {"report", "delivery_bundle", "deliverable"}
+    assert stream["showcase"]["primary_artifact"]["kind"] == "patch_draft"
     assert "delivery bundle" in stream["showcase"]["summary"].lower()
     assert stream["delivery_bundle"]["deliverable_index"]
     assert "Deliverable Index" in html
@@ -672,7 +672,7 @@ def test_engine_executes_creative_artifact_actions_inside_thread_workspace(tmp_p
     assert any(item["relative_path"].endswith("storyboard.md") for item in persisted["artifacts"])
     assert any(item["relative_path"].endswith("prompt-pack.md") for item in persisted["artifacts"])
     assert any("landing page" in item.lower() or "slide deck" in item.lower() for item in stream["showcase"]["deliverables"])
-    assert stream["showcase"]["primary_artifact"]["kind"] in {"report", "delivery_bundle", "deliverable"}
+    assert stream["showcase"]["primary_artifact"]["kind"] == "webpage_blueprint"
     assert any(str(item.get("family", "")) in {"web", "slides"} for item in stream["delivery_bundle"]["deliverable_index"])
 
 

@@ -342,22 +342,27 @@ class ThreadWorkspaceStreamBuilder:
         )
         primary_artifact_kind = ""
         primary_artifact_path = ""
+        primary_artifact_hint = ""
         if delivery_bundle:
             primary = delivery_bundle.get("primary_deliverable", {}) if isinstance(delivery_bundle.get("primary_deliverable", {}), dict) else {}
+            task_spec = delivery_bundle.get("task_spec", {}) if isinstance(delivery_bundle.get("task_spec", {}), dict) else {}
+            primary_artifact_hint = str(task_spec.get("primary_artifact_kind", "")).strip()
             primary_artifact_path = str(primary.get("path", "")).strip()
-            normalized_primary = primary_artifact_path.replace("\\", "/").lower()
-            if "/reports/" in normalized_primary or normalized_primary.endswith(".md"):
-                primary_artifact_kind = "report"
-            elif "/briefs/" in normalized_primary:
-                primary_artifact_kind = "brief"
-            elif primary_artifact_path:
-                primary_artifact_kind = "deliverable"
+            if primary_artifact_path:
+                primary_artifact_kind = self._display_artifact_kind(primary_artifact_hint, primary_artifact_path)
             else:
                 primary_artifact_kind = "delivery_bundle"
                 primary_artifact_path = str(delivery_bundle.get("_artifact_path", ""))
         elif completion_packet:
-            primary_artifact_kind = "completion_packet"
-            primary_artifact_path = str(completion_packet.get("_artifact_path", ""))
+            task_spec = completion_packet.get("task_spec", {}) if isinstance(completion_packet.get("task_spec", {}), dict) else {}
+            primary_artifact_hint = str(task_spec.get("primary_artifact_kind", "")).strip()
+            primary = completion_packet.get("primary_deliverable", {}) if isinstance(completion_packet.get("primary_deliverable", {}), dict) else {}
+            primary_artifact_path = str(primary.get("path", "")).strip()
+            if primary_artifact_path:
+                primary_artifact_kind = self._display_artifact_kind(primary_artifact_hint, primary_artifact_path)
+            else:
+                primary_artifact_kind = "completion_packet"
+                primary_artifact_path = str(completion_packet.get("_artifact_path", ""))
         return {
             "title": str(thread_payload.get("title", "") or "Agent Result"),
             "task": task or "No task captured.",
@@ -371,6 +376,20 @@ class ThreadWorkspaceStreamBuilder:
                 "path": primary_artifact_path,
             },
         }
+
+    @staticmethod
+    def _display_artifact_kind(primary_artifact_hint: str, primary_artifact_path: str) -> str:
+        hint = str(primary_artifact_hint or "").strip()
+        if hint:
+            return hint
+        normalized_primary = str(primary_artifact_path or "").replace("\\", "/").lower()
+        if "/reports/" in normalized_primary or normalized_primary.endswith(".md"):
+            return "report"
+        if "/briefs/" in normalized_primary:
+            return "brief"
+        if primary_artifact_path:
+            return "deliverable"
+        return ""
 
     @staticmethod
     def _build_timeline(events: list[dict[str, Any]]) -> list[dict[str, Any]]:
