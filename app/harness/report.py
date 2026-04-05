@@ -118,20 +118,6 @@ class HarnessReportBuilder:
         lines.extend(
             [
                 "",
-                "## Benchmark Fit",
-            ]
-        )
-        if mission.get("benchmark_targets"):
-            for item in mission.get("benchmark_targets", [])[:4]:
-                lines.append(
-                    f"- `{item.get('name', '')}` fit={item.get('fit', '')} gap={item.get('gap', '')}"
-                )
-        else:
-            lines.append("- none")
-
-        lines.extend(
-            [
-                "",
                 "## Executable Task Graph",
             ]
         )

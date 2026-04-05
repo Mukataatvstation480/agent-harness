@@ -47,6 +47,26 @@ def test_task_profile_and_mission_cover_creative_and_analytics_surfaces() -> Non
     assert mission.name == "creative_pack"
 
 
+def test_mission_registry_can_infer_from_task_spec_without_keyword_shortcuts() -> None:
+    creative_spec = infer_task_spec(
+        query="Please package this into something visual and presentation-ready.",
+        output_mode="slides",
+    ).to_dict()
+    implementation_spec = infer_task_spec(
+        query="Please produce the actual code change artifact for this workspace task.",
+        output_mode="patch",
+        workspace_required=True,
+        needs_validation=True,
+    ).to_dict()
+
+    registry = MissionRegistry()
+    creative = registry.infer("Please package this into something visual and presentation-ready.", task_spec=creative_spec)
+    implementation = registry.infer("Please produce the actual code change artifact for this workspace task.", task_spec=implementation_spec)
+
+    assert creative.name == "creative_pack"
+    assert implementation.name == "implementation_pack"
+
+
 def test_capability_graph_planning_is_task_spec_driven() -> None:
     spec = infer_task_spec(
         query="Inspect my repo, gather external benchmark evidence, and produce a chart pack plus website blueprint.",
@@ -216,11 +236,13 @@ def test_harness_run_contains_core_mission_pack() -> None:
     assert run.mission
     assert run.mission.get("name") == "implementation_pack"
     assert run.mission.get("primary_deliverable")
+    assert isinstance(run.metadata.get("task_spec", {}), dict)
+    assert run.metadata.get("task_spec", {}).get("primary_artifact_kind")
     assert run.mission.get("task_graph", {}).get("schema") == "agent-harness-executable-task-graph/v1"
     assert run.mission.get("task_graph", {}).get("summary", {}).get("node_count", 0) >= 5
     summary = engine.build_report(run, fmt="json")
     assert isinstance(summary, dict)
-    assert summary.get("mission", {}).get("benchmark_targets")
+    assert "benchmark_targets" not in summary.get("mission", {})
     assert summary.get("mission", {}).get("task_graph", {}).get("nodes")
 
 

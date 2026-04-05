@@ -6,6 +6,7 @@ import re
 from dataclasses import dataclass, field
 from typing import Any
 
+from app.core.tasking import infer_task_spec
 from app.core.task_graph import ExecutableTaskGraph, TaskGraphArtifact, TaskGraphNode
 
 
@@ -45,24 +46,6 @@ class MissionDeliverableBlueprint:
 
 
 @dataclass(frozen=True)
-class BenchmarkTargetBlueprint:
-    """Benchmark family that is relevant to a mission type."""
-
-    name: str
-    fit: str
-    strength: str
-    gap: str
-
-    def to_dict(self) -> dict[str, str]:
-        return {
-            "name": self.name,
-            "fit": self.fit,
-            "strength": self.strength,
-            "gap": self.gap,
-        }
-
-
-@dataclass(frozen=True)
 class MissionProfile:
     """Generalized product profile for one class of user task."""
 
@@ -74,7 +57,6 @@ class MissionProfile:
     output_views: list[str]
     review_questions: list[str]
     deliverables: list[MissionDeliverableBlueprint] = field(default_factory=list)
-    benchmark_targets: list[BenchmarkTargetBlueprint] = field(default_factory=list)
     keyword_patterns: list[str] = field(default_factory=list)
 
     def to_dict(self) -> dict[str, Any]:
@@ -87,7 +69,6 @@ class MissionProfile:
             "output_views": list(self.output_views),
             "review_questions": list(self.review_questions),
             "deliverables": [item.to_dict() for item in self.deliverables],
-            "benchmark_targets": [item.to_dict() for item in self.benchmark_targets],
             "keyword_patterns": list(self.keyword_patterns),
         }
 
@@ -97,8 +78,12 @@ class MissionRegistry:
 
     def __init__(self) -> None:
         self._profiles = self._defaults()
+        self._profiles_by_name = {item.name: item for item in self._profiles}
 
-    def infer(self, query: str) -> MissionProfile:
+    def infer(self, query: str, task_spec: dict[str, Any] | None = None) -> MissionProfile:
+        spec_profile = self._infer_from_task_spec(task_spec or {})
+        if spec_profile is not None:
+            return spec_profile
         text = query.lower().strip()
         best = self._profiles[0]
         best_score = -1
@@ -108,6 +93,55 @@ class MissionRegistry:
                 best = profile
                 best_score = score
         return best
+
+    def infer_from_query_context(
+        self,
+        query: str,
+        *,
+        task_spec: dict[str, Any] | None = None,
+    ) -> MissionProfile:
+        payload = task_spec or infer_task_spec(query=query).to_dict()
+        return self.infer(query, task_spec=payload)
+
+    def _infer_from_task_spec(self, task_spec: dict[str, Any]) -> MissionProfile | None:
+        if not isinstance(task_spec, dict) or not task_spec:
+            return None
+        primary = _clean_text(task_spec.get("primary_artifact_kind", ""))
+        channels = {
+            _clean_text(item).lower()
+            for item in task_spec.get("required_channels", [])
+            if _clean_text(item)
+        }
+
+        creative = {"webpage_blueprint", "slide_deck_plan", "podcast_episode_plan", "video_storyboard", "image_prompt_pack"}
+        analytics = {"chart_pack_spec", "data_analysis_spec", "dataset_pull_spec", "dataset_loader_template"}
+        implementation = {"patch_plan", "patch_draft"}
+        benchmark = {"benchmark_manifest", "benchmark_run_config"}
+        operations = {"runbook", "custom:checklist"}
+        strategy_docs = {"custom:decision_memo", "custom:executive_memo", "custom:launch_memo", "custom:one_pager"}
+        research_docs = {"deliverable_report", "custom:brief", "custom:memo", "workspace_findings", "evidence_bundle"}
+
+        if primary in creative:
+            return self._profiles_by_name["creative_pack"]
+        if primary in analytics:
+            return self._profiles_by_name["analytics_pack"]
+        if primary in implementation:
+            return self._profiles_by_name["implementation_pack"]
+        if primary in benchmark:
+            return self._profiles_by_name["implementation_pack"] if "workspace" in channels else self._profiles_by_name["research_pack"]
+        if primary in operations or (primary == "risk_register" and "workspace" not in channels):
+            return self._profiles_by_name["operations_pack"]
+        if primary in strategy_docs:
+            return self._profiles_by_name["strategy_pack"]
+        if primary in research_docs and "risk" in channels and "workspace" not in channels:
+            return self._profiles_by_name["strategy_pack"]
+        if primary in research_docs and "web" in channels and "workspace" not in channels:
+            return self._profiles_by_name["research_pack"]
+        if primary in research_docs and "workspace" in channels:
+            return self._profiles_by_name["implementation_pack"]
+        if primary == "risk_register" and "risk" in channels and "web" in channels:
+            return self._profiles_by_name["strategy_pack"]
+        return None
 
     def list_cards(self) -> list[dict[str, Any]]:
         return [item.to_dict() for item in self._profiles]
@@ -119,8 +153,9 @@ class MissionRegistry:
         run_summary: dict[str, Any],
         profile: MissionProfile | None = None,
     ) -> dict[str, Any]:
-        profile = profile or self.infer(query)
         metadata = run.metadata if hasattr(run, "metadata") and isinstance(run.metadata, dict) else {}
+        task_spec = metadata.get("task_spec", {}) if isinstance(metadata.get("task_spec", {}), dict) else {}
+        profile = profile or self.infer(query, task_spec=task_spec)
         evidence = run_summary.get("evidence", {}) if isinstance(run_summary, dict) else {}
         value_card = run_summary.get("value_card", {}) if isinstance(run_summary, dict) else {}
         recipe = run_summary.get("recipe", {}) if isinstance(run_summary, dict) else {}
@@ -141,15 +176,8 @@ class MissionRegistry:
             + [
                 f"What evidence would invalidate the current {profile.title.lower()} recommendation?",
                 "Which deliverable is ready for stakeholder review today?",
-                "Which benchmark family is the right proof target for this mission?",
             ],
             limit=6,
-        )
-        benchmark_targets = self._runtime_benchmark_targets(
-            profile=profile,
-            completed=bool(getattr(run, "completed", False)),
-            live=live,
-            selected_skills=selected_skills,
         )
         runtime_state = {
             "completed": bool(getattr(run, "completed", False)),
@@ -182,7 +210,6 @@ class MissionRegistry:
             "deliverables": deliverables,
             "review_questions": review_questions,
             "execution_tracks": execution_tracks,
-            "benchmark_targets": benchmark_targets,
             "evidence_snapshot": {
                 "record_count": int(evidence.get("record_count", 0)),
                 "citation_count": int(evidence.get("citation_count", 0)),
@@ -203,7 +230,6 @@ class MissionRegistry:
             runtime_state=runtime_state,
             execution_plan=execution_plan,
             deliverables=deliverables,
-            benchmark_targets=benchmark_targets,
             evidence=pack["evidence_snapshot"],
             decision=pack["decision"],
             execution_tracks=execution_tracks,
@@ -222,6 +248,8 @@ class MissionRegistry:
         agent_comparison: dict[str, Any],
         profile: MissionProfile | None = None,
     ) -> dict[str, Any]:
+        metadata = run.metadata if hasattr(run, "metadata") and isinstance(run.metadata, dict) else {}
+        task_spec = metadata.get("task_spec", {}) if isinstance(metadata.get("task_spec", {}), dict) else {}
         base = self.build_runtime_pack(query=query, run=run, run_summary=run_summary, profile=profile)
         evidence = run_summary.get("evidence", {}) if isinstance(run_summary, dict) else {}
         release = lab_payload.get("release_decision", {}) if isinstance(lab_payload, dict) else {}
@@ -246,14 +274,9 @@ class MissionRegistry:
             evidence=evidence,
             release=release,
         )
-        benchmark_targets = self._release_benchmark_targets(
-            base_rows=base.get("benchmark_targets", []),
-            release=release,
-        )
         honest_boundary = (
             "Current strength is evidence-backed planning, governance framing, and packaged delivery. "
-            "It is not yet a leaderboard winner on web navigation or code-fix benchmarks because the repo "
-            "still lacks full browser-actuation loops and code-task specific execution traces."
+            "The main gap is still deeper long-horizon execution in real environments, especially when browser or repository action loops must stay stable for a long run."
         )
         base.update(
             {
@@ -261,7 +284,6 @@ class MissionRegistry:
                 "review_questions": review_questions,
                 "execution_tracks": self._release_execution_tracks(proposal=proposal, execution_plan=execution_plan),
                 "deliverables": deliverables,
-                "benchmark_targets": benchmark_targets,
                 "decision": {
                     "status": release.get("decision", "block"),
                     "reason": _clean_text(release.get("reason", "")),
@@ -278,10 +300,9 @@ class MissionRegistry:
         )
         base["task_graph"] = self._release_task_graph(
             query=query,
-            profile=profile or self.infer(query),
+            profile=profile or self.infer(query, task_spec=task_spec),
             execution_plan=execution_plan,
             deliverables=deliverables,
-            benchmark_targets=benchmark_targets,
             evidence=base.get("evidence_snapshot", {}),
             decision=base.get("decision", {}),
             release_context=base.get("release_context", {}),
@@ -307,8 +328,8 @@ class MissionRegistry:
                 signal = f"{int(evidence.get('record_count', 0))} records / {int(evidence.get('citation_count', 0))} citations"
             elif "execution" in lowered or "playbook" in lowered or "timeline" in lowered or "migration" in lowered:
                 signal = f"{len(execution_plan)} execution steps"
-            elif "benchmark" in lowered or "validation" in lowered:
-                signal = "benchmark family mapped"
+            elif "validation" in lowered:
+                signal = "validation path attached"
             elif "decision" in lowered or "brief" in lowered or "spec" in lowered:
                 signal = final_answer[:120] or "runtime answer available"
             rows.append(
@@ -349,35 +370,16 @@ class MissionRegistry:
         return tracks
 
     @staticmethod
-    def _runtime_benchmark_targets(
-        profile: MissionProfile,
-        completed: bool,
-        live: dict[str, Any],
-        selected_skills: list[Any],
-    ) -> list[dict[str, Any]]:
-        rows = [item.to_dict() for item in profile.benchmark_targets]
-        for row in rows:
-            row["current_status"] = "mapped"
-            row["current_signal"] = "runtime completed" if completed else "runtime incomplete"
-            if row["name"] in {"WebArena", "SWE-bench Verified"}:
-                row["current_signal"] = "not yet directly exercised"
-            if bool(live.get("success", False)):
-                row["current_signal"] += "; live model path exercised"
-            if selected_skills:
-                row["current_signal"] += f"; skills={len(selected_skills)}"
-        return rows
-
-    @staticmethod
     def _runtime_boundary(profile: MissionProfile) -> str:
         if profile.name == "implementation_pack":
             return (
                 "Current implementation missions can produce specs, migration plans, and validation checklists, "
-                "but they are not yet equivalent to a full code-repair benchmark loop."
+                "but they still need deeper workspace execution closure and stronger long-run repair stability."
             )
         if profile.name == "research_pack":
             return (
                 "Current research missions are strong on packaging evidence and promotion logic, "
-                "but still need public benchmark execution history to claim superiority."
+                "but still need stronger execution closure when research output must turn into sustained operational action."
             )
         return (
             "Current strength is packaging execution, evidence, and review structure in one runtime artifact. "
@@ -395,7 +397,7 @@ class MissionRegistry:
         for item in base_rows:
             row = dict(item)
             title = str(row.get("title", "")).lower()
-            if "benchmark" in title or "validation" in title:
+            if "validation" in title:
                 row["evidence_hint"] = _clean_text(release.get("decision", "block"))
             elif "evidence" in title:
                 row["evidence_hint"] = f"{int(evidence.get('record_count', 0))} records / {int(evidence.get('citation_count', 0))} citations"
@@ -429,25 +431,6 @@ class MissionRegistry:
             )
         return tracks
 
-    @staticmethod
-    def _release_benchmark_targets(
-        base_rows: list[dict[str, Any]],
-        release: dict[str, Any],
-    ) -> list[dict[str, Any]]:
-        rows: list[dict[str, Any]] = []
-        for item in base_rows:
-            row = dict(item)
-            row["current_status"] = "mapped"
-            row["current_signal"] = (
-                "release-gated with evidence"
-                if row.get("name", "") in {"GAIA", "TAU-bench", "TheAgentCompany"}
-                else "partially covered"
-            )
-            if release:
-                row["current_signal"] += f"; release={release.get('decision', 'block')}"
-            rows.append(row)
-        return rows
-
     def _runtime_task_graph(
         self,
         query: str,
@@ -455,7 +438,6 @@ class MissionRegistry:
         runtime_state: dict[str, Any],
         execution_plan: list[str],
         deliverables: list[dict[str, Any]],
-        benchmark_targets: list[dict[str, Any]],
         evidence: dict[str, Any],
         decision: dict[str, Any],
         execution_tracks: list[dict[str, Any]],
@@ -554,25 +536,11 @@ class MissionRegistry:
                 },
             ),
             TaskGraphNode(
-                node_id="benchmark_gate",
-                title="Map benchmark and verification gate",
-                node_type="evaluation",
-                status="completed" if benchmark_targets else "ready",
-                depends_on=["build_primary"],
-                notes=[
-                    str(item.get("current_signal", ""))
-                    for item in benchmark_targets[:3]
-                    if str(item.get("current_signal", ""))
-                ],
-                artifacts=self._benchmark_artifacts(benchmark_targets),
-                metrics={"benchmark_targets": len(benchmark_targets)},
-            ),
-            TaskGraphNode(
                 node_id="governance_review",
                 title="Governance and publish review",
                 node_type="review",
                 status="completed" if decision.get("status") == "ready" else "ready",
-                depends_on=["package_views", "benchmark_gate"],
+                depends_on=["package_views"],
                 notes=[
                     f"decision={decision.get('status', '')}",
                     f"reason={decision.get('reason', '')}",
@@ -604,7 +572,6 @@ class MissionRegistry:
         profile: MissionProfile,
         execution_plan: list[str],
         deliverables: list[dict[str, Any]],
-        benchmark_targets: list[dict[str, Any]],
         evidence: dict[str, Any],
         decision: dict[str, Any],
         release_context: dict[str, Any],
@@ -687,25 +654,11 @@ class MissionRegistry:
                 metrics={"deliverable_count": len(deliverables)},
             ),
             TaskGraphNode(
-                node_id="evaluate_benchmarks",
-                title="Evaluate benchmark positioning and release gate",
-                node_type="evaluation",
-                status="completed" if benchmark_targets else "ready",
-                depends_on=["package_release"],
-                notes=[
-                    str(item.get("current_signal", ""))
-                    for item in benchmark_targets[:3]
-                    if str(item.get("current_signal", ""))
-                ],
-                artifacts=self._benchmark_artifacts(benchmark_targets),
-                metrics={"benchmark_targets": len(benchmark_targets)},
-            ),
-            TaskGraphNode(
                 node_id="release_decision",
                 title="Finalize promotion or block decision",
                 node_type="review",
                 status="completed" if release_status in {"promote", "ship", "ready", "approve"} else "ready",
-                depends_on=["evaluate_benchmarks"],
+                depends_on=["package_release"],
                 notes=[
                     f"decision={release_status or 'block'}",
                     f"reason={decision.get('reason', '')}",
@@ -744,20 +697,6 @@ class MissionRegistry:
         return rows
 
     @staticmethod
-    def _benchmark_artifacts(benchmark_targets: list[dict[str, Any]]) -> list[TaskGraphArtifact]:
-        rows: list[TaskGraphArtifact] = []
-        for item in benchmark_targets[:5]:
-            rows.append(
-                TaskGraphArtifact(
-                    kind="benchmark_target",
-                    label=str(item.get("name", "")),
-                    status=str(item.get("current_status", "mapped")),
-                    summary=_clean_text(str(item.get("current_signal", "")) or str(item.get("gap", ""))),
-                )
-            )
-        return rows
-
-    @staticmethod
     def _defaults() -> list[MissionProfile]:
         return [
             MissionProfile(
@@ -777,11 +716,6 @@ class MissionRegistry:
                     MissionDeliverableBlueprint("Slide Deck Plan", "Slide-by-slide arc for demos, launches, and executive reviews.", "founder and product marketing"),
                     MissionDeliverableBlueprint("Media Storyboard", "Podcast or video segment structure with beats and proof moments.", "content team"),
                     MissionDeliverableBlueprint("Visual Direction Pack", "Prompt-ready visual directions for hero art, posters, and diagrams.", "creative ops"),
-                ],
-                benchmark_targets=[
-                    BenchmarkTargetBlueprint("TAU-bench", "medium", "Useful for multi-step creative task packaging with tool choices.", "No direct media-generation benchmark loop yet."),
-                    BenchmarkTargetBlueprint("TheAgentCompany", "medium", "Matches cross-functional knowledge-work packaging.", "Needs richer long-horizon editing and review state."),
-                    BenchmarkTargetBlueprint("GAIA", "low", "Can partially validate evidence-backed content planning.", "Not a direct creative-output benchmark."),
                 ],
                 keyword_patterns=[r"(webpage|website|landing|frontend|ui|slide|deck|presentation|ppt|podcast|video|storyboard|image|poster|illustration)"],
             ),
@@ -803,11 +737,6 @@ class MissionRegistry:
                     MissionDeliverableBlueprint("Dashboard Narrative", "How to sequence metrics, alerts, and annotations on the surface.", "ops and leadership"),
                     MissionDeliverableBlueprint("Data Pull Spec", "Reproducible collection rules and quality checks for the dataset.", "data engineering"),
                 ],
-                benchmark_targets=[
-                    BenchmarkTargetBlueprint("GAIA", "medium", "Good fit for evidence-backed multi-step analysis framing.", "Needs stronger public run history on external datasets."),
-                    BenchmarkTargetBlueprint("TAU-bench", "medium", "Useful for operational analytics and workflow-oriented analysis loops.", "Needs live connectors into business systems."),
-                    BenchmarkTargetBlueprint("TheAgentCompany", "medium", "Fits workplace analysis and reporting tasks.", "Needs stronger persistent memory around datasets and iterations."),
-                ],
                 keyword_patterns=[r"(data|dataset|analytics|analysis|chart|graph|plot|dashboard|sql|csv|cohort|visualization)"],
             ),
             MissionProfile(
@@ -816,7 +745,7 @@ class MissionRegistry:
                 summary="Business-facing package for launch, rollout, and investment decisions.",
                 primary_deliverable="Launch strategy packet with execution, evidence, and release gate.",
                 target_users=["product lead", "operations lead", "risk owner", "executive sponsor"],
-                output_views=["proposal", "execution plan", "evidence packet", "benchmark positioning"],
+                output_views=["proposal", "execution plan", "evidence packet", "delivery bundle"],
                 review_questions=[
                     "Is the chosen wedge narrow enough to execute and large enough to matter?",
                     "Which release gate blocks expansion first?",
@@ -828,11 +757,6 @@ class MissionRegistry:
                     MissionDeliverableBlueprint("Evidence Packet", "Citations, policy references, and runtime signals behind the claim.", "risk and procurement"),
                     MissionDeliverableBlueprint("Interop Export", "External skill-compatible bundle for downstream ecosystems.", "platform team"),
                 ],
-                benchmark_targets=[
-                    BenchmarkTargetBlueprint("GAIA", "medium", "Good match for evidence-backed multi-step reasoning.", "Needs stronger open-web retrieval verification."),
-                    BenchmarkTargetBlueprint("TAU-bench", "high", "Strong fit for enterprise workflow planning and tool orchestration.", "Needs deeper real connector coverage."),
-                    BenchmarkTargetBlueprint("TheAgentCompany", "medium", "Good fit for knowledge-work packaging and operating decisions.", "Needs richer long-horizon workplace state."),
-                ],
                 keyword_patterns=[r"(launch|rollout|strategy|board|proposal|market|growth|copilot|enterprise|plan)"],
             ),
             MissionProfile(
@@ -841,22 +765,17 @@ class MissionRegistry:
                 summary="Research-facing package for study design, evidence review, and promotion decisions.",
                 primary_deliverable="Research promotion packet with experiment rationale, evidence, and release criteria.",
                 target_users=["research lead", "applied scientist", "review committee"],
-                output_views=["research brief", "benchmark report", "promotion packet", "risk register"],
+                output_views=["research brief", "evidence packet", "promotion packet", "risk register"],
                 review_questions=[
-                    "Is the claimed gain reproducible beyond the current scenario set?",
+                    "Is the operating thesis still coherent after evidence review?",
                     "Which missing evidence would most likely change the promotion decision?",
                     "What post-launch monitoring is required to validate the lab result?",
                 ],
                 deliverables=[
                     MissionDeliverableBlueprint("Research Brief", "Hypothesis, operating thesis, and study implications.", "research committee"),
-                    MissionDeliverableBlueprint("Benchmark Readout", "Release gate, leaderboard, and evidence trail.", "lab leadership"),
+                    MissionDeliverableBlueprint("Delivery Readout", "Decision summary, release posture, and execution implications.", "lab leadership"),
                     MissionDeliverableBlueprint("Promotion Checklist", "What must pass before the result becomes default.", "release committee"),
                     MissionDeliverableBlueprint("Evidence Packet", "External and internal citations linked to the claim.", "reviewers"),
-                ],
-                benchmark_targets=[
-                    BenchmarkTargetBlueprint("GAIA", "high", "Reasoning + retrieval alignment is directly relevant.", "Needs public benchmark execution history."),
-                    BenchmarkTargetBlueprint("TheAgentCompany", "medium", "Useful for broader knowledge-work research tasks.", "Needs richer interactive environment state."),
-                    BenchmarkTargetBlueprint("WebArena", "low", "Only partial overlap through retrieval and action planning.", "Needs real browser action loops."),
                 ],
                 keyword_patterns=[r"(research|study|paper|benchmark|experiment|lab|evaluation|hypothesis)"],
             ),
@@ -878,11 +797,6 @@ class MissionRegistry:
                     MissionDeliverableBlueprint("Risk Register", "Failure modes, control points, and escalation logic.", "ops lead"),
                     MissionDeliverableBlueprint("Evidence Packet", "Policy and runtime evidence for auditability.", "governance"),
                 ],
-                benchmark_targets=[
-                    BenchmarkTargetBlueprint("TAU-bench", "high", "Best fit for enterprise task flow and tool-mediated work.", "Needs live business connectors."),
-                    BenchmarkTargetBlueprint("TheAgentCompany", "medium", "Useful for workplace productivity packaging.", "Needs persistent workplace memory."),
-                    BenchmarkTargetBlueprint("GAIA", "low", "Only partial overlap via multi-hop reasoning.", "Less relevant than ops execution fidelity."),
-                ],
                 keyword_patterns=[r"(ops|operations|timeline|delivery|program|workflow|dependency|playbook|milestone)"],
             ),
             MissionProfile(
@@ -895,18 +809,13 @@ class MissionRegistry:
                 review_questions=[
                     "What execution trace proves the design is implementable?",
                     "Which integration or operability gap is still unowned?",
-                    "What benchmark should validate the implementation class?",
+                    "Which validation gate would fail first if this design were executed today?",
                 ],
                 deliverables=[
                     MissionDeliverableBlueprint("Architecture Spec", "Target state and integration blueprint.", "tech lead"),
                     MissionDeliverableBlueprint("Migration Plan", "Phased delivery path with rollback boundary.", "platform team"),
                     MissionDeliverableBlueprint("Validation Checklist", "Tests, evals, and release gates for implementation.", "engineering manager"),
-                    MissionDeliverableBlueprint("Benchmark Mapping", "Which benchmark family actually matters for this build.", "research and engineering"),
-                ],
-                benchmark_targets=[
-                    BenchmarkTargetBlueprint("SWE-bench Verified", "medium", "Relevant once the system closes the code-fix loop.", "Current engine is not yet a code-repair benchmark runner."),
-                    BenchmarkTargetBlueprint("WebArena", "low", "Relevant for integration flows with heavy browser action.", "Missing real browser execution layer."),
-                    BenchmarkTargetBlueprint("GAIA", "medium", "Useful for architecture reasoning quality.", "Not sufficient for implementation proof."),
+                    MissionDeliverableBlueprint("Execution Readiness", "Which actions, tests, and checkpoints are needed before rollout.", "research and engineering"),
                 ],
                 keyword_patterns=[r"(architecture|design|system|integration|refactor|migration|implementation|build|code)"],
             ),

@@ -722,6 +722,13 @@ class HarnessEngine:
             )
 
         safe_query = preflight.redacted_query or query
+        task_profile = analyze_task_request(
+            safe_query,
+            target="general",
+            workspace_root=str(thread_context.get("workspace", {}).get("workspace", "")) if thread_context else None,
+            live_model_overrides=live_model,
+        )
+        task_spec_payload = task_profile.task_spec if isinstance(task_profile.task_spec, dict) else {}
         graph_result = self.graph.invoke(GraphState(query=safe_query, system_mode=mode))
         payload: dict[str, Any] = graph_result if isinstance(graph_result, dict) else graph_result.model_dump()
         plan = self.planner.build_plan(safe_query, live_model_overrides=live_model)
@@ -918,6 +925,8 @@ class HarnessEngine:
                 "risk_level": payload.get("risk_level", "unknown"),
                 "selected_agent": payload.get("agent_name", ""),
                 "selected_skills": payload.get("selected_skills", []),
+                "task_profile": task_profile.to_dict(),
+                "task_spec": task_spec_payload,
                 "security": {
                     "preflight_action": preflight.action.value,
                     "preflight_risk_score": preflight.risk_score,

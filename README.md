@@ -38,7 +38,6 @@ Depending on the task, the main deliverable can be:
 - a research report
 - a patch draft
 - an engineering handoff memo
-- a benchmark manifest or run config
 - a launch memo or rollout pack
 - a slide deck plan or webpage blueprint
 - a delivery bundle with linked artifacts
@@ -176,7 +175,7 @@ Use environment variables or CLI flags. Keep secrets outside the repo.
 set AGENT_HARNESS_MODEL_BASE_URL=https://your-endpoint/v1
 set AGENT_HARNESS_MODEL_API_KEY=your_api_key
 set AGENT_HARNESS_MODEL_NAME=your_model
-python -m app.main harness-live "Write a benchmark-backed research brief"
+python -m app.main harness-live "Write an evidence-backed research brief"
 ```
 
 ### 7. Run Tests
@@ -199,7 +198,6 @@ pytest -q
 | Export thread snapshot | `python -m app.main agent-thread-export <thread_id>` |
 | Run harness with live model | `python -m app.main harness-live "<query>"` |
 | Build code mission pack | `python -m app.main harness-code-pack "<query>" --workspace .` |
-| Run benchmark suite | `python -m app.main benchmark-suite --adapters routing_internal,lab_daily` |
 | Run showcase | `python -m app.main studio-showcase "<query>" --tag demo` |
 | Export skills interop | `python -m app.main skills-interop-export` |
 

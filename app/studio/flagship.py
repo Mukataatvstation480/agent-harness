@@ -176,7 +176,10 @@ class StudioShowcaseBuilder:
         value_card = self.harness.build_value_card(run)
         visual_payload = self.harness.build_visual_payload(run, value_card=value_card)
         scenario = self.proposals.infer(query)
-        mission_profile = self.missions.infer(query)
+        mission_profile = self.missions.infer(
+            query,
+            task_spec=run.metadata.get("task_spec", {}) if isinstance(run.metadata.get("task_spec", {}), dict) else {},
+        )
 
         active_scenarios = scenario_ids or list(DEFAULT_STUDIO_SCENARIOS)
         lab_payload = self.harness.run_research_lab(

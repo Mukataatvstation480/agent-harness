@@ -36,7 +36,7 @@ def test_build_showcase_payload_shape() -> None:
     assert "release_need" in payload["story"]
     assert payload["mission"]["primary_deliverable"]
     assert len(payload["mission"].get("deliverables", [])) >= 3
-    assert len(payload["mission"].get("benchmark_targets", [])) >= 2
+    assert "benchmark_targets" not in payload["mission"]
     assert payload["mission"].get("task_graph", {}).get("schema") == "agent-harness-executable-task-graph/v1"
     assert payload["mission"].get("task_graph", {}).get("summary", {}).get("node_count", 0) >= 5
     assert len(payload["story"].get("strategy_plan", [])) >= 3
