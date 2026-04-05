@@ -1011,6 +1011,80 @@ def requested_output_modes(*, query: str, output_mode: str) -> list[str]:
     return requested
 
 
+def _is_report_like_artifact(kind: str) -> bool:
+    normalized = str(kind or "").strip()
+    if not normalized:
+        return False
+    if normalized.startswith("custom:"):
+        return normalized not in {"custom:checklist", "custom:faq"}
+    return normalized in {
+        "deliverable_report",
+        "evidence_bundle",
+        "workspace_findings",
+        "risk_register",
+    }
+
+
+def _select_synthesis_skill(
+    *,
+    query: str,
+    primary_artifact_kind: str,
+    selected_channels: set[str],
+    research_surface: bool,
+    contracts: list[dict[str, Any]],
+    requested_surface_count: int,
+) -> str:
+    primary = str(primary_artifact_kind or "").strip()
+    support_kinds = {
+        "completion_packet",
+        "delivery_bundle",
+        "evidence_bundle",
+        "workspace_findings",
+        "risk_register",
+    }
+    custom_contract_count = sum(
+        1 for item in contracts if isinstance(item, dict) and str(item.get("kind", "")).startswith("custom:")
+    )
+    material_contract_count = sum(
+        1
+        for item in contracts
+        if isinstance(item, dict)
+        and str(item.get("kind", "")).strip()
+        and str(item.get("kind", "")).strip() not in support_kinds
+    )
+    artifact_to_skill = {
+        "patch_plan": "codebase_triage",
+        "patch_draft": "codebase_triage",
+        "runbook": "ops_runbook",
+        "benchmark_manifest": "benchmark_ablation",
+        "benchmark_run_config": "benchmark_ablation",
+        "dataset_pull_spec": "benchmark_ablation",
+        "dataset_loader_template": "benchmark_ablation",
+        "webpage_blueprint": "webpage_blueprint",
+        "slide_deck_plan": "slide_deck_designer",
+        "chart_pack_spec": "chart_storyboard",
+        "podcast_episode_plan": "podcast_episode_plan",
+        "video_storyboard": "video_storyboard",
+        "image_prompt_pack": "image_prompt_pack",
+        "data_analysis_spec": "data_analysis_plan",
+        "custom:checklist": "ops_runbook",
+        "risk_register": "ops_runbook",
+    }
+    mapped = artifact_to_skill.get(primary)
+    if mapped:
+        return mapped
+    if custom_contract_count > 0 or requested_surface_count > 1 or material_contract_count > 1:
+        return "artifact_synthesis"
+    if research_surface and "web" in selected_channels and _is_report_like_artifact(primary):
+        lowered_query = query.lower()
+        if any(marker in lowered_query for marker in ["report", "research", "improvement", "roadmap", "strategy", "gaps"]):
+            return "artifact_synthesis"
+        return "research_brief"
+    if _is_report_like_artifact(primary):
+        return "artifact_synthesis"
+    return "artifact_synthesis"
+
+
 def default_artifact_targets(
     *,
     query: str,
@@ -2177,39 +2251,16 @@ def build_dynamic_task_graph(
         nodes = rewritten_nodes
 
     contracts = resolved.task_spec.get("artifact_contracts", []) if isinstance(resolved.task_spec.get("artifact_contracts", []), list) else []
-    custom_contract_count = sum(1 for item in contracts if isinstance(item, dict) and str(item.get("kind", "")).startswith("custom:"))
     requested_surface_count = len(requested_output_modes(query=query, output_mode=resolved.output_mode))
-
-    synthesis_skill = "artifact_synthesis"
-    lowered_query = query.lower()
-    if resolved.output_mode == "patch" or resolved.execution_intent == "code":
-        synthesis_skill = "codebase_triage"
-    elif resolved.output_mode == "runbook" or resolved.execution_intent == "ops":
-        synthesis_skill = "ops_runbook"
-    elif research_surface and any(
-        marker in lowered_query for marker in ["report", "research", "improvement", "roadmap", "strategy", "gaps"]
-    ):
-        synthesis_skill = "artifact_synthesis"
-    elif resolved.output_mode == "benchmark" or resolved.execution_intent == "benchmark":
-        synthesis_skill = "benchmark_ablation"
-    elif custom_contract_count > 0 or requested_surface_count > 1 or len(contracts) > 2:
-        synthesis_skill = "artifact_synthesis"
-    elif resolved.output_mode == "report" and "web" in selected:
-        synthesis_skill = "research_brief"
-    elif resolved.output_mode == "webpage":
-        synthesis_skill = "webpage_blueprint"
-    elif resolved.output_mode == "slides":
-        synthesis_skill = "slide_deck_designer"
-    elif resolved.output_mode == "chart":
-        synthesis_skill = "chart_storyboard"
-    elif resolved.output_mode == "podcast":
-        synthesis_skill = "podcast_episode_plan"
-    elif resolved.output_mode == "video":
-        synthesis_skill = "video_storyboard"
-    elif resolved.output_mode == "image":
-        synthesis_skill = "image_prompt_pack"
-    elif resolved.output_mode == "data":
-        synthesis_skill = "data_analysis_plan"
+    primary_artifact_kind = str(resolved.task_spec.get("primary_artifact_kind", "")).strip()
+    synthesis_skill = _select_synthesis_skill(
+        query=query,
+        primary_artifact_kind=primary_artifact_kind,
+        selected_channels=selected,
+        research_surface=research_surface,
+        contracts=contracts,
+        requested_surface_count=requested_surface_count,
+    )
 
     nodes.append(
         TaskGraphNode(
@@ -2220,6 +2271,7 @@ def build_dynamic_task_graph(
             depends_on=synthesis_sources,
             metrics={
                 "skill_name": synthesis_skill,
+                "primary_artifact_kind": primary_artifact_kind,
                 "source_node_ids": synthesis_sources,
                 "prompt": query,
             },

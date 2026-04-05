@@ -266,3 +266,30 @@ def test_auto_recipe_can_use_task_profile_signals_for_patch_work() -> None:
     )
 
     assert run.metadata.get("recipe", {}).get("name") == "router-forge"
+
+
+def test_generic_task_graph_selects_synthesis_skill_from_primary_artifact() -> None:
+    engine = HarnessEngine()
+
+    slides = engine.compile_generic_task_payload(
+        query="Prepare a slide deck for the launch review with a clear executive narrative.",
+        target="general",
+    )
+    brief = engine.compile_generic_task_payload(
+        query="Investigate frontier agent framework patterns and produce a cited overview.",
+        target="research",
+    )
+    memo = engine.compile_generic_task_payload(
+        query="Prepare a decision memo and FAQ for the rollout.",
+        target="general",
+    )
+
+    slides_synthesis = next(item for item in slides["graph"]["nodes"] if item["node_id"] == "synthesis")
+    brief_synthesis = next(item for item in brief["graph"]["nodes"] if item["node_id"] == "synthesis")
+    memo_synthesis = next(item for item in memo["graph"]["nodes"] if item["node_id"] == "synthesis")
+
+    assert slides_synthesis["metrics"]["primary_artifact_kind"] == "slide_deck_plan"
+    assert slides_synthesis["metrics"]["skill_name"] == "slide_deck_designer"
+    assert brief_synthesis["metrics"]["skill_name"] == "research_brief"
+    assert memo_synthesis["metrics"]["primary_artifact_kind"] == "custom:decision_memo"
+    assert memo_synthesis["metrics"]["skill_name"] == "artifact_synthesis"
