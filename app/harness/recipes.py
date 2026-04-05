@@ -105,6 +105,42 @@ class RecipeRegistry:
             return self._recipes.get("router-forge")
         return None
 
+    def suggest_from_profile(self, profile: dict[str, Any]) -> HarnessRecipe | None:
+        """Suggest a recipe from task profile/task spec signals before falling back to raw keywords."""
+
+        task_spec = profile.get("task_spec", {}) if isinstance(profile.get("task_spec", {}), dict) else {}
+        channels = {
+            str(item).strip()
+            for item in task_spec.get("required_channels", [])
+            if str(item).strip()
+        }
+        domains = {
+            str(item).strip()
+            for item in task_spec.get("domains", [])
+            if str(item).strip()
+        }
+        primary_artifact = str(task_spec.get("primary_artifact_kind", "")).strip()
+        package_names = {
+            str(item.get("name", "")).strip()
+            for item in profile.get("package_priors", [])
+            if isinstance(item, dict) and str(item.get("name", "")).strip()
+        }
+        output_mode = str(profile.get("output_mode", "")).strip()
+
+        if primary_artifact in {"patch_draft", "patch_plan"} or ("code-mission" in package_names and "workspace" in channels):
+            return self._recipes.get("router-forge")
+        if "deep-research" in package_names or primary_artifact in {"benchmark_manifest", "benchmark_run_config"}:
+            return self._recipes.get("research-rig")
+        if primary_artifact in {"webpage_blueprint", "slide_deck_plan", "video_storyboard", "image_prompt_pack"}:
+            return self._recipes.get("creative-studio")
+        if "enterprise" in domains and ("risk" in channels or "risk" in domains or output_mode == "runbook"):
+            return self._recipes.get("enterprise-ops")
+        if "risk" in channels or "risk" in domains:
+            return self._recipes.get("risk-radar")
+        if "research" in domains and "web" in channels and "workspace" not in channels:
+            return self._recipes.get("research-rig")
+        return None
+
     def load_from_file(self, path: str | Path) -> HarnessRecipe:
         file_path = Path(path)
         if not file_path.exists():

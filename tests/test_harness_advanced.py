@@ -256,3 +256,13 @@ def test_recipe_registry_suggests_daily_and_research_workflows() -> None:
         constraints=HarnessConstraints(max_steps=4, max_tool_calls=4, auto_recipe=True),
     )
     assert enterprise_run.metadata.get("recipe", {}).get("name") == "enterprise-ops"
+
+
+def test_auto_recipe_can_use_task_profile_signals_for_patch_work() -> None:
+    engine = HarnessEngine()
+    run = engine.run(
+        query="Inspect the workspace, create a patch draft, and validate the result.",
+        constraints=HarnessConstraints(max_steps=4, max_tool_calls=4, auto_recipe=True),
+    )
+
+    assert run.metadata.get("recipe", {}).get("name") == "router-forge"

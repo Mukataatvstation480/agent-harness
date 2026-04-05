@@ -30,6 +30,7 @@ from app.harness.optimizer import HarnessOptimizer
 from app.harness.planner import HarnessPlanner
 from app.harness.presentation import PresentationBlueprintBuilder
 from app.harness.recipes import HarnessRecipe, RecipeRegistry
+from app.harness.task_profile import analyze_task_request
 from app.harness.redteam import HarnessRedTeam
 from app.harness.research_lab import HarnessResearchLab
 from app.harness.report import HarnessReportBuilder
@@ -1006,6 +1007,13 @@ class HarnessEngine:
         if recipe_name:
             return self.recipes.get(recipe_name)
         if constraints.auto_recipe:
+            try:
+                profile = analyze_task_request(query=query, target="general")
+                suggested = self.recipes.suggest_from_profile(profile.to_dict())
+                if suggested is not None:
+                    return suggested
+            except Exception:
+                pass
             return self.recipes.suggest(query)
         return None
 
