@@ -18,6 +18,7 @@ from app.core.tasking import (
     default_workspace_action_specs,
     infer_task_spec,
     plan_capability_path,
+    task_spec_from_dict,
     workspace_action_result_field,
 )
 from app.skills.registry import execute_skill
@@ -2519,36 +2520,9 @@ class TaskGraphActionMapper:
     def _coerce_task_spec(*, metrics: dict[str, Any], graph: dict[str, Any], context: dict[str, Any]):
         payload = metrics.get("task_spec", {})
         if isinstance(payload, dict) and payload.get("artifact_contracts"):
-            artifact_contracts = []
-            for item in payload.get("artifact_contracts", []):
-                if not isinstance(item, dict):
-                    continue
-                from app.core.tasking import ArtifactContract, TaskSpec
-
-                artifact_contracts.append(
-                    ArtifactContract(
-                        kind=str(item.get("kind", "")),
-                        title=str(item.get("title", "")),
-                        format_hint=str(item.get("format_hint", "")),
-                        required=bool(item.get("required", True)),
-                    )
-                )
-            from app.core.tasking import TaskSpec
-
-            return TaskSpec(
-                query=str(payload.get("query", metrics.get("prompt", graph.get("query", "")))),
-                goal=str(payload.get("goal", metrics.get("prompt", graph.get("query", "")))),
-                target=str(payload.get("target", "general")),
-                domains=[str(item) for item in payload.get("domains", []) if str(item).strip()],
-                constraints=[str(item) for item in payload.get("constraints", []) if str(item).strip()],
-                success_criteria=[str(item) for item in payload.get("success_criteria", []) if str(item).strip()],
-                required_channels=[str(item) for item in payload.get("required_channels", []) if str(item).strip()],
-                artifact_contracts=artifact_contracts,
-                primary_artifact_kind=str(payload.get("primary_artifact_kind", "")),
-                risk_policy=str(payload.get("risk_policy", "balanced")),
-                needs_validation=bool(payload.get("needs_validation", False)),
-                needs_command_execution=bool(payload.get("needs_command_execution", False)),
-            )
+            hydrated = task_spec_from_dict(payload)
+            if hydrated is not None:
+                return hydrated
         return infer_task_spec(
             query=str(metrics.get("prompt", graph.get("query", context.get("query", "")))),
             output_mode=str(metrics.get("output_mode", "artifact")),

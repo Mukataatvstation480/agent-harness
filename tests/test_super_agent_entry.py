@@ -105,6 +105,24 @@ def test_thread_first_super_agent_keeps_general_target_for_ambiguous_requests(tm
     assert any(item["name"] == "general-purpose" for item in payload["packages"])
 
 
+def test_thread_first_super_agent_infers_research_target_from_task_spec(tmp_path: Path) -> None:
+    settings = HarnessRuntimeSettings(
+        threads_root=tmp_path / "threads",
+        memory_path=tmp_path / "memory.json",
+    )
+    engine = HarnessEngine(settings=settings)
+
+    thread = engine.create_thread(title="Research Routing")
+    payload = engine.run_thread_first(
+        thread["thread_id"],
+        "Investigate the latest agent framework patterns on the web and produce a cited deep research report.",
+        target="auto",
+    )
+
+    assert payload["route"]["target"] == "research"
+    assert any("primary deliverable" in item for item in payload["route"]["rationale"])
+
+
 def test_analyze_task_request_keeps_discovery_and_allows_mixed_channels() -> None:
     profile = analyze_task_request(
         "Inspect my repository, compare it with the latest public benchmarks, and prepare a recommendation deck."

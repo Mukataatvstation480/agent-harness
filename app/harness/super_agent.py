@@ -5,6 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any
 
+from app.core.tasking import suggest_target_from_task_spec, task_spec_from_dict
 from app.harness.task_profile import analyze_task_request
 from app.skills.packages import SkillPackageCatalog
 
@@ -133,19 +134,11 @@ class ThreadFirstSuperAgent:
         if requested and requested != "auto":
             return requested
         profile = analyze_task_request(query=query, target="general", workspace_root=workspace_root)
-        selected = set(profile.deliberation.selected)
-        intent = str(profile.execution_intent or "general").strip().lower()
-        output_mode = str(profile.output_mode or "artifact").strip().lower()
-
-        if output_mode == "patch" and "workspace" in selected and "web" not in selected:
-            return "code"
-        if output_mode == "runbook" and intent == "ops" and "risk" in selected:
-            return "ops"
-        if output_mode == "report" and intent == "research" and "web" in selected and "workspace" not in selected:
-            return "research"
-        if output_mode == "benchmark" and "web" in selected and "workspace" not in selected:
-            return "research"
-        return "general"
+        payload = profile.task_spec if isinstance(profile.task_spec, dict) else {}
+        task_spec = task_spec_from_dict(payload)
+        if task_spec is None:
+            return "general"
+        return suggest_target_from_task_spec(task_spec)
 
     @staticmethod
     def _build_route(profile: dict[str, Any], packages: list[Any], target: str) -> SuperAgentRoute:
@@ -153,6 +146,10 @@ class ThreadFirstSuperAgent:
         selected_channels = profile.get("selected_channels", [])
         if isinstance(selected_channels, list) and selected_channels:
             rationale.append(f"selected channels: {', '.join(str(item) for item in selected_channels[:4])}")
+        task_spec = profile.get("task_spec", {}) if isinstance(profile.get("task_spec", {}), dict) else {}
+        primary_artifact = str(task_spec.get("primary_artifact_kind", "")).strip()
+        if primary_artifact:
+            rationale.append(f"primary deliverable: {primary_artifact}")
         if packages:
             rationale.append(f"package priors: {', '.join(item.name for item in packages[:3])}")
         if profile.get("requires_workspace"):

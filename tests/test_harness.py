@@ -39,6 +39,29 @@ def test_harness_planner_switches_tools_by_task_context() -> None:
     assert research_tool.name == "external_resource_hub"
 
 
+def test_harness_planner_advances_along_capability_sequence() -> None:
+    planner = HarnessPlanner()
+    query = "Write a deep research report about AI agent frameworks with evidence and citations"
+
+    first_tool = planner.next_tool_call(
+        query=query,
+        step=1,
+        plan=planner.build_plan(query),
+    )
+    second_tool = planner.next_tool_call(
+        query=query,
+        step=2,
+        plan=planner.build_plan(query),
+        used_tools={first_tool.name} if first_tool else set(),
+        session_events=[{"tool": first_tool.name}] if first_tool else [],
+    )
+
+    assert first_tool is not None
+    assert first_tool.name == "external_resource_hub"
+    assert second_tool is not None
+    assert second_tool.name == "evidence_dossier_builder"
+
+
 def test_guardrail_blocks_known_tool() -> None:
     guardrails = GuardrailEngine()
     notes = guardrails.check_tool_call(

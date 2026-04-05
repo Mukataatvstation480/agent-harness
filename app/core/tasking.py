@@ -311,6 +311,39 @@ class StateGap:
         }
 
 
+def task_spec_from_dict(payload: dict[str, Any]) -> TaskSpec | None:
+    """Rehydrate a task spec from a JSON-style payload."""
+
+    if not isinstance(payload, dict) or not payload:
+        return None
+    contracts: list[ArtifactContract] = []
+    for item in payload.get("artifact_contracts", []) if isinstance(payload.get("artifact_contracts", []), list) else []:
+        if not isinstance(item, dict):
+            continue
+        contracts.append(
+            ArtifactContract(
+                kind=str(item.get("kind", "")),
+                title=str(item.get("title", "")),
+                format_hint=str(item.get("format_hint", "")),
+                required=bool(item.get("required", True)),
+            )
+        )
+    return TaskSpec(
+        query=str(payload.get("query", "")),
+        goal=str(payload.get("goal", payload.get("query", ""))),
+        target=str(payload.get("target", "general")),
+        domains=[str(item) for item in payload.get("domains", []) if str(item).strip()],
+        constraints=[str(item) for item in payload.get("constraints", []) if str(item).strip()],
+        success_criteria=[str(item) for item in payload.get("success_criteria", []) if str(item).strip()],
+        required_channels=[str(item) for item in payload.get("required_channels", []) if str(item).strip()],
+        artifact_contracts=contracts,
+        primary_artifact_kind=str(payload.get("primary_artifact_kind", "")),
+        risk_policy=str(payload.get("risk_policy", "balanced")),
+        needs_validation=bool(payload.get("needs_validation", False)),
+        needs_command_execution=bool(payload.get("needs_command_execution", False)),
+    )
+
+
 def infer_task_spec(
     *,
     query: str,
@@ -415,6 +448,30 @@ def infer_task_spec(
         needs_validation=needs_validation,
         needs_command_execution=needs_command_execution,
     )
+
+
+def suggest_target_from_task_spec(task_spec: TaskSpec) -> str:
+    """Map a task spec to a stable super-agent target without task-family templates."""
+
+    channels = set(task_spec.required_channels)
+    primary = str(task_spec.primary_artifact_kind or "").strip()
+    domains = set(task_spec.domains)
+
+    if primary in {"patch_draft", "patch_plan"}:
+        return "code"
+    if primary == "runbook":
+        return "ops"
+    if primary in {"benchmark_manifest", "benchmark_run_config"} and "workspace" not in channels:
+        return "research"
+    if primary in {"deliverable_report", "data_analysis_spec"} and "web" in channels and "workspace" not in channels:
+        return "research"
+    if "workspace" in channels and task_spec.needs_validation:
+        return "code"
+    if "risk" in channels and ("enterprise" in domains or primary.startswith("custom:")):
+        return "ops"
+    if "web" in channels and "workspace" not in channels:
+        return "research"
+    return "general"
 
 
 def default_workspace_action_specs() -> dict[str, WorkspaceActionSpec]:

@@ -21,6 +21,8 @@ class HarnessPlanner:
         """Build a lightweight plan from capability-graph planning."""
 
         profile = analyze_task_request(query, target=target, live_model_overrides=live_model_overrides)
+        task_spec = profile.task_spec if isinstance(profile.task_spec, dict) else {}
+        primary_artifact = str(task_spec.get("primary_artifact_kind", profile.output_mode)).strip()
         plan = ["understand goal, constraints, and desired end state"]
         steps = profile.capability_plan.get("steps", []) if isinstance(profile.capability_plan.get("steps", []), list) else []
         for step in steps[:8]:
@@ -34,7 +36,7 @@ class HarnessPlanner:
             plan.append("validate the result against the task success criteria and remaining state gap")
         if profile.requires_command_execution:
             plan.append("execute bounded workspace commands only if they reduce the remaining state gap")
-        plan.append(f"close the remaining artifact gap and publish a {profile.output_mode} result")
+        plan.append(f"close the remaining artifact gap and publish the primary deliverable: {primary_artifact or profile.output_mode}")
         return plan
 
     def next_tool_call(
@@ -74,18 +76,31 @@ class HarnessPlanner:
 
     @staticmethod
     def _candidate_tool_sequence(profile: TaskProfile) -> list[tuple[str, dict[str, object]]]:
-        keywords = profile.keywords or [profile.execution_intent or "task"]
+        task_spec = profile.task_spec if isinstance(profile.task_spec, dict) else {}
+        required_channels = {
+            str(item).strip()
+            for item in task_spec.get("required_channels", [])
+            if str(item).strip()
+        }
+        primary_artifact = str(task_spec.get("primary_artifact_kind", "")).strip()
+        keywords = profile.keywords or [primary_artifact or profile.execution_intent or "task"]
         primary = keywords[0] if keywords else profile.query
-        skill_query = " ".join(keywords[:3]) or profile.execution_intent or profile.query
-        glob = "*.py" if profile.execution_intent in {"code", "benchmark"} else "*"
+        skill_query = " ".join(
+            item
+            for item in [primary_artifact, " ".join(sorted(required_channels)), " ".join(keywords[:2])]
+            if str(item).strip()
+        ).strip() or profile.query
+        glob = HarnessPlanner._workspace_glob(profile=profile, primary_artifact=primary_artifact)
 
         sequence: list[tuple[str, dict[str, object]]] = []
+        seen_tools: set[str] = set()
         for step in profile.capability_plan.get("steps", []) if isinstance(profile.capability_plan.get("steps", []), list) else []:
             if not isinstance(step, dict) or str(step.get("node_type", "")) != "tool_call":
                 continue
             ref = str(step.get("ref", "")).strip()
             if not ref:
                 continue
+            seen_tools.add(ref)
             args = dict(step.get("default_args", {})) if isinstance(step.get("default_args", {}), dict) else {}
             if ref == "workspace_file_search":
                 args.setdefault("query", primary)
@@ -108,11 +123,70 @@ class HarnessPlanner:
                 args.setdefault("query", profile.query)
             sequence.append((ref, args))
 
-        if profile.execution_intent == "benchmark":
+        for tool_name, args in HarnessPlanner._channel_fallback_tools(
+            profile=profile,
+            required_channels=required_channels,
+            primary_artifact=primary_artifact,
+            primary=primary,
+            skill_query=skill_query,
+            glob=glob,
+            seen_tools=seen_tools,
+        ):
+            seen_tools.add(tool_name)
+            sequence.append((tool_name, args))
+
+        if primary_artifact in {"benchmark_manifest", "benchmark_run_config"}:
             sequence.append(("code_experiment_design", {"query": profile.query, "max_experiments": 5}))
-        elif profile.execution_intent == "code" and profile.requires_validation:
+        elif profile.requires_validation and "workspace" in required_channels:
             sequence.append(("memory_context_digest", {"events": []}))
         return sequence
+
+    @staticmethod
+    def _channel_fallback_tools(
+        *,
+        profile: TaskProfile,
+        required_channels: set[str],
+        primary_artifact: str,
+        primary: str,
+        skill_query: str,
+        glob: str,
+        seen_tools: set[str],
+    ) -> list[tuple[str, dict[str, object]]]:
+        sequence: list[tuple[str, dict[str, object]]] = []
+        if "discovery" in required_channels and "tool_search" not in seen_tools:
+            sequence.append(("tool_search", {"query": primary_artifact or profile.query, "limit": 6}))
+        if "discovery" in required_channels and "code_skill_search" not in seen_tools:
+            sequence.append(("code_skill_search", {"query": skill_query, "target": profile.target_hint, "limit": 6}))
+        if "workspace" in required_channels and "workspace_file_search" not in seen_tools:
+            sequence.append(("workspace_file_search", {"query": primary, "glob": glob, "limit": 8}))
+        if "web" in required_channels and "external_resource_hub" not in seen_tools:
+            sequence.append(("external_resource_hub", {"query": profile.query, "limit": 6}))
+        if (
+            "web" in required_channels
+            and primary_artifact in {"deliverable_report", "benchmark_manifest", "data_analysis_spec"}
+            and "evidence_dossier_builder" not in seen_tools
+        ):
+            sequence.append(
+                ("evidence_dossier_builder", {"query": profile.query, "limit": 5, "domains": profile.domains or ["general"]})
+            )
+        if "risk" in required_channels and "policy_risk_matrix" not in seen_tools:
+            sequence.append(("policy_risk_matrix", {"query": profile.query, "evidence_limit": 4}))
+        return sequence
+
+    @staticmethod
+    def _workspace_glob(*, profile: TaskProfile, primary_artifact: str) -> str:
+        languages = {
+            str(item).strip().lower()
+            for item in profile.workspace_summary.get("languages", [])
+            if str(item).strip()
+        } if isinstance(profile.workspace_summary, dict) else set()
+        if primary_artifact in {"patch_draft", "patch_plan", "benchmark_manifest", "benchmark_run_config"}:
+            if "python" in languages:
+                return "*.py"
+            if {"typescript", "javascript"} & languages:
+                return "*.{ts,tsx,js,jsx}"
+            return "*"
+        return "*"
 
     @staticmethod
     def _tool_type(tool_name: str) -> ToolType:
