@@ -18,6 +18,7 @@ class StrategyLabConfig:
 
     mode: str = "balanced"
     recipe: str = ""
+    auto_recipe: bool = True
     max_total_calls: int = 40
     max_calls_per_query: int = 6
     max_queries: int = 4
@@ -78,6 +79,7 @@ class HarnessStrategyLab:
             queries=active_queries,
             mode=cfg.mode,
             recipe=cfg.recipe,
+            auto_recipe=cfg.auto_recipe,
             constraints=constraints,
         )
 
@@ -96,11 +98,12 @@ class HarnessStrategyLab:
 
                 live_constraints = self._clone_constraints(constraints)
                 live_constraints.enable_live_agent = True
+                live_constraints.auto_recipe = cfg.auto_recipe
                 live_constraints.max_live_agent_calls = min(cfg.max_calls_per_query, remaining_budget)
                 run = engine.run(
                     query=query,
                     mode=cfg.mode,
-                    recipe=cfg.recipe or None,
+                    recipe=(cfg.recipe or None) if not cfg.auto_recipe else None,
                     constraints=live_constraints,
                     live_model=live_model,
                     live_strategy=strategy,
@@ -171,16 +174,18 @@ class HarnessStrategyLab:
         queries: list[str],
         mode: str,
         recipe: str,
+        auto_recipe: bool,
         constraints: HarnessConstraints | None,
     ) -> dict[str, float]:
         baseline: dict[str, float] = {}
         for query in queries:
             base_constraints = self._clone_constraints(constraints)
             base_constraints.enable_live_agent = False
+            base_constraints.auto_recipe = auto_recipe
             run = engine.run(
                 query=query,
                 mode=mode,
-                recipe=recipe or None,
+                recipe=(recipe or None) if not auto_recipe else None,
                 constraints=base_constraints,
                 apply_champion_strategy=False,
             )
@@ -300,6 +305,7 @@ class HarnessStrategyLab:
         return {
             "mode": cfg.mode,
             "recipe": cfg.recipe,
+            "auto_recipe": cfg.auto_recipe,
             "max_total_calls": cfg.max_total_calls,
             "max_calls_per_query": cfg.max_calls_per_query,
             "max_queries": cfg.max_queries,

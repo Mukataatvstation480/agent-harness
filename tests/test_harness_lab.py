@@ -24,6 +24,10 @@ def test_research_lab_lists_scenarios_and_presets() -> None:
     assert any(item.get("category") == "enterprise" for item in scenarios)
     assert any(item.get("name") == "core" for item in presets)
     assert any(item.get("name") == "broad" for item in presets)
+    core = next(item for item in presets if item.get("name") == "core")
+    candidates = core.get("candidates", [])
+    assert any(item.get("name") == "balanced-auto" and item.get("auto_recipe") is True for item in candidates)
+    assert any(item.get("name") == "daily-operator" and item.get("auto_recipe") is False for item in candidates)
 
 
 def test_research_lab_run_returns_ranked_leaderboard() -> None:
@@ -45,9 +49,28 @@ def test_research_lab_run_returns_ranked_leaderboard() -> None:
     assert "pareto_frontier" in payload["competition"]
     assert "release_decision" in payload
     assert payload["release_decision"]["decision"] in {"go", "caution", "block"}
+    assert any(item.get("name") == "balanced-auto" and item.get("auto_recipe") is True for item in payload.get("candidates", []))
+    assert any(item.get("auto_recipe") is False for item in payload.get("candidates", []))
     repro = payload.get("reproducibility", {})
     assert repro.get("isolate_memory") is True
     assert repro.get("fresh_memory_per_candidate") is True
+
+
+def test_research_lab_custom_candidates_infer_auto_recipe_from_recipe_presence() -> None:
+    engine = HarnessEngine()
+    payload = engine.run_research_lab(
+        candidates=[
+            {"name": "auto-general", "mode": "balanced"},
+            {"name": "fixed-daily", "mode": "balanced", "recipe": "daily-operator"},
+        ],
+        repeats=1,
+        scenario_ids=["daily-001"],
+        constraints=HarnessConstraints(max_steps=3, max_tool_calls=3),
+    )
+
+    candidates = payload.get("candidates", [])
+    assert any(item.get("name") == "auto-general" and item.get("auto_recipe") is True for item in candidates)
+    assert any(item.get("name") == "fixed-daily" and item.get("auto_recipe") is False for item in candidates)
 
 
 def test_tool_registry_new_tools_output_shape() -> None:

@@ -10,6 +10,7 @@ class PresentationBlueprintBuilder:
 
     def build_first_screen(self, payload: dict[str, Any]) -> dict[str, Any]:
         kpis = payload.get("kpis", {})
+        delivery = payload.get("delivery", {}) if isinstance(payload.get("delivery", {}), dict) else {}
         value_index = float(kpis.get("value_index", 0.0))
         completion = float(kpis.get("completion_score", 0.0))
         evidence_records = float(kpis.get("evidence_records", 0.0))
@@ -76,16 +77,17 @@ class PresentationBlueprintBuilder:
                 "surface": "#F7F8FA",
             },
             "hero": {
-                "title": "Harness Delivery Lens",
+                "title": str(delivery.get("primary_deliverable", "Harness Delivery Lens")) or "Harness Delivery Lens",
                 "subtitle": payload.get("narrative", ""),
                 "badges": status_badges,
                 "kpi_cards": [
                     {"title": "Completion", "value": round(completion * 100, 1), "unit": "%", "ref": "kpis.completion_score"},
                     {"title": "Evidence", "value": round(evidence_records, 1), "ref": "kpis.evidence_records"},
+                    {"title": "Deliverables", "value": round(float(delivery.get("deliverable_count", 0.0)), 1), "ref": "delivery.deliverable_count"},
                     {"title": "Reliability", "value": round(reliability * 100, 1), "unit": "%", "ref": "kpis.reliability"},
                     {"title": "Safety", "value": round(safety * 100, 1), "unit": "%", "ref": "kpis.safety"},
                     {"title": "Adaptation", "value": round(float(kpis.get("adaptability", 0.0)) * 100, 1), "unit": "%", "ref": "kpis.adaptability"},
-                    {"title": "Value", "value": round(value_index, 2), "ref": "kpis.value_index"},
+                    {"title": "Value", "value": round(value_index, 2), "ref": "kpis.value_index", "secondary": True},
                 ],
             },
             "panels": panels,

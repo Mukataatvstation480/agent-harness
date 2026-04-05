@@ -118,3 +118,20 @@ def test_optimizer_generates_profile_driven_candidates() -> None:
     assert any(item.get("auto_recipe") is False and item.get("recipe") == "" for item in candidates)
     assert any(item.get("mode") == "safety_critical" and item.get("auto_recipe") is True for item in candidates)
     assert "leaderboard" in payload
+
+
+def test_visual_payload_and_showcase_emphasize_delivery_state() -> None:
+    engine = HarnessEngine()
+    run = engine.run(
+        query="Create a practical execution plan with risks and measurable checkpoints.",
+        constraints=HarnessConstraints(max_steps=3, max_tool_calls=3),
+    )
+
+    visual = engine.build_visual_payload(run)
+    showcase = engine.run_showcase(pack_name="security-first")
+
+    assert visual["delivery"]["primary_deliverable"]
+    assert visual["delivery"]["ready"] is True
+    assert visual["first_screen_blueprint"]["hero"]["title"]
+    assert showcase["comparison"]["summary"]["deliverables_ready"] >= 1
+    assert "deliverables" in showcase["hero_story"][0].lower()

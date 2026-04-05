@@ -139,7 +139,9 @@ class HarnessShowcaseBuilder:
         run_cards: list[dict[str, Any]] = []
         visual_items: list[dict[str, Any]] = []
         aggregate = {
-            "value_index_sum": 0.0,
+            "deliverables_ready": 0.0,
+            "deliverable_count_sum": 0.0,
+            "evidence_records_sum": 0.0,
             "reliability_sum": 0.0,
             "safety_sum": 0.0,
             "innovation_sum": 0.0,
@@ -169,14 +171,18 @@ class HarnessShowcaseBuilder:
                     "query": scenario.query,
                     "mode": mode,
                     "recipe": scenario.recipe,
+                    "primary_deliverable": visual_payload.get("delivery", {}).get("primary_deliverable", ""),
                     "value_card": value_card,
                     "run_summary": engine.reporter.summary(run),
                 }
             )
             visual_items.append(visual_payload)
 
-            aggregate["value_index_sum"] += float(value_card.get("value_index", 0.0))
             kpis = visual_payload.get("kpis", {})
+            delivery = visual_payload.get("delivery", {}) if isinstance(visual_payload.get("delivery", {}), dict) else {}
+            aggregate["deliverables_ready"] += 1.0 if bool(delivery.get("ready", False)) else 0.0
+            aggregate["deliverable_count_sum"] += float(delivery.get("deliverable_count", 0.0))
+            aggregate["evidence_records_sum"] += float(kpis.get("evidence_records", 0.0))
             aggregate["reliability_sum"] += float(kpis.get("reliability", 0.0))
             aggregate["safety_sum"] += float(kpis.get("safety", 0.0))
             aggregate["innovation_sum"] += float(kpis.get("innovation", 0.0))
@@ -189,7 +195,9 @@ class HarnessShowcaseBuilder:
             "description": pack.description,
             "tags": pack.tags,
             "scenario_count": len(pack.scenarios),
-            "avg_value_index": round(aggregate["value_index_sum"] / count, 2),
+            "deliverables_ready_ratio": round(aggregate["deliverables_ready"] / count, 3),
+            "avg_deliverable_count": round(aggregate["deliverable_count_sum"] / count, 3),
+            "avg_evidence_records": round(aggregate["evidence_records_sum"] / count, 3),
             "avg_reliability": round(aggregate["reliability_sum"] / count, 3),
             "avg_safety": round(aggregate["safety_sum"] / count, 3),
             "avg_innovation": round(aggregate["innovation_sum"] / count, 3),
@@ -209,12 +217,14 @@ class HarnessShowcaseBuilder:
     @staticmethod
     def _hero_story(overview: dict[str, Any], comparison: dict[str, Any]) -> list[str]:
         best = comparison.get("best", {})
-        value_best = best.get("value_index", {})
+        deliverable_best = best.get("deliverable_ready", {})
+        evidence_best = best.get("evidence_records", {})
+        completion_best = best.get("completion", {})
         safety_best = best.get("safety", {})
-        innovation_best = best.get("innovation", {})
         return [
-            f"Pack {overview.get('pack')} average value index is {overview.get('avg_value_index')}.",
-            f"Top value scenario: {value_best.get('title', '-')} ({value_best.get('score', '-')}).",
+            f"Pack {overview.get('pack')} closed deliverables for {overview.get('deliverables_ready_ratio')} of scenarios.",
+            f"Most ready scenario: {deliverable_best.get('title', '-')} ({deliverable_best.get('score', '-')}).",
+            f"Strongest evidence scenario: {evidence_best.get('title', '-')} ({evidence_best.get('score', '-')}).",
+            f"Highest completion scenario: {completion_best.get('title', '-')} ({completion_best.get('score', '-')}).",
             f"Strongest safety scenario: {safety_best.get('title', '-')} ({safety_best.get('score', '-')}).",
-            f"Strongest innovation scenario: {innovation_best.get('title', '-')} ({innovation_best.get('score', '-')}).",
         ]

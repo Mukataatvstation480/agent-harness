@@ -24,6 +24,7 @@ class HarnessVisualProtocol:
         security_board = self._build_security_board(run)
         live_agent_board = self._build_live_agent_board(run)
         evidence_board = self._build_evidence_board(run)
+        delivery = self._build_delivery_summary(run)
         network = self._build_tool_network(run, manifests)
         hero_cards = self._build_hero_cards(run, value_card)
         radar = self._build_value_radar(value_card)
@@ -40,6 +41,7 @@ class HarnessVisualProtocol:
             "security_board": security_board,
             "live_agent_board": live_agent_board,
             "evidence_board": evidence_board,
+            "delivery": delivery,
             "tool_network": network,
             "hero_cards": hero_cards,
             "narrative": value_card.get("narrative", ""),
@@ -59,9 +61,14 @@ class HarnessVisualProtocol:
         best: dict[str, tuple[str, float]] = {}
         for item in items:
             kpis = item.get("kpis", {})
+            delivery = item.get("delivery", {}) if isinstance(item.get("delivery", {}), dict) else {}
             name = str(item.get("title", item.get("query", "scenario")))
             row = {
                 "title": name,
+                "primary_deliverable": str(delivery.get("primary_deliverable", "")),
+                "deliverable_ready": 1.0 if bool(delivery.get("ready", False)) else 0.0,
+                "deliverable_count": float(delivery.get("deliverable_count", 0.0)),
+                "evidence_records": float(kpis.get("evidence_records", 0.0)),
                 "value_index": float(kpis.get("value_index", 0.0)),
                 "reliability": float(kpis.get("reliability", 0.0)),
                 "safety": float(kpis.get("safety", 0.0)),
@@ -73,7 +80,7 @@ class HarnessVisualProtocol:
             }
             rows.append(row)
 
-            for metric in ["value_index", "reliability", "safety", "innovation"]:
+            for metric in ["deliverable_ready", "evidence_records", "completion", "reliability", "safety"]:
                 val = float(row[metric])
                 current = best.get(metric, ("", -1.0))
                 if val > current[1]:
@@ -82,6 +89,11 @@ class HarnessVisualProtocol:
         return {
             "count": len(rows),
             "rows": rows,
+            "summary": {
+                "deliverables_ready": int(sum(1 for row in rows if float(row.get("deliverable_ready", 0.0)) >= 1.0)),
+                "avg_completion": round(sum(float(row.get("completion", 0.0)) for row in rows) / len(rows), 4),
+                "avg_evidence_records": round(sum(float(row.get("evidence_records", 0.0)) for row in rows) / len(rows), 3),
+            },
             "best": {key: {"title": value[0], "score": round(value[1], 3)} for key, value in best.items()},
         }
 
@@ -106,6 +118,19 @@ class HarnessVisualProtocol:
             "adaptability": dims.get("adaptability", 0.0),
             "safety": dims.get("safety", 0.0),
             "innovation": dims.get("innovation", 0.0),
+        }
+
+    @staticmethod
+    def _build_delivery_summary(run: HarnessRun) -> dict[str, Any]:
+        mission = run.mission if isinstance(run.mission, dict) else {}
+        deliverables = mission.get("deliverables", []) if isinstance(mission.get("deliverables", []), list) else []
+        decision = mission.get("decision", {}) if isinstance(mission.get("decision", {}), dict) else {}
+        ready = bool(run.completed)
+        return {
+            "primary_deliverable": str(mission.get("primary_deliverable", "")),
+            "deliverable_count": len(deliverables),
+            "decision_status": str(decision.get("status", "ready" if ready else "blocked")),
+            "ready": ready,
         }
 
     @staticmethod
@@ -300,7 +325,13 @@ class HarnessVisualProtocol:
             for item in value_card.get("dimensions", [])
             if isinstance(item, dict)
         }
+        mission = run.mission if isinstance(run.mission, dict) else {}
         cards = [
+            {
+                "title": "Primary Deliverable",
+                "headline": str(mission.get("primary_deliverable", "Deliverable package")),
+                "evidence": f"deliverables={len(mission.get('deliverables', [])) if isinstance(mission.get('deliverables', []), list) else 0}",
+            },
             {
                 "title": "Reliability Signal",
                 "headline": f"{dims.get('reliability', 0.0) * 100:.0f}% reliable execution",

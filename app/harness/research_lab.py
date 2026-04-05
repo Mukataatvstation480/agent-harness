@@ -47,6 +47,7 @@ class LabCandidate:
     name: str
     mode: str
     recipe: str = ""
+    auto_recipe: bool = True
     constraints_overrides: dict[str, Any] = field(default_factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -54,6 +55,7 @@ class LabCandidate:
             "name": self.name,
             "mode": self.mode,
             "recipe": self.recipe,
+            "auto_recipe": self.auto_recipe,
             "constraints_overrides": self.constraints_overrides,
         }
 
@@ -66,27 +68,28 @@ class HarnessResearchLab:
         self._preset_builders: dict[str, list[LabCandidate]] = {
             "core": [
                 LabCandidate(name="balanced-auto", mode="balanced"),
-                LabCandidate(name="deep-ecosystem", mode="deep", recipe="ecosystem-hunter"),
-                LabCandidate(name="safety-risk-radar", mode="safety_critical", recipe="risk-radar"),
-                LabCandidate(name="daily-operator", mode="balanced", recipe="daily-operator"),
-                LabCandidate(name="creative-studio", mode="balanced", recipe="creative-studio"),
-                LabCandidate(name="enterprise-ops", mode="safety_critical", recipe="enterprise-ops"),
+                LabCandidate(name="deep-ecosystem", mode="deep", recipe="ecosystem-hunter", auto_recipe=False),
+                LabCandidate(name="safety-risk-radar", mode="safety_critical", recipe="risk-radar", auto_recipe=False),
+                LabCandidate(name="daily-operator", mode="balanced", recipe="daily-operator", auto_recipe=False),
+                LabCandidate(name="creative-studio", mode="balanced", recipe="creative-studio", auto_recipe=False),
+                LabCandidate(name="enterprise-ops", mode="safety_critical", recipe="enterprise-ops", auto_recipe=False),
             ],
             "daily": [
                 LabCandidate(name="balanced-auto", mode="balanced"),
-                LabCandidate(name="daily-operator", mode="balanced", recipe="daily-operator"),
-                LabCandidate(name="fast-daily", mode="fast", recipe="daily-operator"),
+                LabCandidate(name="daily-operator", mode="balanced", recipe="daily-operator", auto_recipe=False),
+                LabCandidate(name="fast-daily", mode="fast", recipe="daily-operator", auto_recipe=False),
             ],
             "research": [
                 LabCandidate(name="balanced-auto", mode="balanced"),
-                LabCandidate(name="research-rig", mode="deep", recipe="research-rig"),
-                LabCandidate(name="router-forge", mode="balanced", recipe="router-forge"),
+                LabCandidate(name="research-rig", mode="deep", recipe="research-rig", auto_recipe=False),
+                LabCandidate(name="router-forge", mode="balanced", recipe="router-forge", auto_recipe=False),
             ],
             "strict": [
                 LabCandidate(
                     name="strict-risk-radar",
                     mode="safety_critical",
                     recipe="risk-radar",
+                    auto_recipe=False,
                     constraints_overrides={
                         "security_strictness": "strict",
                         "allow_network_actions": False,
@@ -97,6 +100,7 @@ class HarnessResearchLab:
                     name="strict-daily",
                     mode="balanced",
                     recipe="daily-operator",
+                    auto_recipe=False,
                     constraints_overrides={
                         "security_strictness": "strict",
                         "allow_network_actions": False,
@@ -106,10 +110,10 @@ class HarnessResearchLab:
             ],
             "broad": [
                 LabCandidate(name="balanced-auto", mode="balanced"),
-                LabCandidate(name="daily-operator", mode="balanced", recipe="daily-operator"),
-                LabCandidate(name="research-rig", mode="deep", recipe="research-rig"),
-                LabCandidate(name="creative-studio", mode="balanced", recipe="creative-studio"),
-                LabCandidate(name="enterprise-ops", mode="safety_critical", recipe="enterprise-ops"),
+                LabCandidate(name="daily-operator", mode="balanced", recipe="daily-operator", auto_recipe=False),
+                LabCandidate(name="research-rig", mode="deep", recipe="research-rig", auto_recipe=False),
+                LabCandidate(name="creative-studio", mode="balanced", recipe="creative-studio", auto_recipe=False),
+                LabCandidate(name="enterprise-ops", mode="safety_critical", recipe="enterprise-ops", auto_recipe=False),
             ],
         }
 
@@ -169,10 +173,13 @@ class HarnessResearchLab:
                             base=constraints,
                             overrides=candidate.constraints_overrides,
                         )
+                        if effective_constraints is None:
+                            effective_constraints = HarnessConstraints()
+                        effective_constraints.auto_recipe = candidate.auto_recipe
                         run = engine.run(
                             query=scenario.query,
                             mode=candidate.mode or scenario.mode,
-                            recipe=candidate.recipe or scenario.recipe or None,
+                            recipe=(candidate.recipe or scenario.recipe or None) if not candidate.auto_recipe else None,
                             constraints=effective_constraints,
                             live_model=live_model,
                         )
@@ -234,6 +241,7 @@ class HarnessResearchLab:
                         name=str(item.get("name", "custom")),
                         mode=str(item.get("mode", "balanced")),
                         recipe=str(item.get("recipe", "")),
+                        auto_recipe=bool(item.get("auto_recipe", not bool(item.get("recipe", "")))),
                         constraints_overrides=dict(item.get("constraints_overrides", {})),
                     )
                 )
@@ -291,6 +299,7 @@ class HarnessResearchLab:
             "repeat": repeat_idx,
             "mode": candidate.mode or scenario.mode,
             "recipe": candidate.recipe or scenario.recipe,
+            "auto_recipe": candidate.auto_recipe,
             "value_index": round(value_index, 3),
             "completion": round(float(metrics.get("completion_score", 0.0)), 4),
             "tool_success_rate": round(float(metrics.get("tool_success_rate", 0.0)), 4),
