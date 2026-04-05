@@ -13,7 +13,7 @@ from app.harness.manifest import ToolManifestRegistry
 from app.harness.models import HarnessConstraints
 from app.harness.planner import HarnessPlanner
 from app.harness.security import SecurityEngine
-from app.harness.task_profile import analyze_task_request
+from app.harness.task_profile import _fallback_deliberate_channels, analyze_task_request
 
 
 def test_manifest_catalog_includes_innovative_tools() -> None:
@@ -132,6 +132,34 @@ def test_package_priors_can_expand_channels_and_graph_actions() -> None:
     assert "deep-research" in package_names
     assert "web" in profile.deliberation.selected
     assert any(str(item.get("tool_name", "")) == "external_resource_hub" for item in graph_nodes if isinstance(item, dict))
+
+
+def test_channel_deliberation_is_task_spec_driven_before_heuristics() -> None:
+    profile = analyze_task_request(
+        "Produce a cited research memo on agent interoperability and external evidence quality.",
+        target="research",
+    )
+
+    assert {"discovery", "web"}.issubset(set(profile.deliberation.selected))
+    assert any("task spec and capability graph" in item or "capability graph selected" in item for item in profile.deliberation.rationale)
+
+
+def test_channel_fallback_stays_discovery_only_without_structural_requirements() -> None:
+    fallback = _fallback_deliberate_channels(
+        query="Inspect repo, compare options, and decide whether web evidence or local files matter.",
+        target="general",
+        execution_intent="mixed",
+        output_mode="artifact",
+        skill_priors=[],
+        workspace_root=None,
+        workspace_signal=4,
+        external_signal=4,
+        code_signal=3,
+        ops_signal=0,
+    )
+
+    assert fallback.selected == ["discovery"]
+    assert fallback.scores["discovery"] > fallback.scores["workspace"]
 
 
 def test_package_priors_can_raise_code_skill_priority() -> None:
@@ -262,7 +290,7 @@ def test_recipe_registry_suggests_daily_and_research_workflows() -> None:
     assert daily_run.metadata.get("recipe", {}).get("name") == "daily-operator"
 
     research_run = engine.run(
-        query="Design an ablation benchmark and reproducible experiment plan.",
+        query="Design a reproducible experiment and evidence plan.",
         constraints=HarnessConstraints(max_steps=4, max_tool_calls=4, auto_recipe=True),
     )
     assert research_run.metadata.get("recipe", {}).get("name") == "research-rig"
@@ -311,7 +339,7 @@ def test_generic_task_graph_selects_synthesis_skill_from_primary_artifact() -> N
     memo_synthesis = next(item for item in memo["graph"]["nodes"] if item["node_id"] == "synthesis")
 
     assert slides_synthesis["metrics"]["primary_artifact_kind"] == "slide_deck_plan"
-    assert slides_synthesis["metrics"]["skill_name"] == "slide_deck_designer"
+    assert slides_synthesis["metrics"]["skill_name"] == "artifact_synthesis"
     assert brief_synthesis["metrics"]["skill_name"] == "research_brief"
     assert memo_synthesis["metrics"]["primary_artifact_kind"] == "custom:decision_memo"
     assert memo_synthesis["metrics"]["skill_name"] == "artifact_synthesis"

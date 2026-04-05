@@ -14,7 +14,7 @@ def test_deep_research_builder_writes_bundle(tmp_path: Path) -> None:
         subject / "app" / "agents",
         subject / "app" / "harness",
         subject / "app" / "skills",
-        subject / "app" / "benchmark",
+        subject / "app" / "core",
         subject / "tests",
         competitor / "skills" / "public" / "deep-research",
         competitor / "skills" / "public" / "consulting-analysis",
@@ -41,10 +41,10 @@ def test_deep_research_builder_writes_bundle(tmp_path: Path) -> None:
         "workspace_file_search = 1\nworkspace_file_read = 1\nworkspace_file_write = 1\ntask_graph_builder = 1\n",
         encoding="utf-8",
     )
+    (subject / "app" / "core" / "tasking.py").write_text("class TaskSpec:\n    pass\nclass CapabilityNode:\n    pass\n", encoding="utf-8")
     (subject / "app" / "harness" / "evidence.py").write_text("# evidence\n", encoding="utf-8")
     (subject / "app" / "harness" / "deep_research.py").write_text("# self marker\n", encoding="utf-8")
     (subject / "app" / "skills" / "interop.py").write_text("# interop\n", encoding="utf-8")
-    (subject / "app" / "benchmark" / "adapters.py").write_text("# adapters\n", encoding="utf-8")
     (subject / "app" / "main.py").write_text('@app.command("demo")\n', encoding="utf-8")
     (subject / "tests" / "test_demo.py").write_text("def test_demo():\n    assert True\n", encoding="utf-8")
 
@@ -69,6 +69,7 @@ def test_deep_research_builder_writes_bundle(tmp_path: Path) -> None:
     assert payload["schema"] == "agent-harness-deep-research/v1"
     assert "DeerFlow" in payload["report_markdown"]
     assert len(payload["dimensions"]) >= 5
+    assert "Benchmark Readiness" not in payload["report_markdown"]
     assert Path(paths["framework"]).exists()
     assert Path(paths["report"]).exists()
     assert Path(paths["bundle"]).exists()

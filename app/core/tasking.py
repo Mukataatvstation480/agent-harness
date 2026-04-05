@@ -43,26 +43,6 @@ def _dedupe_contracts(contracts: list["ArtifactContract"]) -> list["ArtifactCont
     return out
 
 
-def _query_requests_benchmark_artifacts(*, lowered: str, tokens: set[str]) -> bool:
-    markers = [
-        "ablation",
-        "runner",
-        "run config",
-        "run-config",
-        "manifest",
-        "suite",
-        "benchmark manifest",
-        "benchmark config",
-        "evaluation config",
-        "run benchmark",
-        "gaia",
-        "swe-bench",
-        "webarena",
-        "tau-bench",
-    ]
-    return any(_has_marker(lowered=lowered, tokens=tokens, marker=marker) for marker in markers)
-
-
 def _query_requests_data_artifacts(*, lowered: str, tokens: set[str]) -> bool:
     markers = [
         "data analysis",
@@ -90,7 +70,6 @@ def _select_primary_artifact_kind(contracts: list["ArtifactContract"]) -> str:
         "custom:memo",
         "custom:one_pager",
         "custom:brief",
-        "benchmark_manifest",
         "webpage_blueprint",
         "slide_deck_plan",
         "chart_pack_spec",
@@ -137,6 +116,14 @@ def _explicit_artifact_contracts(lowered: str) -> list["ArtifactContract"]:
             ArtifactContract(kind="evidence_bundle", title="Evidence Bundle", format_hint="json"),
         ),
         (("workspace findings", "inspection findings"), ArtifactContract(kind="workspace_findings", title="Workspace Findings", format_hint="json")),
+        (
+            ("dataset pull plan", "dataset pull spec", "pull spec", "pull plan"),
+            ArtifactContract(kind="dataset_pull_spec", title="Dataset Pull Spec", format_hint="json"),
+        ),
+        (
+            ("loader template", "dataset loader", "loader spec"),
+            ArtifactContract(kind="dataset_loader_template", title="Dataset Loader Template", format_hint="python"),
+        ),
     ]
     for keys, contract in markers:
         if any(key in lowered for key in keys):
@@ -359,14 +346,13 @@ def infer_task_spec(
 
     lowered = query.lower()
     tokens = set(re.findall(r"[a-z0-9_-]+", lowered))
+    domain_set = {str(item).strip().lower() for item in (domains or []) if str(item).strip()}
     contracts: list[ArtifactContract] = []
-    if output_mode == "patch":
+    prefers_patch_artifacts = target == "code" or output_mode == "patch"
+    if prefers_patch_artifacts:
         contracts.append(ArtifactContract(kind="patch_plan", title="Patch Plan", format_hint="markdown"))
         contracts.append(ArtifactContract(kind="patch_draft", title="Patch Draft", format_hint="diff"))
-    elif output_mode == "benchmark":
-        contracts.append(ArtifactContract(kind="benchmark_manifest", title="Benchmark Manifest", format_hint="json"))
-        contracts.append(ArtifactContract(kind="benchmark_run_config", title="Benchmark Run Config", format_hint="json"))
-    elif output_mode == "runbook":
+    if output_mode == "runbook":
         contracts.append(ArtifactContract(kind="runbook", title="Operational Runbook", format_hint="markdown"))
     elif output_mode == "webpage":
         contracts.append(ArtifactContract(kind="webpage_blueprint", title="Webpage Blueprint", format_hint="markdown"))
@@ -398,11 +384,8 @@ def infer_task_spec(
         contracts.append(ArtifactContract(kind="image_prompt_pack", title="Image Prompt Pack", format_hint="markdown"))
     elif any(_has_marker(lowered=lowered, tokens=tokens, marker=marker) for marker in ["data", "dataset", "analytics", "dashboard", "sql", "csv"]):
         contracts.append(ArtifactContract(kind="data_analysis_spec", title="Data Analysis Spec", format_hint="json"))
-    else:
+    elif not prefers_patch_artifacts:
         contracts.append(ArtifactContract(kind="deliverable_report", title="Deliverable Report", format_hint="markdown"))
-    if output_mode != "benchmark" and _query_requests_benchmark_artifacts(lowered=lowered, tokens=tokens):
-        contracts.append(ArtifactContract(kind="benchmark_manifest", title="Benchmark Manifest", format_hint="json"))
-        contracts.append(ArtifactContract(kind="benchmark_run_config", title="Benchmark Run Config", format_hint="json"))
     if output_mode != "data" and _query_requests_data_artifacts(lowered=lowered, tokens=tokens):
         contracts.append(ArtifactContract(kind="data_analysis_spec", title="Data Analysis Spec", format_hint="json"))
     contracts.extend(_custom_document_contracts(lowered))
@@ -410,13 +393,18 @@ def infer_task_spec(
     contracts.append(ArtifactContract(kind="completion_packet", title="Completion Packet", format_hint="json"))
     contracts.append(ArtifactContract(kind="delivery_bundle", title="Delivery Bundle", format_hint="json"))
     contracts = _dedupe_contracts(contracts)
+    contract_kinds = {item.kind for item in contracts}
 
     required_channels: list[str] = ["discovery"]
-    if workspace_required or any(_has_marker(lowered=lowered, tokens=tokens, marker=marker) for marker in ["repo", "workspace", "code", "file", "module", "patch", "test"]):
+    if workspace_required or target == "code" or bool(contract_kinds & {"patch_plan", "patch_draft", "workspace_findings"}):
         required_channels.append("workspace")
-    if external_required or any(_has_marker(lowered=lowered, tokens=tokens, marker=marker) for marker in ["latest", "research", "web", "internet", "benchmark", "market", "paper"]):
+    if external_required or target == "research" or bool(contract_kinds & {"evidence_bundle", "dataset_pull_spec", "dataset_loader_template"}):
         required_channels.append("web")
-    if any(_has_marker(lowered=lowered, tokens=tokens, marker=marker) for marker in ["risk", "safety", "governance", "policy", "audit", "compliance"]):
+    if (
+        target == "ops"
+        or ("risk" in domain_set and "engineering" not in domain_set)
+        or bool(contract_kinds & {"risk_register", "runbook", "custom:checklist"})
+    ):
         required_channels.append("risk")
 
     success = [
@@ -461,8 +449,6 @@ def suggest_target_from_task_spec(task_spec: TaskSpec) -> str:
         return "code"
     if primary == "runbook":
         return "ops"
-    if primary in {"benchmark_manifest", "benchmark_run_config"} and "workspace" not in channels:
-        return "research"
     if primary in {"deliverable_report", "data_analysis_spec"} and "web" in channels and "workspace" not in channels:
         return "research"
     if "workspace" in channels and task_spec.needs_validation:
@@ -480,8 +466,6 @@ def default_workspace_action_specs() -> dict[str, WorkspaceActionSpec]:
     specs = [
         WorkspaceActionSpec("patch_scaffold", "Generate Patch Scaffold", "plans/patch-scaffold.md", "text/markdown", "output", "markdown"),
         WorkspaceActionSpec("patch_draft", "Generate Patch Draft", "patches/patch-draft.diff", "text/plain", "output", "diff"),
-        WorkspaceActionSpec("benchmark_run_config", "Generate Benchmark Run Config", "benchmarks/run-config.json", "application/json", "config", "json"),
-        WorkspaceActionSpec("benchmark_manifest", "Generate Benchmark Manifest", "benchmarks/manifest.json", "application/json", "manifest", "json"),
         WorkspaceActionSpec("completion_packet", "Generate Completion Packet", "packets/completion-packet.json", "application/json", "packet", "json"),
         WorkspaceActionSpec("delivery_bundle", "Generate Delivery Bundle", "bundles/delivery-bundle.json", "application/json", "bundle", "json"),
         WorkspaceActionSpec("dataset_pull_spec", "Generate Dataset Pull Spec", "datasets/pull-spec.json", "application/json", "spec", "json"),
@@ -642,22 +626,6 @@ def default_capability_registry() -> CapabilityRegistry:
             requires_channels=["workspace"],
         ),
         Capability(
-            name="produce_benchmark_manifest",
-            title="Generate Benchmark Manifest",
-            node_type="workspace_action",
-            ref="benchmark_manifest",
-            phase="produce",
-            produces_artifacts=["benchmark_manifest"],
-        ),
-        Capability(
-            name="produce_benchmark_run_config",
-            title="Generate Benchmark Run Config",
-            node_type="workspace_action",
-            ref="benchmark_run_config",
-            phase="produce",
-            produces_artifacts=["benchmark_run_config"],
-        ),
-        Capability(
             name="produce_dataset_pull_spec",
             title="Generate Dataset Pull Spec",
             node_type="workspace_action",
@@ -776,8 +744,6 @@ def plan_capability_path(
         "delivery_bundle": "produce_delivery_bundle",
         "patch_plan": "produce_patch_scaffold",
         "patch_draft": "produce_patch_draft",
-        "benchmark_manifest": "produce_benchmark_manifest",
-        "benchmark_run_config": "produce_benchmark_run_config",
         "dataset_pull_spec": "produce_dataset_pull_spec",
         "dataset_loader_template": "produce_dataset_loader_template",
         "webpage_blueprint": "produce_webpage_blueprint",
@@ -849,10 +815,6 @@ def build_world_state(*, graph: dict[str, Any], context: dict[str, Any]) -> Task
                 artifacts.append("image_prompt_pack")
             if "analysis/data-analysis-spec" in lowered:
                 artifacts.append("data_analysis_spec")
-            if "benchmarks/manifest" in lowered:
-                artifacts.append("benchmark_manifest")
-            if "benchmarks/run-config" in lowered:
-                artifacts.append("benchmark_run_config")
             if "datasets/pull-spec" in lowered:
                 artifacts.append("dataset_pull_spec")
             if "datasets/loader_template" in lowered:

@@ -135,9 +135,7 @@ class HarnessPlanner:
             seen_tools.add(tool_name)
             sequence.append((tool_name, args))
 
-        if primary_artifact in {"benchmark_manifest", "benchmark_run_config"}:
-            sequence.append(("code_experiment_design", {"query": profile.query, "max_experiments": 5}))
-        elif profile.requires_validation and "workspace" in required_channels:
+        if profile.requires_validation and "workspace" in required_channels:
             sequence.append(("memory_context_digest", {"events": []}))
         return sequence
 
@@ -163,7 +161,7 @@ class HarnessPlanner:
             sequence.append(("external_resource_hub", {"query": profile.query, "limit": 6}))
         if (
             "web" in required_channels
-            and primary_artifact in {"deliverable_report", "benchmark_manifest", "data_analysis_spec"}
+            and primary_artifact in {"deliverable_report", "data_analysis_spec"}
             and "evidence_dossier_builder" not in seen_tools
         ):
             sequence.append(
@@ -180,7 +178,7 @@ class HarnessPlanner:
             for item in profile.workspace_summary.get("languages", [])
             if str(item).strip()
         } if isinstance(profile.workspace_summary, dict) else set()
-        if primary_artifact in {"patch_draft", "patch_plan", "benchmark_manifest", "benchmark_run_config"}:
+        if primary_artifact in {"patch_draft", "patch_plan"}:
             if "python" in languages:
                 return "*.py"
             if {"typescript", "javascript"} & languages:

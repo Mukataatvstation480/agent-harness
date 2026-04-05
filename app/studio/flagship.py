@@ -23,7 +23,7 @@ from app.tracing.analyzer import RoutingAnalyzer
 from app.tracing.visualizer import render_trace_views
 
 FLAGSHIP_ONE_LINER = (
-    "Agent Harness Studio turns one user request into an auditable, benchmarked, "
+    "Agent Harness Studio turns one user request into an auditable, deliverable-first, "
     "and ecosystem-portable agent product."
 )
 FLAGSHIP_DIFF = (
@@ -503,7 +503,7 @@ class StudioShowcaseBuilder:
             "minimum_axis": round(min_score, 4),
             "geometric": round(geo, 4),
             "kind": "internal_heuristic",
-            "benchmark_validated": False,
+            "externally_validated": False,
             "bottleneck": {"axis": axis, "score": round(axis_score, 4)},
         }
 
@@ -540,7 +540,7 @@ class StudioShowcaseBuilder:
                 "headline": headline,
                 "best_vs_name": strongest.get("name", ""),
                 "best_vs_gap": strongest.get("frontier_gap", 0.0),
-                "benchmark_validated": False,
+                "externally_validated": False,
                 "comparison_basis": "built_in_archetype_vectors",
             },
         }
@@ -884,7 +884,7 @@ class StudioShowcaseBuilder:
             f"Internal frontier estimate={frontier.get('score', 0.0):.3f} with bottleneck `{bottleneck.get('axis', '')}`.",
             str(comparison.get("positioning", {}).get("headline", "")),
             "Method edge: routing balances deliverable fit, evidence need, and execution risk instead of forcing one fixed workflow.",
-            "Same command emits narrative report, quantitative leaderboard, and OpenAI/Anthropic skill bundle.",
+            "Same command emits a primary deliverable, inspectable runtime artifacts, and an OpenAI/Anthropic skill bundle.",
         ]
 
     @staticmethod
@@ -943,7 +943,7 @@ class StudioShowcaseBuilder:
             },
         ]
         warnings = [
-            "Value index, frontier score, and archetype gap are internal heuristics, not public benchmark results.",
+            "Value index, frontier score, and archetype gap are internal heuristics, not externally audited results.",
             "Archetype comparison uses built-in baseline vectors and should not be presented as a measured win over external repositories.",
         ]
         if any("length" in str(item).lower() for item in generation.get("notes", []) if isinstance(item, str)):
@@ -985,12 +985,12 @@ class StudioShowcaseBuilder:
     def _primary_output_text(payload: dict[str, Any]) -> str:
         delivery = payload.get("harness", {}) if isinstance(payload.get("harness", {}), dict) else {}
         proposal = payload.get("proposal", {}) if isinstance(payload.get("proposal", {}), dict) else {}
-        final_answer = str(delivery.get("final_answer", "")).strip()
-        if final_answer:
-            return final_answer
         brief = str(delivery.get("delivery_brief_excerpt", "")).strip()
         if brief:
             return brief
+        final_answer = str(delivery.get("final_answer", "")).strip()
+        if final_answer:
+            return final_answer
         subheadline = str(proposal.get("subheadline", "")).strip()
         if subheadline:
             return subheadline
@@ -1243,8 +1243,7 @@ details{{border:1px solid var(--line);border-radius:18px;background:rgba(255,255
     <div class="grid3" style="margin-top:12px">{self._phase_cards(proposal.get("phases", []))}</div>
   </details>
   <details style="margin-top:12px">
-    <summary>Benchmark Fit And Boundary</summary>
-    <table><thead><tr><th>Benchmark</th><th>Fit</th><th>Strength</th><th>Gap</th></tr></thead><tbody>{self._benchmark_rows(mission.get("benchmark_targets", []))}</tbody></table>
+    <summary>Delivery Boundary And Review</summary>
     <p style="margin-top:12px">{html.escape(str(mission.get("honest_boundary", "")))}</p>
     <ul>{"".join(f"<li>{html.escape(str(item))}</li>" for item in mission.get("review_questions", []))}</ul>
   </details>
@@ -1629,22 +1628,6 @@ details{{border:1px solid var(--line);border-radius:18px;background:rgba(255,255
         if not rows:
             return "<tr><td colspan='2'>No artifact families.</td></tr>"
         return "".join(rows)
-
-    @staticmethod
-    def _benchmark_rows(rows: list[dict[str, Any]]) -> str:
-        if not rows:
-            return "<tr><td colspan='4'>No benchmark mapping.</td></tr>"
-        parts: list[str] = []
-        for row in rows[:6]:
-            parts.append(
-                "<tr>"
-                f"<td>{html.escape(str(row.get('name', '')))}</td>"
-                f"<td>{html.escape(str(row.get('fit', '')))}</td>"
-                f"<td>{html.escape(str(row.get('strength', '')))}</td>"
-                f"<td>{html.escape(str(row.get('gap', '')))}</td>"
-                "</tr>"
-            )
-        return "".join(parts)
 
     @staticmethod
     def _agent_rows(rows: list[dict[str, Any]]) -> str:

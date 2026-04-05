@@ -273,14 +273,6 @@ class TaskGraphActionMapper:
         render_context = dict(context)
         render_context["_graph"] = graph
         render_context["_action_metrics"] = metrics
-        local = self._render_workspace_action_local(
-            action_kind=action_kind,
-            prompt=prompt,
-            source_text=source_text,
-            context=render_context,
-            workspace_summary=workspace_summary,
-            descriptor=descriptor,
-        )
         relative_path = str(metrics.get("relative_path", descriptor.get("default_relative_path", ""))).strip() or str(
             descriptor.get("default_relative_path", f"artifacts/{action_kind}.txt")
         )
@@ -293,12 +285,20 @@ class TaskGraphActionMapper:
             "graph_id": graph.get("graph_id", ""),
             "artifact_contract": dict(descriptor.get("artifact_contract", {})) if isinstance(descriptor.get("artifact_contract", {}), dict) else {},
         }
+        seed = self._workspace_action_generation_seed(
+            action_kind=action_kind,
+            prompt=prompt,
+            source_text=source_text,
+            workspace_summary=workspace_summary,
+            descriptor=descriptor,
+            content_type=content_type,
+        )
         if content_type == "application/json":
-            payload = dict(local.get("payload", {})) if isinstance(local.get("payload", {}), dict) else {}
+            payload = dict(seed.get("payload", {})) if isinstance(seed.get("payload", {}), dict) else {}
             content = json.dumps(payload, indent=2, default=str)
             body[result_field] = payload
         else:
-            content = str(local.get("content", ""))
+            content = str(seed.get("content", ""))
             body[result_field] = content
 
         live_generation = self._live_workspace_action_generation(
@@ -310,7 +310,7 @@ class TaskGraphActionMapper:
             local_body=body,
             local_content=content,
             content_type=content_type,
-            context=context,
+            context=render_context,
         )
         generation_source = "local"
         if live_generation:
@@ -329,6 +329,22 @@ class TaskGraphActionMapper:
                     content = text
                     field = self._workspace_action_result_field(action_kind)
                     body[field] = text
+        else:
+            local = self._render_workspace_action_local(
+                action_kind=action_kind,
+                prompt=prompt,
+                source_text=source_text,
+                context=render_context,
+                workspace_summary=workspace_summary,
+                descriptor=descriptor,
+            )
+            if content_type == "application/json":
+                payload = dict(local.get("payload", {})) if isinstance(local.get("payload", {}), dict) else {}
+                content = json.dumps(payload, indent=2, default=str)
+                body[result_field] = payload
+            else:
+                content = str(local.get("content", ""))
+                body[result_field] = content
         body["path"] = relative_path
         body["generation_source"] = generation_source
         if live_generation and isinstance(live_generation.get("rationale", []), list):
@@ -417,6 +433,42 @@ class TaskGraphActionMapper:
             return {"payload": dict(payload) if isinstance(payload, dict) else {"content": str(payload)}}
         return {"content": str(payload)}
 
+    @classmethod
+    def _workspace_action_generation_seed(
+        cls,
+        *,
+        action_kind: str,
+        prompt: str,
+        source_text: str,
+        workspace_summary: dict[str, Any],
+        descriptor: dict[str, Any],
+        content_type: str,
+    ) -> dict[str, Any]:
+        title = str(descriptor.get("title", descriptor.get("kind", "Artifact"))).strip() or "Artifact"
+        contract = dict(descriptor.get("artifact_contract", {})) if isinstance(descriptor.get("artifact_contract", {}), dict) else {}
+        grounding = cls._meaningful_lines(source_text, limit=4)
+        if content_type == "application/json":
+            payload: dict[str, Any] = {
+                "kind": str(descriptor.get("kind", action_kind)).strip(),
+                "title": title,
+                "objective": prompt,
+                "format_hint": str(descriptor.get("format_hint", "json")).strip() or "json",
+                "grounding": grounding,
+            }
+            if workspace_summary:
+                payload["workspace_languages"] = list(workspace_summary.get("languages", []))
+                payload["workspace_frameworks"] = list(workspace_summary.get("frameworks", []))
+            if contract:
+                payload["artifact_contract"] = contract
+            return {"payload": payload}
+        lines = [f"# {title}", "", f"Objective: {prompt}"]
+        if grounding:
+            lines.extend(["", "Grounding:"])
+            lines.extend(f"- {item}" for item in grounding[:4])
+        if contract:
+            lines.extend(["", "Contract:", json.dumps(contract, ensure_ascii=False, indent=2)])
+        return {"content": "\n".join(lines).strip() + "\n"}
+
     def _workspace_action_builders(self) -> dict[str, Any]:
         return {
             "patch_scaffold": lambda **kwargs: self._build_patch_scaffold(
@@ -440,16 +492,6 @@ class TaskGraphActionMapper:
                 prompt=kwargs["prompt"],
                 source_text=kwargs["source_text"],
                 context=kwargs["context"],
-                workspace_summary=kwargs["workspace_summary"],
-            ),
-            "benchmark_run_config": lambda **kwargs: self._build_benchmark_run_config(
-                prompt=kwargs["prompt"],
-                source_text=kwargs["source_text"],
-                workspace_summary=kwargs["workspace_summary"],
-            ),
-            "benchmark_manifest": lambda **kwargs: self._build_benchmark_manifest(
-                prompt=kwargs["prompt"],
-                source_text=kwargs["source_text"],
                 workspace_summary=kwargs["workspace_summary"],
             ),
             "dataset_pull_spec": lambda **kwargs: self._build_dataset_pull_spec(
@@ -674,7 +716,7 @@ class TaskGraphActionMapper:
         citations = evidence_payload["citations"]
         baseline_lines = evidence_payload["baseline_lines"]
         source_lines = evidence_payload["source_lines"]
-        benchmark_focus = evidence_payload["benchmark_focus"]
+        proof_focus = evidence_payload["proof_focus"]
         source_rows = evidence_payload["source_rows"]
         evidence_titles = cls._dedupe_lines(
             [
@@ -682,7 +724,7 @@ class TaskGraphActionMapper:
                 for record in evidence_records
                 if record.get("title")
             ]
-            + benchmark_focus
+            + proof_focus
             + grounding.get("evidence", [])
         )[:8]
 
@@ -693,24 +735,24 @@ class TaskGraphActionMapper:
                 "General agent frameworks usually lose to a direct model answer when orchestration adds latency, weak intermediate artifacts, "
                 "and low-signal planning overhead without producing stronger evidence or a better final deliverable."
             )
-        benchmark_clause = cls._join_natural_list(benchmark_focus[:3])
+        proof_clause = cls._join_natural_list(proof_focus[:3])
         evidence_clause = cls._join_natural_list([record["title"] for record in evidence_records[:3] if record.get("title")])
         gap_candidates = [
             "Orchestration overhead often creates more intermediate metadata than end-user value.",
             "Evidence collection is frequently disconnected from the final answer, so frameworks do more work without producing better synthesis.",
             "Closure artifacts are often generated before the true primary deliverable is strong enough, which buries the real result.",
-            "Benchmark and validation surfaces are often scaffold-like rather than executable enough to prove advantage.",
+            "External proof surfaces are often scaffold-like rather than concrete enough to justify a differentiated claim.",
         ]
         if evidence_titles:
             gap_candidates.insert(0, f"Current evidence points to repeated emphasis on {evidence_titles[0]}.")
-        if benchmark_clause:
+        if proof_clause:
             gap_candidates.append(
-                f"The benchmark-facing evidence centers on {benchmark_clause}, so the framework has to prove value on verifiable external tasks rather than internal scoring."
+                f"The strongest external proof surfaces center on {proof_clause}, so the framework has to prove value on verifiable task closure rather than internal scoring."
             )
         recommendation_candidates = [
             "Make the primary deliverable the center of the runtime, with packet and bundle generated only after the result is strong.",
             "Use external evidence and source matrices to improve the final synthesis directly, not as detached side artifacts.",
-            "Suppress benchmark, dataset, or validation scaffolds unless the user explicitly asks for them.",
+            "Suppress optional proof, dataset, or validation scaffolds unless the user explicitly asks for them.",
             "Reserve long task graphs for cases that end in verifiable artifacts, inspectable evidence, or executable outputs.",
         ]
         if citations:
@@ -720,7 +762,7 @@ class TaskGraphActionMapper:
                 "Force every major claim to map to a source row, an implication, and an unresolved uncertainty before treating the result as publishable."
             )
         open_questions = [
-            "Which parts of the improvement story are still narrative rather than benchmark-backed?",
+            "Which parts of the improvement story are still narrative rather than backed by inspectable proof?",
             "Which runtime surfaces create genuine closure value and which are only orchestration ceremony?",
             "What evidence would convince a skeptical reviewer that the framework beats a direct model answer on a real task?",
         ]
@@ -738,7 +780,7 @@ class TaskGraphActionMapper:
             "citations": citations,
             "baseline_lines": baseline_lines,
             "source_lines": source_lines,
-            "benchmark_focus": benchmark_focus,
+            "proof_focus": proof_focus,
             "gaps": gap_candidates,
             "recommendations": recommendation_candidates,
             "open_questions": open_questions,
@@ -839,7 +881,7 @@ class TaskGraphActionMapper:
             "",
             "- 1. Where direct prompting currently wins",
             "- 2. What frameworks are supposed to add but often fail to deliver",
-            "- 3. Evidence and benchmark signals that matter",
+            "- 3. Evidence and external proof signals that matter",
             "- 4. Runtime and product architecture changes with the highest leverage",
             "",
             "## Evidence Coverage",
@@ -858,7 +900,7 @@ class TaskGraphActionMapper:
     def _build_direct_baseline_document(cls, *, prompt: str, source_text: str, title: str) -> str:
         signal_map = cls._research_signal_map(prompt=prompt, source_text=source_text)
         evidence_titles = signal_map.get("evidence_titles", [])
-        benchmark_focus = cls._join_natural_list(signal_map.get("benchmark_focus", [])[:3])
+        proof_focus = cls._join_natural_list(signal_map.get("proof_focus", [])[:3])
         lines = [
             f"# {title}",
             "",
@@ -884,7 +926,7 @@ class TaskGraphActionMapper:
             ),
             "",
             (
-                "It also tends to blend diagnosis and prescription. The answer says to simplify, benchmark, or improve planning, but it rarely shows which parts of the "
+                "It also tends to blend diagnosis and prescription. The answer says to simplify, validate, or improve planning, but it rarely shows which parts of the "
                 "framework are pure ceremony and which runtime surfaces are genuinely worth keeping because they create closure, validation, or reuse."
             ),
             "",
@@ -905,13 +947,13 @@ class TaskGraphActionMapper:
                 "cannot improve the answer, support validation, or create a reusable artifact, it should probably disappear."
             ),
         ]
-        if benchmark_focus:
+        if proof_focus:
             lines.extend(
                 [
                     "",
-                    "## Benchmark Lens",
+                    "## Proof Lens",
                     "",
-                    f"The most relevant benchmark surfaces in the current evidence are {benchmark_focus}. A direct answer would mention them; Harness has to connect them to concrete runtime changes and delivery quality.",
+                    f"The most relevant external proof surfaces in the current evidence are {proof_focus}. A direct answer would mention them; Harness has to connect them to concrete runtime changes and delivery quality.",
                 ]
             )
         if evidence_titles:
@@ -922,7 +964,7 @@ class TaskGraphActionMapper:
 
     @classmethod
     def _research_summary_paragraphs(cls, *, prompt: str, signal_map: dict[str, Any]) -> list[str]:
-        benchmark_focus = cls._join_natural_list(signal_map.get("benchmark_focus", [])[:3])
+        proof_focus = cls._join_natural_list(signal_map.get("proof_focus", [])[:3])
         evidence_titles = cls._join_natural_list(signal_map.get("evidence_titles", [])[:3])
         paragraphs = [
             (
@@ -931,10 +973,10 @@ class TaskGraphActionMapper:
                 "the final answer, the evidence quality, or the ability to take the next action."
             )
         ]
-        if benchmark_focus or evidence_titles:
+        if proof_focus or evidence_titles:
             paragraphs.append(
                 (
-                    f"The current evidence surface is anchored by {benchmark_focus or evidence_titles}. That matters because these sources evaluate whether an agent can "
+                    f"The current evidence surface is anchored by {proof_focus or evidence_titles}. That matters because these sources evaluate whether an agent can "
                     "translate reasoning into externally verifiable outcomes, not just plausible prose. A strong framework therefore has to win on grounded synthesis, artifact "
                     "quality, and task closure rather than on the number of internal components it activates."
                 )
@@ -958,7 +1000,7 @@ class TaskGraphActionMapper:
         recommendations = signal_map.get("recommendations", [])
         gaps = signal_map.get("gaps", [])
         baseline_lines = signal_map.get("baseline_lines", [])
-        benchmark_focus = cls._join_natural_list(signal_map.get("benchmark_focus", [])[:3])
+        proof_focus = cls._join_natural_list(signal_map.get("proof_focus", [])[:3])
         evidence_focus = cls._join_natural_list([record.get("title", "") for record in records[:3] if isinstance(record, dict)])
         paragraphs: list[str] = []
         bullets: list[str] = []
@@ -970,10 +1012,10 @@ class TaskGraphActionMapper:
                     "single-model answer, which means the framework must contribute either stronger evidence, better synthesis, clearer traceability, or a reusable executable artifact."
                 )
             )
-            if benchmark_focus or evidence_focus:
+            if proof_focus or evidence_focus:
                 paragraphs.append(
                     (
-                        f"The strongest available support currently comes from {benchmark_focus or evidence_focus}. Those signals should shape the argument because they test whether "
+                        f"The strongest available support currently comes from {proof_focus or evidence_focus}. Those signals should shape the argument because they test whether "
                         "the framework can actually close work in realistic environments rather than merely produce a polished narrative."
                     )
                 )
@@ -1005,7 +1047,7 @@ class TaskGraphActionMapper:
                 ]
             else:
                 paragraphs.append(
-                    "The available evidence is still thin, but even the current signal suggests that benchmark-grounded, externally inspectable results matter more than elaborate internal orchestration."
+                    "The available evidence is still thin, but even the current signal suggests that externally inspectable proof matters more than elaborate internal orchestration."
                 )
                 bullets = evidence_titles[:4]
             return paragraphs, cls._dedupe_lines(bullets)[:4]
@@ -1019,7 +1061,7 @@ class TaskGraphActionMapper:
             )
             paragraphs.append(
                 (
-                    "The second move is to make evidence enter the final synthesis directly. Source collection, benchmark references, and workspace findings should not sit in parallel "
+                    "The second move is to make evidence enter the final synthesis directly. Source collection, external proof references, and workspace findings should not sit in parallel "
                     "tracks; they should materially change the wording, confidence, and recommended next actions of the main deliverable."
                 )
             )
@@ -1078,7 +1120,7 @@ class TaskGraphActionMapper:
         citations: list[str] = []
         baseline_lines: list[str] = []
         source_lines: list[str] = []
-        benchmark_focus: list[str] = []
+        proof_focus: list[str] = []
         source_rows: list[dict[str, str]] = []
 
         for payload in cls._json_objects_from_text(source_text, limit=10):
@@ -1124,6 +1166,18 @@ class TaskGraphActionMapper:
                     text = cls._single_line(item)
                     if text:
                         citations.append(text)
+                for item in (
+                    output.get("proof_focus", []) if isinstance(output.get("proof_focus", []), list) else []
+                )[:8]:
+                    text = cls._single_line(item)
+                    if text:
+                        proof_focus.append(text)
+                for item in (
+                    output.get("benchmark_focus", []) if isinstance(output.get("benchmark_focus", []), list) else []
+                )[:8]:
+                    text = cls._single_line(item)
+                    if text:
+                        proof_focus.append(text)
             metadata = payload.get("__tool_metadata__", {}) if isinstance(payload.get("__tool_metadata__", {}), dict) else {}
             for record in metadata.get("evidence_records", [])[:8] if isinstance(metadata.get("evidence_records", []), list) else []:
                 if not isinstance(record, dict):
@@ -1146,6 +1200,14 @@ class TaskGraphActionMapper:
                 text = cls._single_line(item)
                 if text:
                     citations.append(text)
+            for item in metadata.get("proof_focus", [])[:8] if isinstance(metadata.get("proof_focus", []), list) else []:
+                text = cls._single_line(item)
+                if text:
+                    proof_focus.append(text)
+            for item in metadata.get("benchmark_focus", [])[:8] if isinstance(metadata.get("benchmark_focus", []), list) else []:
+                text = cls._single_line(item)
+                if text:
+                    proof_focus.append(text)
             text_output = str(payload.get("output", "")).strip()
             lowered = text_output.lower()
             if "baseline answer" in lowered or "what it misses" in lowered:
@@ -1167,7 +1229,7 @@ class TaskGraphActionMapper:
                 citations.append(cls._single_line(line.split(":", 1)[1]))
                 continue
             if any(marker in lowered for marker in ["tau-bench", "swe-bench", "model context protocol", "webarena", "gaia benchmark", "gaia ", "mcp"]):
-                benchmark_focus.append(line)
+                proof_focus.append(line)
             if "baseline answer" in lowered or "what it misses" in lowered:
                 baseline_lines.append(line)
             if ("question:" in lowered or "source:" in lowered or "usefulness:" in lowered or "what it proves" in lowered) and line not in source_lines:
@@ -1233,7 +1295,7 @@ class TaskGraphActionMapper:
             "citations": cls._dedupe_lines(citations)[:10],
             "baseline_lines": cls._dedupe_lines(baseline_lines)[:8],
             "source_lines": cls._dedupe_lines(source_lines)[:8],
-            "benchmark_focus": cls._dedupe_lines(benchmark_focus)[:6],
+            "proof_focus": cls._dedupe_lines(proof_focus)[:6],
             "source_rows": deduped_rows,
         }
 
@@ -1257,22 +1319,22 @@ class TaskGraphActionMapper:
         elif "tau-bench" in lowered:
             claim = "Shows that realistic long-horizon tool-using tasks need externally verifiable task closure, not just plausible reasoning traces."
             usefulness = "Useful because it anchors evaluation on enterprise-style workflows where orchestration quality must survive realistic execution chains."
-            gap = "It is a benchmark surface, not direct evidence of cost, latency, or broad user preference across all task categories."
+            gap = "It is an external evaluation surface, not direct evidence of cost, latency, or broad user preference across all task categories."
         elif "swe-bench" in lowered:
             claim = "Measures whether agents can finish verifiable software tasks with concrete code changes, making closure quality inspectable rather than rhetorical."
             usefulness = "Important because it tests whether a framework can produce auditable task completion on engineering work instead of only polished analysis."
             gap = "It is strong evidence for code-task closure, but it does not generalize by itself to research, ops, or non-engineering tasks."
         elif "promotion criteria" in lowered or "reproducibility" in lowered:
-            claim = "Argues that research candidates should only be promoted when reproducibility, benchmark stability, and operating constraints are jointly satisfied."
+            claim = "Argues that research candidates should only be promoted when reproducibility, evaluation stability, and operating constraints are jointly satisfied."
             usefulness = "Useful as an operating gate: it turns framework evaluation from narrative optimism into explicit promotion criteria."
-            gap = "It is a decision policy, not an external benchmark result showing that a specific framework already wins in production."
+            gap = "It is a decision policy, not an external production result showing that a specific framework already wins in practice."
         elif "langgraph" in lowered or "durability" in lowered:
             claim = "Describes stateful orchestration and durability patterns that matter for long-running agent execution."
             usefulness = "Relevant because it shows which runtime mechanisms support recovery and persistence when multi-step execution is genuinely necessary."
             gap = "It explains orchestration patterns, but it is not direct evidence that more orchestration improves end-user outcomes."
-        elif "benchmark" in lowered:
-            usefulness = "Helps anchor the memo in an externally inspectable evaluation surface rather than purely internal framework claims."
-            gap = "Needs linkage to the specific failure mode and the task class the benchmark actually covers."
+        elif "benchmark" in lowered or "evaluation" in lowered:
+            usefulness = "Helps anchor the memo in an externally inspectable proof surface rather than purely internal framework claims."
+            gap = "Needs linkage to the specific failure mode and the task class the evaluation surface actually covers."
         elif "architecture" in lowered or "protocol" in lowered:
             usefulness = "Helps connect high-level runtime design choices to concrete integration constraints."
             gap = "Supports the architectural framing, but not quantitative claims about performance advantage."
@@ -1499,6 +1561,7 @@ class TaskGraphActionMapper:
             objective=objective,
             source_text=source_text,
             sandbox=sandbox,
+            graph=graph,
             context=context,
         )
         trace: list[dict[str, Any]] = []
@@ -1579,6 +1642,7 @@ class TaskGraphActionMapper:
         objective: str,
         source_text: str,
         sandbox: ThreadSandbox,
+        graph: dict[str, Any],
         context: dict[str, Any],
     ) -> dict[str, Any]:
         local = self._default_subagent_plan(
@@ -1591,6 +1655,7 @@ class TaskGraphActionMapper:
             objective=objective,
             source_text=source_text,
             local_plan=local,
+            graph=graph,
             context=context,
         )
         return live or local
@@ -1630,16 +1695,6 @@ class TaskGraphActionMapper:
                     {"name": "evidence_dossier_builder", "args": {"query": objective, "limit": 4}},
                 ],
                 "rationale": ["research probe defaults to external resources and evidence collection"],
-            }
-        if subagent_kind == "benchmark_probe":
-            return {
-                "source": "local",
-                "skill_name": "benchmark_ablation",
-                "tool_calls": [
-                    {"name": "code_experiment_design", "args": {"query": objective, "max_experiments": 4}},
-                    {"name": "tool_search", "args": {"query": "benchmark evaluation runner", "limit": 5}},
-                ],
-                "rationale": ["benchmark probe defaults to experiment design and runner discovery"],
             }
         return {
             "source": "local",
@@ -1708,7 +1763,6 @@ class TaskGraphActionMapper:
         high_value = {
             "artifact_synthesis",
             "research_brief",
-            "benchmark_ablation",
             "ops_runbook",
             "custom:memo",
             "custom:brief",
@@ -1723,7 +1777,7 @@ class TaskGraphActionMapper:
     def _preferred_live_document_strategy(*, surface_kind: str, prompt: str) -> str:
         lowered = str(prompt or "").lower()
         if surface_kind in {"custom:memo", "custom:brief", "research_brief"} or any(
-            marker in lowered for marker in ["research", "benchmark", "investigate", "report", "memo", "compare"]
+            marker in lowered for marker in ["research", "evaluation", "investigate", "report", "memo", "compare"]
         ):
             return "research_analyst"
         if any(marker in lowered for marker in ["patch", "fix", "repo", "repository", "test", "bug", "router", "workspace"]):
@@ -1760,7 +1814,7 @@ class TaskGraphActionMapper:
             "custom:memo": (
                 "Return markdown for a serious research memo. Keep the result decision-relevant. "
                 "Use clear memo sections such as Summary, Context, Evidence, Recommendation, Implications, and Next Step. "
-                "Do not invent roadmap phases or benchmark percentages unless the evidence explicitly contains them."
+                "Do not invent roadmap phases or external evaluation percentages unless the evidence explicitly contains them."
             ),
             "custom:brief": (
                 "Return a compact research brief with high-density paragraphs and a short findings list. "
@@ -1801,6 +1855,11 @@ class TaskGraphActionMapper:
             return None
         if self._prefer_local_workspace_action(action_kind):
             return None
+        graph = context.get("_graph", {}) if isinstance(context.get("_graph", {}), dict) else {}
+        action_metrics = context.get("_action_metrics", {}) if isinstance(context.get("_action_metrics", {}), dict) else {}
+        execution_loop = action_metrics.get("execution_loop", {}) if isinstance(action_metrics.get("execution_loop", {}), dict) else {}
+        if not execution_loop and isinstance(graph.get("metadata", {}), dict) and isinstance(graph.get("metadata", {}).get("execution_loop", {}), dict):
+            execution_loop = dict(graph.get("metadata", {}).get("execution_loop", {}))
         if content_type != "application/json":
             revised = self._live_high_value_document_generation(
                 surface_kind=action_kind,
@@ -1832,10 +1891,13 @@ class TaskGraphActionMapper:
                 "source_text": source_text[:4000],
                 "workspace_summary": workspace_summary,
                 "local_relative_path": local_relative_path,
-                "local_result": local_body,
-                "local_content_preview": local_content[:3000],
+                "fallback_seed": local_body,
+                "fallback_content_preview": local_content[:3000],
                 "expected_mode": mode,
                 "quality_brief": self._workspace_action_quality_brief(action_kind),
+                "artifact_contract": dict(local_body.get("artifact_contract", {})) if isinstance(local_body.get("artifact_contract", {}), dict) else {},
+                "execution_loop": execution_loop,
+                "current_loop_phase": str(context.get("current_loop_phase", "")) or str(self._graph_current_phase(graph)),
             }
             messages = [
                 {
@@ -1845,6 +1907,8 @@ class TaskGraphActionMapper:
                         "Return strict JSON with keys relative_path, content_text, content_json, rationale. "
                         "Only set content_json for JSON artifacts. "
                         "Only set content_text for text, diff, markdown, or python artifacts. "
+                        "Treat fallback_seed as a safety fallback, not as the preferred final answer. "
+                        "Use execution_loop and current_loop_phase to decide how detailed and action-oriented the artifact should be. "
                         "Keep the output executable and grounded in the provided task, source text, and workspace summary. "
                         "Do not change artifact type. "
                         "Prefer a result that a reviewer could directly use, not a scaffold that merely names sections. "
@@ -1935,7 +1999,7 @@ class TaskGraphActionMapper:
             if cls._line_mentions_unsupported_source(line, allowed_sources):
                 removed_claims += 1
                 continue
-            if cls._line_mentions_unseen_benchmark(line, normalized_evidence):
+            if cls._line_mentions_unseen_eval_surface(line, normalized_evidence):
                 removed_claims += 1
                 continue
             cleaned_lines.append(line)
@@ -2006,7 +2070,7 @@ class TaskGraphActionMapper:
                     cls._single_line(record.get("url", "")),
                 ]
             )
-        for key in ["citations", "baseline_lines", "source_lines", "benchmark_focus"]:
+        for key in ["citations", "baseline_lines", "source_lines", "proof_focus"]:
             values = evidence.get(key, [])
             if isinstance(values, list):
                 parts.extend(cls._single_line(item) for item in values[:12])
@@ -2100,7 +2164,7 @@ class TaskGraphActionMapper:
         return not any(marker and marker in normalized for marker in allowed_sources)
 
     @staticmethod
-    def _line_mentions_unseen_benchmark(line: str, evidence_text: str) -> bool:
+    def _line_mentions_unseen_eval_surface(line: str, evidence_text: str) -> bool:
         known = ["swe-bench", "webarena", "gaia", "tau-bench", "mcp", "toolformer", "react"]
         lowered = str(line or "").lower()
         for marker in known:
@@ -2181,7 +2245,7 @@ class TaskGraphActionMapper:
                 if len(references) >= 4:
                     break
         if not references:
-            for item in evidence.get("benchmark_focus", []) if isinstance(evidence.get("benchmark_focus", []), list) else []:
+            for item in evidence.get("proof_focus", []) if isinstance(evidence.get("proof_focus", []), list) else []:
                 row = cls._single_line(item)
                 if row and row not in seen:
                     seen.add(row)
@@ -2265,7 +2329,7 @@ class TaskGraphActionMapper:
                         "Return strict JSON with keys content_text and rationale. "
                         "Produce the final skill output only, not commentary about the runtime. "
                         "Make the result materially stronger than the local_output while staying grounded in source_text. "
-                        "If the skill is research_brief, artifact_synthesis, benchmark_ablation, or ops_runbook, prefer concrete, structured output over generic prose. "
+                        "If the skill is research_brief, artifact_synthesis, or ops_runbook, prefer concrete, structured output over generic prose. "
                         "Do not echo raw planning metadata or node names. "
                         "If source_text contains a direct baseline, outperform it by adding missing evidence, sharper synthesis, and a more actionable final recommendation."
                     ),
@@ -2296,8 +2360,6 @@ class TaskGraphActionMapper:
     @staticmethod
     def _workspace_action_quality_brief(action_kind: str) -> str:
         mapping = {
-            "benchmark_manifest": "Return a real benchmark plan with measurable tracks, datasets or suites, success metrics, and output files.",
-            "benchmark_run_config": "Return an executable-style config with suites, evaluation steps, artifacts, and run controls.",
             "custom:memo": "Write a substantive memo with paragraph-grade analysis, concrete evidence, and a clear recommendation.",
             "custom:brief": "Write a compact but high-density brief with findings, evidence, and next actions.",
             "custom:decision_memo": "Write a decision memo that makes a hard recommendation, names tradeoffs, and leaves no ambiguity about the next step.",
@@ -2316,7 +2378,6 @@ class TaskGraphActionMapper:
         mapping = {
             "artifact_synthesis": "Write the final deliverable, not a meta-summary. Lead with the main thesis, then evidence, then concrete next actions.",
             "research_brief": "Produce a substantive research brief with question, findings, evidence, disagreements, and recommended follow-up.",
-            "benchmark_ablation": "Produce a real benchmark and ablation plan with variants, metrics, failure modes, and decision thresholds.",
             "ops_runbook": "Produce a runbook operators could execute under pressure, with triggers, steps, rollback, and escalation points.",
             "codebase_triage": "Write an engineering handoff with root cause, touched files, patch intent, test plan, and validation notes grounded in workspace evidence.",
         }
@@ -2341,6 +2402,7 @@ class TaskGraphActionMapper:
         objective: str,
         source_text: str,
         local_plan: dict[str, Any],
+        graph: dict[str, Any],
         context: dict[str, Any],
     ) -> dict[str, Any] | None:
         overrides = self._resolve_live_model_overrides(context)
@@ -2353,11 +2415,15 @@ class TaskGraphActionMapper:
             if not config:
                 return None
             gateway = LiveModelGateway(config)
+            graph_metadata = graph.get("metadata", {}) if isinstance(graph.get("metadata", {}), dict) else {}
+            execution_loop = graph_metadata.get("execution_loop", {}) if isinstance(graph_metadata.get("execution_loop", {}), dict) else {}
             payload = {
                 "subagent_kind": subagent_kind,
                 "objective": objective,
                 "source_text": source_text[:2500],
                 "local_plan": local_plan,
+                "execution_loop": execution_loop,
+                "current_loop_phase": str(context.get("current_loop_phase", "")) or str(self._graph_current_phase(graph)),
                 "allowed_tools": sorted(self._allowed_subagent_tools()),
                 "allowed_skills": sorted(self._allowed_subagent_skills()),
             }
@@ -2368,7 +2434,10 @@ class TaskGraphActionMapper:
                         "You are generating a mini-plan for a subagent inside a general agent runtime. "
                         "Return strict JSON with keys skill_name, tool_calls, rationale. "
                         "tool_calls must be an array of {name, args}. "
-                        "Only use allowed tool names and allowed skill names."
+                        "The execution_loop describes the intended observe -> decide -> act -> deliver progression. "
+                        "Use current_loop_phase to choose the smallest subagent plan that helps the runtime move forward. "
+                        "Only use allowed tool names and allowed skill names. "
+                        "Avoid broad exploratory plans when a focused artifact or evidence move is enough."
                     ),
                 },
                 {"role": "user", "content": json.dumps(payload, ensure_ascii=True)},
@@ -2466,12 +2535,14 @@ class TaskGraphActionMapper:
         )
         if not additions:
             additions = self._propose_replan_nodes(
-            node=node,
-            graph=graph,
-            context=context,
-            metrics=metrics,
-            failure_policy=failure_policy,
-            completion_packet=completion_packet_preview,
+                node=node,
+                graph=graph,
+                context=context,
+                metrics=metrics,
+                failure_policy=failure_policy,
+                completion_packet=completion_packet_preview,
+                state_gap=state_gap.to_dict(),
+                capability_replan=capability_replan,
             )
         added_node_ids: list[str] = []
         if additions:
@@ -2919,25 +2990,6 @@ class TaskGraphActionMapper:
         )
 
     @staticmethod
-    def _build_benchmark_run_config(
-        *,
-        prompt: str,
-        source_text: str,
-        workspace_summary: dict[str, Any],
-    ) -> dict[str, Any]:
-        commands = workspace_summary.get("suggested_commands", []) if isinstance(workspace_summary.get("suggested_commands", []), list) else []
-        return {
-            "objective": prompt,
-            "runner": "agent-harness-benchmark",
-            "suite_candidates": ["GAIA", "SWE-bench", "WebArena", "tau-bench"],
-            "workspace_languages": list(workspace_summary.get("languages", [])),
-            "workspace_frameworks": list(workspace_summary.get("frameworks", [])),
-            "validation_commands": commands[:3],
-            "artifacts": ["scoreboard.json", "failure-clusters.json", "ablation-report.md"],
-            "notes": source_text[:1500],
-        }
-
-    @staticmethod
     def _build_dataset_pull_spec(
         *,
         prompt: str,
@@ -2950,7 +3002,7 @@ class TaskGraphActionMapper:
             "topic": prompt,
             "collection_mode": "curated_external_pull",
             "required_fields": ["title", "url", "source", "date", "snippet", "relevance_score"],
-            "preferred_sources": ["official docs", "benchmarks", "papers", "trusted datasets"],
+            "preferred_sources": ["official docs", "papers", "trusted datasets", "public reports"],
             "resource_seed": resources[:1500],
             "evidence_seed": evidence[:1500],
             "notes": source_text[:1200],
@@ -2965,12 +3017,21 @@ class TaskGraphActionMapper:
         metrics: dict[str, Any],
         failure_policy: dict[str, Any],
         completion_packet: dict[str, Any],
+        state_gap: dict[str, Any],
+        capability_replan: dict[str, Any],
     ) -> list[dict[str, Any]]:
         existing_ids = {
             str(item.get("node_id", ""))
             for item in graph.get("nodes", [])
             if isinstance(item, dict)
         }
+        fallback_seed = self._local_replan_suggestions(
+            context=context,
+            failure_policy=failure_policy,
+            completion_packet=completion_packet,
+            state_gap=state_gap,
+            capability_replan=capability_replan,
+        )
         proposed = self._live_replan_suggestions(
             node=node,
             graph=graph,
@@ -2978,9 +3039,12 @@ class TaskGraphActionMapper:
             metrics=metrics,
             failure_policy=failure_policy,
             completion_packet=completion_packet,
+            state_gap=state_gap,
+            capability_replan=capability_replan,
+            fallback_seed=fallback_seed,
         )
         if not proposed:
-            proposed = self._local_replan_suggestions(context=context, failure_policy=failure_policy, completion_packet=completion_packet)
+            proposed = fallback_seed
 
         additions: list[dict[str, Any]] = []
         for item in proposed:
@@ -3004,252 +3068,105 @@ class TaskGraphActionMapper:
         return additions
 
     @staticmethod
-    def _local_replan_suggestions(*, context: dict[str, Any], failure_policy: dict[str, Any], completion_packet: dict[str, Any]) -> list[dict[str, Any]]:
-        policy = str(failure_policy.get("policy", "none"))
-        summary = str(failure_policy.get("summary", ""))
-        state_gap = completion_packet.get("state_gap", {}) if isinstance(completion_packet.get("state_gap", {}), dict) else {}
-        missing_artifacts = [str(item) for item in state_gap.get("missing_artifacts", []) if str(item).strip()] if isinstance(state_gap.get("missing_artifacts", []), list) else []
-        missing_channels = [str(item) for item in state_gap.get("missing_channels", []) if str(item).strip()] if isinstance(state_gap.get("missing_channels", []), list) else []
-        if policy == "none":
+    def _local_replan_suggestions(
+        *,
+        context: dict[str, Any],
+        failure_policy: dict[str, Any],
+        completion_packet: dict[str, Any],
+        state_gap: dict[str, Any],
+        capability_replan: dict[str, Any],
+    ) -> list[dict[str, Any]]:
+        del context, capability_replan
+        policy = str(failure_policy.get("policy", "none")).strip() or "none"
+        summary = str(failure_policy.get("summary", "")).strip()
+        packet_gap = completion_packet.get("state_gap", {}) if isinstance(completion_packet.get("state_gap", {}), dict) else {}
+        gap = state_gap if isinstance(state_gap, dict) and state_gap else packet_gap
+        missing_artifacts = [str(item).strip() for item in gap.get("missing_artifacts", []) if str(item).strip()] if isinstance(gap.get("missing_artifacts", []), list) else []
+        missing_channels = [str(item).strip() for item in gap.get("missing_channels", []) if str(item).strip()] if isinstance(gap.get("missing_channels", []), list) else []
+        missing_validation = bool(gap.get("missing_validation", False))
+        if policy == "none" and not missing_artifacts and not missing_channels and not missing_validation:
             return []
-        if policy == "validation_gap":
-            return [
+
+        additions: list[dict[str, Any]] = []
+        artifact_map = {
+            "patch_plan": "patch_scaffold",
+            "patch_draft": "patch_draft",
+            "dataset_pull_spec": "dataset_pull_spec",
+            "dataset_loader_template": "dataset_loader_template",
+            "webpage_blueprint": "webpage_blueprint",
+            "slide_deck_plan": "slide_deck_plan",
+            "chart_pack_spec": "chart_pack_spec",
+            "podcast_episode_plan": "podcast_episode_plan",
+            "video_storyboard": "video_storyboard",
+            "image_prompt_pack": "image_prompt_pack",
+            "data_analysis_spec": "data_analysis_spec",
+            "runbook": "runbook",
+        }
+        for artifact_kind in missing_artifacts:
+            action_kind = artifact_map.get(artifact_kind)
+            if not action_kind:
+                continue
+            additions.append(
                 {
-                    "node_type": "tool_call",
-                    "tool_name": "workspace_file_search",
-                    "tool_args": {"query": "test validation regression", "glob": "*", "limit": 6},
-                    "title": "Inspect Validation Targets",
-                    "reason": summary or "completion packet shows validation is still open",
-                },
-                {
-                    "node_type": "subagent",
-                    "subagent_kind": "repair_probe",
-                    "objective": "Investigate open validation gaps and propose a bounded repair path",
-                    "title": "Run Validation Repair Probe",
-                    "reason": summary or "completion packet indicates unresolved validation gap",
-                    "source_node_ids": ["analysis", "completion_packet"],
-                },
-            ]
-        if policy == "workspace_gap":
-            return [
-                {
-                    "node_type": "tool_call",
-                    "tool_name": "workspace_file_search",
-                    "tool_args": {"query": "repo workspace relevant files", "glob": "*", "limit": 8},
-                    "title": "Inspect Missing Workspace Context",
-                    "reason": summary or "completion packet shows missing workspace grounding",
-                }
-            ]
-        if policy == "web_gap":
-            return [
-                {
-                    "node_type": "tool_call",
-                    "tool_name": "external_resource_hub",
-                    "tool_args": {"query": "collect external evidence for unresolved task", "limit": 6},
-                    "title": "Collect Missing Web Evidence",
-                    "reason": summary or "completion packet shows missing external evidence",
-                },
-                {
-                    "node_type": "subagent",
-                    "subagent_kind": "research_probe",
-                    "objective": "Close the missing external evidence gap with targeted research actions",
-                    "title": "Run Web Evidence Probe",
-                    "reason": summary or "delegate evidence gap closure",
-                    "source_node_ids": ["analysis", "completion_packet"],
-                },
-            ]
-        if policy == "artifact_gap":
-            actions: list[dict[str, Any]] = []
-            if any(item in {"patch_plan", "patch_draft"} for item in missing_artifacts):
-                actions.append(
-                    {
-                        "node_type": "workspace_action",
-                        "kind": "patch_draft",
-                        "title": "Generate Missing Patch Draft",
-                        "reason": summary or "completion packet shows patch artifact gap",
-                        "source_node_ids": ["analysis", "completion_packet"],
-                    }
-                )
-            if any(item in {"benchmark_manifest", "benchmark_run_config"} for item in missing_artifacts):
-                actions.append(
-                    {
-                        "node_type": "workspace_action",
-                        "kind": "benchmark_manifest",
-                        "title": "Generate Missing Benchmark Manifest",
-                        "reason": summary or "completion packet shows benchmark artifact gap",
-                        "source_node_ids": ["analysis", "completion_packet"],
-                    }
-                )
-            if "evidence_bundle" in missing_artifacts or "web" in missing_channels:
-                actions.append(
-                    {
-                        "node_type": "tool_call",
-                        "tool_name": "external_resource_hub",
-                        "tool_args": {"query": "collect evidence for missing deliverables", "limit": 5},
-                        "title": "Collect Evidence For Missing Artifacts",
-                        "reason": summary or "artifact gap requires stronger evidence inputs",
-                    }
-                )
-            actions.append(
-                {
-                    "node_type": "subagent",
-                    "subagent_kind": "repair_probe",
-                    "objective": "Resolve the remaining artifact gaps reported in the completion packet",
-                    "title": "Run Artifact Gap Repair Probe",
-                    "reason": summary or "completion packet lists unresolved artifact gaps",
+                    "node_type": "workspace_action",
+                    "kind": action_kind,
+                    "title": f"Generate Missing {action_kind.replace('_', ' ').title()}",
+                    "reason": summary or f"state gap reports missing artifact {artifact_kind}",
                     "source_node_ids": ["analysis", "completion_packet"],
                 }
             )
-            return actions
-        if policy == "missing_dependency":
-            return [
+
+        tool_name = ""
+        tool_args: dict[str, Any] = {}
+        tool_title = ""
+        if "workspace" in missing_channels or policy in {"validation_gap", "workspace_gap", "missing_dependency", "assertion_failure"}:
+            tool_name = "workspace_file_search"
+            tool_args = {"query": summary or "inspect workspace files related to the unresolved repair gap", "glob": "*", "limit": 8}
+            tool_title = "Inspect Workspace Repair Context"
+        elif "web" in missing_channels or policy in {"web_gap", "evidence_gap"}:
+            tool_name = "external_resource_hub"
+            tool_args = {"query": summary or "collect external evidence for the unresolved delivery gap", "limit": 6}
+            tool_title = "Collect Missing External Evidence"
+        elif policy == "timeout":
+            tool_name = "code_experiment_design"
+            tool_args = {"query": summary or "design timeout mitigation experiments", "max_experiments": 4}
+            tool_title = "Design Timeout Mitigation Experiments"
+        elif policy in {"tool_failure"}:
+            tool_name = "tool_search"
+            tool_args = {"query": summary or "discover fallback tools for the unresolved repair gap", "limit": 5}
+            tool_title = "Discover Repair Tools"
+        if tool_name:
+            additions.append(
                 {
                     "node_type": "tool_call",
-                    "tool_name": "workspace_file_search",
-                    "tool_args": {"query": "import requirements dependency", "glob": "*", "limit": 6},
-                    "title": "Search Dependency Signals",
-                    "reason": summary or "dependency failure detected in validation output",
-                },
-                {
-                    "node_type": "tool_call",
-                    "tool_name": "tool_search",
-                    "tool_args": {"query": "dependency install remediation", "limit": 5},
-                    "title": "Discover Dependency Repair Tools",
-                    "reason": summary or "need dependency-aware remediation tools",
-                },
+                    "tool_name": tool_name,
+                    "tool_args": tool_args,
+                    "title": tool_title,
+                    "reason": summary or f"repair policy {policy} requires additional external/tool context",
+                }
+            )
+
+        if policy != "none" or missing_artifacts or missing_channels or missing_validation:
+            subagent_kind = "research_probe" if ("web" in missing_channels or policy in {"web_gap", "evidence_gap"}) else "repair_probe"
+            objective_parts = []
+            if missing_artifacts:
+                objective_parts.append(f"close missing artifacts: {', '.join(missing_artifacts[:3])}")
+            if missing_channels:
+                objective_parts.append(f"close missing channels: {', '.join(missing_channels[:3])}")
+            if missing_validation:
+                objective_parts.append("close unresolved validation")
+            objective_parts.append(summary or f"follow repair policy {policy}")
+            additions.append(
                 {
                     "node_type": "subagent",
-                    "subagent_kind": "repair_probe",
-                    "objective": "Investigate missing dependency failures and suggest minimal remediation",
-                    "title": "Run Dependency Repair Probe",
-                    "reason": summary or "delegate dependency-focused repair analysis",
-                    "source_node_ids": ["analysis", "execution"],
-                },
-            ]
-        if policy == "timeout":
-            return [
-                {
-                    "node_type": "workspace_action",
-                    "kind": "benchmark_manifest",
-                    "title": "Generate Timeout-Oriented Benchmark Manifest",
-                    "reason": summary or "timeout suggests benchmark or runtime budgeting issue",
-                    "source_node_ids": ["analysis", "execution"],
-                },
-                {
-                    "node_type": "tool_call",
-                    "tool_name": "code_experiment_design",
-                    "tool_args": {"query": "timeout mitigation and runtime ablation", "max_experiments": 4},
-                    "title": "Design Timeout Mitigation Experiments",
-                    "reason": summary or "timeout should trigger runtime ablation design",
-                },
-                {
-                    "node_type": "subagent",
-                    "subagent_kind": "benchmark_probe",
-                    "objective": "Investigate timeout bottlenecks and propose benchmark/runtime adjustments",
-                    "title": "Run Timeout Benchmark Probe",
-                    "reason": summary or "delegate timeout diagnosis to benchmark probe",
-                    "source_node_ids": ["analysis", "execution"],
-                },
-            ]
-        if policy == "evidence_gap":
-            return [
-                {
-                    "node_type": "tool_call",
-                    "tool_name": "external_resource_hub",
-                    "tool_args": {"query": "collect missing evidence for current task", "limit": 5},
-                    "title": "Collect Missing External Evidence",
-                    "reason": summary or "evidence gap detected",
-                },
-                {
-                    "node_type": "workspace_action",
-                    "kind": "dataset_pull_spec",
-                    "title": "Generate Missing-Evidence Dataset Pull Spec",
-                    "reason": summary or "need reproducible data collection plan",
-                    "source_node_ids": ["analysis"],
-                },
-                {
-                    "node_type": "subagent",
-                    "subagent_kind": "research_probe",
-                    "objective": "Investigate evidence gaps and propose the next evidence collection steps",
-                    "title": "Run Evidence Gap Probe",
-                    "reason": summary or "delegate evidence diagnosis",
-                    "source_node_ids": ["analysis"],
-                },
-            ]
-        if policy == "tool_failure":
-            return [
-                {
-                    "node_type": "tool_call",
-                    "tool_name": "tool_search",
-                    "tool_args": {"query": "tool failure fallback remediation", "limit": 5},
-                    "title": "Discover Fallback Tools",
-                    "reason": summary or "tool failure detected",
-                },
-                {
-                    "node_type": "subagent",
-                    "subagent_kind": "repair_probe",
-                    "objective": "Investigate tool failure and propose fallback execution path",
-                    "title": "Run Tool Failure Probe",
-                    "reason": summary or "delegate tool-failure recovery analysis",
-                    "source_node_ids": ["analysis"],
-                },
-            ]
-        if policy == "assertion_failure":
-            return [
-                {
-                    "node_type": "workspace_action",
-                    "kind": "patch_draft",
-                    "title": "Generate Assertion-Failure Patch Draft",
-                    "reason": summary or "assertion failure suggests targeted code change",
-                    "source_node_ids": ["analysis", "execution"],
-                },
-                {
-                    "node_type": "tool_call",
-                    "tool_name": "workspace_file_search",
-                    "tool_args": {"query": "assert failed regression bug", "glob": "*", "limit": 6},
-                    "title": "Search Assertion Failure Hotspots",
-                    "reason": summary or "search workspace for regression hotspots",
-                },
-                {
-                    "node_type": "subagent",
-                    "subagent_kind": "repair_probe",
-                    "objective": "Investigate assertion failures and suggest the smallest corrective patch",
-                    "title": "Run Assertion Repair Probe",
-                    "reason": summary or "delegate regression-focused repair analysis",
-                    "source_node_ids": ["analysis", "execution"],
-                },
-            ]
-        return [
-            {
-                "node_type": "workspace_action",
-                "kind": "patch_scaffold",
-                "title": "Generate Remediation Patch Scaffold",
-                "reason": summary or "generic validation failure detected",
-                "source_node_ids": ["analysis", "execution"],
-            },
-            {
-                "node_type": "workspace_action",
-                "kind": "patch_draft",
-                "title": "Generate Remediation Patch Draft",
-                "reason": summary or "generic validation failure detected",
-                "source_node_ids": ["analysis", "execution"],
-            },
-            {
-                "node_type": "tool_call",
-                "tool_name": "tool_search",
-                "tool_args": {"query": "repair validation failure", "limit": 5},
-                "title": "Discover Remediation Tools",
-                "reason": summary or "generic remediation search",
-            },
-            {
-                "node_type": "subagent",
-                "subagent_kind": "repair_probe",
-                "objective": "Investigate the validation failure and suggest next remediation steps",
-                "title": "Run Repair Probe",
-                "reason": summary or "generic validation failure detected",
-                "source_node_ids": ["analysis", "execution"],
-            },
-        ]
+                    "subagent_kind": subagent_kind,
+                    "objective": "; ".join(part for part in objective_parts if part),
+                    "title": "Run Repair Probe" if subagent_kind == "repair_probe" else "Run Evidence Probe",
+                    "reason": summary or "use a bounded probe to close the remaining execution gap",
+                    "source_node_ids": ["analysis", "completion_packet", "execution"],
+                }
+            )
+        return additions
 
     def _live_replan_suggestions(
         self,
@@ -3260,6 +3177,9 @@ class TaskGraphActionMapper:
         metrics: dict[str, Any],
         failure_policy: dict[str, Any],
         completion_packet: dict[str, Any],
+        state_gap: dict[str, Any] | None = None,
+        capability_replan: dict[str, Any] | None = None,
+        fallback_seed: list[dict[str, Any]] | None = None,
     ) -> list[dict[str, Any]]:
         try:
             from app.harness.live_agent import CallBudget, LiveModelConfig, LiveModelGateway
@@ -3268,13 +3188,23 @@ class TaskGraphActionMapper:
             if not config:
                 return []
             gateway = LiveModelGateway(config)
+            graph_metadata = graph.get("metadata", {}) if isinstance(graph.get("metadata", {}), dict) else {}
+            execution_loop = metrics.get("execution_loop", {}) if isinstance(metrics.get("execution_loop", {}), dict) else {}
+            if not execution_loop and isinstance(graph_metadata.get("execution_loop", {}), dict):
+                execution_loop = dict(graph_metadata.get("execution_loop", {}))
             payload = {
                 "query": str(metrics.get("prompt", context.get("query", ""))),
                 "graph_id": graph.get("graph_id", ""),
                 "replan_focus": metrics.get("replan_focus", []),
                 "failure_policy": failure_policy,
                 "completion_packet": completion_packet,
+                "state_gap": dict(state_gap or {}),
+                "capability_replan": dict(capability_replan or {}),
                 "node_results": context.get("node_results", {}),
+                "execution_loop": execution_loop,
+                "current_loop_phase": str(context.get("current_loop_phase", "")) or str(self._graph_current_phase(graph)),
+                "phase_summary": graph.get("summary", {}).get("phase_summary", []) if isinstance(graph.get("summary", {}), dict) else [],
+                "fallback_seed": list(fallback_seed or []),
             }
             messages = [
                 {
@@ -3283,11 +3213,14 @@ class TaskGraphActionMapper:
                         "You are replanning a general agent task graph after execution feedback. "
                         "Return strict JSON with key actions. "
                         "Each action must include node_type from workspace_action, tool_call, subagent. "
-                        "Use the completion_packet gaps to choose the smallest closure repair. "
+                        "Use the completion_packet gaps and execution_loop to choose the smallest closure repair. "
+                        "Use capability_replan and fallback_seed as structural hints, not as mandatory output. "
+                        "Prefer nodes that advance the current loop phase or unblock deliver. "
                         f"Allowed workspace_action kinds: {', '.join(sorted(allowed_workspace_action_kinds(include_internal=False)))}. "
                         "You may also emit kind starting with custom: when you include relative_path plus content_type or artifact_contract. "
                         "Allowed tool_call names: tool_search, workspace_file_search, external_resource_hub, code_experiment_design. "
-                        "Allowed subagent kinds: repair_probe, research_probe, benchmark_probe."
+                        "Allowed subagent kinds: repair_probe, research_probe, general_probe. "
+                        "Avoid adding generic diagnostics when a concrete artifact or evidence repair would close the task faster."
                     ),
                 },
                 {"role": "user", "content": json.dumps(payload, ensure_ascii=True)},
@@ -3340,7 +3273,7 @@ class TaskGraphActionMapper:
                 "-    return \"research\" if \"report\" in query else \"general\"\n"
                 "+def route(query):\n"
                 "+    normalized = (query or \"\").strip().lower()\n"
-                "+    if any(token in normalized for token in (\"report\", \"research\", \"benchmark\", \"paper\")):\n"
+                "+    if any(token in normalized for token in (\"report\", \"research\", \"evidence\", \"paper\")):\n"
                 "+        return \"research\"\n"
                 "+    if any(token in normalized for token in (\"patch\", \"test\", \"repo\", \"workspace\", \"code\", \"parser\", \"routing\")):\n"
                 "+        return \"code\"\n"
@@ -3357,22 +3290,6 @@ class TaskGraphActionMapper:
             "+\n"
             f"+# Grounding: {TaskGraphActionMapper._single_line(source_text)[:120]}\n"
         )
-
-    @staticmethod
-    def _build_benchmark_manifest(*, prompt: str, source_text: str, workspace_summary: dict[str, Any]) -> dict[str, Any]:
-        return {
-            "name": "agent-harness-benchmark-manifest",
-            "objective": prompt,
-            "tracks": ["baseline", "ablation_a", "ablation_b"],
-            "workspace_languages": list(workspace_summary.get("languages", [])),
-            "workspace_frameworks": list(workspace_summary.get("frameworks", [])),
-            "artifacts": {
-                "scoreboard": "reports/scoreboard.json",
-                "failures": "reports/failure-clusters.json",
-                "report": "reports/benchmark-report.md",
-            },
-            "notes": TaskGraphActionMapper._single_line(source_text)[:240],
-        }
 
     def _build_completion_packet(
         self,
@@ -3707,7 +3624,7 @@ class TaskGraphActionMapper:
             "- Slide 1: opening tension and business context\n"
             "- Slide 2: what exists today and where it breaks\n"
             "- Slide 3: solution or system mechanism\n"
-            "- Slide 4: evidence, benchmark, or artifact proof\n"
+            "- Slide 4: evidence, external proof, or artifact proof\n"
             "- Slide 5: rollout plan and ownership\n"
             "- Slide 6: risks, asks, and next decision\n\n"
             f"Grounding: {note}\n"
@@ -3901,7 +3818,6 @@ class TaskGraphActionMapper:
             ("packet", ["packets/"]),
             ("bundle", ["bundles/"]),
             ("code", ["patches/", "plans/"]),
-            ("benchmark", ["benchmarks/"]),
             ("dataset", ["datasets/"]),
             ("web", ["web/"]),
             ("slides", ["slides/"]),
@@ -3920,14 +3836,23 @@ class TaskGraphActionMapper:
         return "misc"
 
     @staticmethod
+    def _graph_current_phase(graph: dict[str, Any]) -> str:
+        summary = graph.get("summary", {}) if isinstance(graph.get("summary", {}), dict) else {}
+        phase_summary = summary.get("phase_summary", []) if isinstance(summary.get("phase_summary", []), list) else []
+        for item in phase_summary:
+            if not isinstance(item, dict):
+                continue
+            if int(item.get("completed_nodes", 0)) < int(item.get("node_count", 0)):
+                return str(item.get("phase", "")).strip()
+        return "deliver" if phase_summary else ""
+
+    @staticmethod
     def _artifact_kind_from_path(path: str) -> str:
         lowered = str(path or "").replace("\\", "/").lower()
         mapping = [
             ("deliverable_report", ["/report", "report.md"]),
             ("completion_packet", ["packets/completion-packet"]),
             ("delivery_bundle", ["bundles/delivery-bundle"]),
-            ("benchmark_manifest", ["benchmarks/manifest"]),
-            ("benchmark_run_config", ["benchmarks/run-config"]),
             ("data_analysis_spec", ["analysis/data-analysis-spec"]),
             ("dataset_pull_spec", ["datasets/pull-spec"]),
             ("dataset_loader_template", ["datasets/loader_template"]),
@@ -4040,8 +3965,6 @@ class TaskGraphActionMapper:
             for item in delivered_artifacts
             if cls._artifact_kind_from_path(str(item.get("path", "")))
         }
-        if {"benchmark_manifest", "benchmark_run_config"} & delivered_kinds:
-            additions.append("Turns the answer into a runnable evaluation package with benchmark manifest and run configuration.")
         if cls._node_artifact_path(node_results, "source_matrix"):
             additions.append("Adds a source matrix so claims can be traced back to concrete evidence surfaces.")
         if primary_deliverable.get("path"):
@@ -4116,7 +4039,6 @@ class TaskGraphActionMapper:
         return {
             "artifact_synthesis",
             "research_brief",
-            "benchmark_ablation",
             "validation_planner",
             "codebase_triage",
             "ops_runbook",

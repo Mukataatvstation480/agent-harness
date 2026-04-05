@@ -1,4 +1,4 @@
-"""Dynamic task understanding, channel deliberation, and graph compilation."""
+﻿"""Dynamic task understanding, channel deliberation, and graph compilation."""
 
 from __future__ import annotations
 
@@ -112,6 +112,7 @@ class TaskProfile:
     workspace_summary: dict[str, Any] = field(default_factory=dict)
     task_spec: dict[str, Any] = field(default_factory=dict)
     capability_plan: dict[str, Any] = field(default_factory=dict)
+    execution_loop: dict[str, Any] = field(default_factory=dict)
     graph_expansion: dict[str, Any] = field(default_factory=dict)
     skill_priors: list[SkillPrior] = field(default_factory=list)
     package_priors: list[dict[str, Any]] = field(default_factory=list)
@@ -136,6 +137,7 @@ class TaskProfile:
             "workspace_summary": dict(self.workspace_summary),
             "task_spec": dict(self.task_spec),
             "capability_plan": dict(self.capability_plan),
+            "execution_loop": dict(self.execution_loop),
             "graph_expansion": dict(self.graph_expansion),
             "skill_priors": [item.to_dict() for item in self.skill_priors],
             "package_priors": [dict(item) for item in self.package_priors],
@@ -175,13 +177,11 @@ def infer_domains(query: str) -> list[str]:
         ],
         "research": [
             "research",
-            "benchmark",
             "experiment",
             "study",
             "evaluation",
             "paper",
             "\u7814\u7a76",
-            "\u57fa\u51c6",
             "\u8bc4\u6d4b",
             "\u8bba\u6587",
             "\u5b9e\u9a8c",
@@ -206,12 +206,21 @@ def infer_domains(query: str) -> list[str]:
             "patch",
             "test",
             "bug",
+            "implementation",
+            "architecture",
+            "migration",
+            "validate",
+            "validation",
             "\u4ee3\u7801",
             "\u4ed3\u5e93",
             "\u6a21\u5757",
             "\u8865\u4e01",
             "\u6d4b\u8bd5",
             "\u7f3a\u9677",
+            "\u5b9e\u73b0",
+            "\u67b6\u6784",
+            "\u8fc1\u79fb",
+            "\u9a8c\u8bc1",
         ],
     }
     domains = [domain for domain, markers in mapping.items() if any(marker in lowered for marker in markers)]
@@ -266,11 +275,14 @@ def analyze_task_request(
         "research",
         "report",
         "topic",
+        "evidence",
+        "external",
+        "source",
+        "citation",
         "market",
         "trend",
         "state of the art",
         "paper",
-        "benchmark",
         "compare",
         "internet",
         "web",
@@ -279,7 +291,6 @@ def analyze_task_request(
         "\u62a5\u544a",
         "\u8d8b\u52bf",
         "\u8bba\u6587",
-        "\u8bc4\u6d4b",
         "\u5bf9\u6bd4",
         "\u7f51\u4e0a",
         "\u8c03\u7814",
@@ -319,141 +330,10 @@ def analyze_task_request(
         "\u6cbb\u7406",
         "\u7b56\u7565",
     ]
-    benchmark_markers = [
-        "benchmark",
-        "ablation",
-        "evaluation",
-        "runner",
-        "gaia",
-        "swe-bench",
-        "webarena",
-        "\u03c4-bench",
-        "tau-bench",
-        "\u57fa\u51c6",
-        "\u6d88\u878d",
-        "\u8bc4\u6d4b",
-        "\u8dd1\u5206",
-    ]
-    webpage_markers = [
-        "webpage",
-        "website",
-        "landing page",
-        "landing",
-        "html",
-        "frontend",
-        "web app",
-        "component",
-        "\u7f51\u9875",
-        "\u7f51\u7ad9",
-        "\u524d\u7aef",
-        "\u754c\u9762",
-        "\u9875\u9762",
-    ]
-    slides_markers = [
-        "slides",
-        "slide",
-        "deck",
-        "presentation",
-        "ppt",
-        "pptx",
-        "keynote",
-        "\u5e7b\u706f",
-        "\u6f14\u793a",
-        "\u6c47\u62a5",
-    ]
-    chart_markers = [
-        "chart",
-        "charts",
-        "graph",
-        "graphs",
-        "plot",
-        "visualization",
-        "visualize",
-        "data viz",
-        "\u56fe\u8868",
-        "\u53ef\u89c6\u5316",
-        "\u7ed8\u56fe",
-    ]
-    podcast_markers = [
-        "podcast",
-        "episode",
-        "audio show",
-        "audio",
-        "interview",
-        "\u64ad\u5ba2",
-        "\u97f3\u9891",
-    ]
-    video_markers = [
-        "video",
-        "storyboard",
-        "trailer",
-        "promo video",
-        "short film",
-        "shorts",
-        "\u89c6\u9891",
-        "\u5206\u955c",
-    ]
-    image_markers = [
-        "image",
-        "poster",
-        "illustration",
-        "thumbnail",
-        "render",
-        "visual",
-        "\u6d77\u62a5",
-        "\u63d2\u56fe",
-        "\u5c01\u9762",
-        "\u914d\u56fe",
-    ]
-    data_markers = [
-        "data analysis",
-        "analytics",
-        "dataset",
-        "csv",
-        "table",
-        "sql",
-        "cohort",
-        "segmentation",
-        "\u6570\u636e\u5206\u6790",
-        "\u6570\u636e\u96c6",
-        "\u8868\u683c",
-        "\u5206\u7fa4",
-    ]
-    report_markers = ["report", "brief", "summary", "proposal", "\u65b9\u6848", "\u62a5\u544a", "\u603b\u7ed3"]
-    memo_markers = ["memo", "one-pager", "one pager", "brief"]
-    runbook_markers = ["runbook", "playbook", "ops", "\u64cd\u4f5c\u624b\u518c", "\u9884\u6848"]
-    patch_markers = ["patch", "fix", "fixes", "implement", "tests", "\u4ee3\u7801\u4fee\u6539", "\u8865\u4e01", "\u4fee\u590d"]
-    benchmark_runtime_markers = [
-        "ablation",
-        "runner",
-        "run config",
-        "run-config",
-        "manifest",
-        "suite",
-        "gaia",
-        "swe-bench",
-        "webarena",
-        "tau-bench",
-        "\u6d88\u878d",
-        "\u8dd1\u5206",
-    ]
-
     workspace_signal = _count_markers(lowered, workspace_markers)
     external_signal = _count_markers(lowered, external_markers)
     code_signal = _count_markers(lowered, code_markers)
     ops_signal = _count_markers(lowered, ops_markers)
-    benchmark_signal = _count_markers(lowered, benchmark_markers)
-    report_signal = _count_markers(lowered, report_markers + memo_markers)
-    benchmark_runtime_signal = _count_markers(lowered, benchmark_runtime_markers)
-    patch_mode_signal = _count_markers(lowered, patch_markers)
-    runbook_mode_signal = _count_markers(lowered, runbook_markers)
-    webpage_mode_signal = _count_markers(lowered, webpage_markers)
-    slides_mode_signal = _count_markers(lowered, slides_markers)
-    chart_mode_signal = _count_markers(lowered, chart_markers)
-    podcast_mode_signal = _count_markers(lowered, podcast_markers)
-    video_mode_signal = _count_markers(lowered, video_markers)
-    image_mode_signal = _count_markers(lowered, image_markers)
-    data_mode_signal = _count_markers(lowered, data_markers)
 
     if target_hint == "code":
         workspace_signal += 2
@@ -463,87 +343,70 @@ def analyze_task_request(
     elif target_hint == "ops":
         ops_signal += 2
 
-    execution_intent = "general"
-    if benchmark_runtime_signal >= 1 and benchmark_signal >= max(code_signal, ops_signal, 1):
-        execution_intent = "benchmark"
-    elif code_signal >= max(ops_signal, external_signal, 2):
-        execution_intent = "code"
-    elif ops_signal >= max(code_signal, external_signal, 2):
-        execution_intent = "ops"
-    elif external_signal >= 2:
-        execution_intent = "research"
-    elif workspace_signal and external_signal:
-        execution_intent = "mixed"
-
-    output_mode = "artifact"
-    if patch_mode_signal > 0:
-        output_mode = "patch"
-    elif runbook_mode_signal > 0:
-        output_mode = "runbook"
-    elif benchmark_runtime_signal > 0 and report_signal == 0:
-        output_mode = "benchmark"
-    elif webpage_mode_signal > 0:
-        output_mode = "webpage"
-    elif slides_mode_signal > 0:
-        output_mode = "slides"
-    elif chart_mode_signal > 0:
-        output_mode = "chart"
-    elif podcast_mode_signal > 0:
-        output_mode = "podcast"
-    elif video_mode_signal > 0:
-        output_mode = "video"
-    elif image_mode_signal > 0:
-        output_mode = "image"
-    elif data_mode_signal > 0 and report_signal == 0:
-        output_mode = "data"
-    elif report_signal > 0:
-        output_mode = "report"
-
-    reasoning_style = "deliberate"
-    if execution_intent == "benchmark":
-        reasoning_style = "comparative"
-    elif execution_intent == "code":
-        reasoning_style = "debug"
-    elif execution_intent == "research":
-        reasoning_style = "evidence-led"
-    elif execution_intent == "ops":
-        reasoning_style = "procedural"
-    elif output_mode in {"webpage", "slides", "podcast", "video", "image"}:
-        reasoning_style = "creative"
-    elif output_mode in {"chart", "data"}:
-        reasoning_style = "analytic"
-
     workspace_summary = inspect_workspace_capabilities(workspace_root)
-    provisional_validation = execution_intent in {"code", "benchmark", "mixed"} or output_mode in {
-        "patch",
-        "benchmark",
-        "chart",
-        "data",
-    }
-    if execution_intent == "research" and output_mode in {"report", "artifact"}:
-        provisional_validation = False
+    requested_modes = requested_output_modes(query=query, output_mode="artifact")
+    provisional_output_mode = requested_modes[0] if requested_modes else "artifact"
+    validation_markers = [
+        "validate",
+        "validation",
+        "test",
+        "tests",
+        "check",
+        "verify",
+        "acceptance",
+        "\u6d4b\u8bd5",
+        "\u9a8c\u8bc1",
+        "\u6267\u884c",
+    ]
     provisional_command_execution = (
-        execution_intent in {"code", "benchmark"}
-        and bool(workspace_summary.get("suggested_commands", []))
-        and any(
-            marker in lowered
-            for marker in ["run", "execute", "build", "test", "validation", "\u8fd0\u884c", "\u6267\u884c", "\u6d4b\u8bd5"]
-        )
+        bool(workspace_summary.get("suggested_commands", []))
+        and (workspace_signal > 0 or target_hint == "code")
+        and any(marker in lowered for marker in ["run", "execute", "build", "test", "validation", "\u8fd0\u884c", "\u6267\u884c", "\u6d4b\u8bd5"])
+    )
+    provisional_validation = (
+        package_validation
+        or provisional_command_execution
+        or any(mode in {"patch", "chart", "data"} for mode in requested_modes)
+        or any(marker in lowered for marker in validation_markers)
     )
     task_spec = infer_task_spec(
         query=query,
         target=target_hint,
         domains=infer_domains(query),
-        output_mode=output_mode,
+        output_mode=provisional_output_mode,
         workspace_required=workspace_signal > 0 or "workspace" in package_channels,
         external_required=external_signal > 0 or "web" in package_channels,
-        needs_validation=provisional_validation or package_validation,
+        needs_validation=provisional_validation,
         needs_command_execution=provisional_command_execution,
+    )
+    capability_plan = plan_capability_path(
+        task_spec=task_spec,
+        registry=default_capability_registry(),
+    )
+    output_mode = _derive_output_mode_from_task_spec(task_spec.to_dict())
+    execution_intent = _derive_execution_intent(
+        task_spec=task_spec.to_dict(),
+        target_hint=target_hint,
+        workspace_summary=workspace_summary,
+    )
+    reasoning_style = _derive_reasoning_style(
+        task_spec=task_spec.to_dict(),
+        execution_intent=execution_intent,
+        output_mode=output_mode,
+    )
+    provisional_execution_loop = build_execution_loop(
+        query=query,
+        task_spec=task_spec.to_dict(),
+        selected_channels=list(dict.fromkeys(task_spec.required_channels + capability_plan.get("required_channels", []))),
+        capability_plan=capability_plan,
+        graph_expansion={},
+        requires_command_execution=provisional_command_execution,
     )
     skill_priors = select_skill_priors(
         query=query,
-        execution_intent=execution_intent,
-        output_mode=output_mode,
+        task_spec=task_spec.to_dict(),
+        capability_plan=capability_plan,
+        execution_loop=provisional_execution_loop,
         package_priors=package_priors,
         limit=skill_limit,
     )
@@ -552,13 +415,22 @@ def analyze_task_request(
         target=target_hint,
         execution_intent=execution_intent,
         output_mode=output_mode,
+        task_spec=task_spec.to_dict(),
+        capability_plan=capability_plan,
         skill_priors=skill_priors,
         workspace_root=workspace_root,
         workspace_signal=workspace_signal,
         external_signal=external_signal,
         code_signal=code_signal,
-        benchmark_signal=benchmark_signal,
         ops_signal=ops_signal,
+    )
+    provisional_execution_loop = build_execution_loop(
+        query=query,
+        task_spec=task_spec.to_dict(),
+        selected_channels=local_deliberation.selected,
+        capability_plan=capability_plan,
+        graph_expansion={},
+        requires_command_execution=provisional_command_execution,
     )
     deliberation = refine_deliberation_with_live_model(
         query=query,
@@ -567,12 +439,10 @@ def analyze_task_request(
         output_mode=output_mode,
         skill_priors=skill_priors,
         workspace_summary=workspace_summary,
+        execution_loop=provisional_execution_loop,
+        required_channels=list(dict.fromkeys(task_spec.required_channels + capability_plan.get("required_channels", []))),
         local=local_deliberation,
         live_model_overrides=live_model_overrides,
-    )
-    capability_plan = plan_capability_path(
-        task_spec=task_spec,
-        registry=default_capability_registry(),
     )
     merged_selected = list(dict.fromkeys(list(deliberation.selected) + list(capability_plan.get("required_channels", []))))
     merged_selected = list(dict.fromkeys(merged_selected + package_channels))
@@ -622,6 +492,14 @@ def analyze_task_request(
         task_spec=task_spec.to_dict(),
         capability_plan=capability_plan,
     )
+    execution_loop = build_execution_loop(
+        query=query,
+        task_spec=task_spec.to_dict(),
+        selected_channels=deliberation.selected,
+        capability_plan=capability_plan,
+        graph_expansion=graph_expansion,
+        requires_command_execution=requires_command_execution,
+    )
 
     return TaskProfile(
         query=query,
@@ -647,6 +525,7 @@ def analyze_task_request(
         workspace_summary=workspace_summary,
         task_spec=task_spec.to_dict(),
         capability_plan=capability_plan,
+        execution_loop=execution_loop,
         graph_expansion=graph_expansion,
         skill_priors=skill_priors,
         package_priors=package_priors,
@@ -654,110 +533,334 @@ def analyze_task_request(
     )
 
 
+def build_execution_loop(
+    *,
+    query: str,
+    task_spec: dict[str, Any],
+    selected_channels: list[str],
+    capability_plan: dict[str, Any],
+    graph_expansion: dict[str, Any],
+    requires_command_execution: bool,
+) -> dict[str, Any]:
+    """Build a simple thread-visible execution loop summary."""
+
+    contracts = task_spec.get("artifact_contracts", []) if isinstance(task_spec.get("artifact_contracts", []), list) else []
+    primary_artifact = str(task_spec.get("primary_artifact_kind", "")).strip() or "deliverable_report"
+    observe_focus: list[str] = []
+    for channel, label in [
+        ("discovery", "discover available tools and skills"),
+        ("workspace", "inspect local workspace state"),
+        ("web", "collect external evidence"),
+        ("risk", "evaluate risk and governance constraints"),
+    ]:
+        if channel in selected_channels:
+            observe_focus.append(label)
+    act_focus = [
+        str(item.get("title", item.get("kind", ""))).strip()
+        for item in graph_expansion.get("actions", [])
+        if isinstance(item, dict) and str(item.get("title", item.get("kind", ""))).strip()
+    ][:4]
+    if requires_command_execution:
+        act_focus.append("run targeted workspace execution")
+    deliverables = [
+        str(item.get("title", item.get("kind", ""))).strip()
+        for item in contracts
+        if isinstance(item, dict) and str(item.get("kind", "")) not in {"completion_packet", "delivery_bundle"}
+    ]
+    phases = [
+        {
+            "phase": "observe",
+            "goal": "reduce uncertainty before committing to an execution path",
+            "focus": observe_focus or ["capture only the minimum context needed to act"],
+        },
+        {
+            "phase": "decide",
+            "goal": "turn the request into a bounded execution plan",
+            "focus": [
+                "analyze the task against requested deliverables",
+                "pick the smallest capability path that can close the task",
+            ],
+        },
+        {
+            "phase": "act",
+            "goal": "materialize the requested work instead of stopping at diagnosis",
+            "focus": act_focus or ["execute the smallest artifact-producing action that moves the task forward"],
+        },
+        {
+            "phase": "deliver",
+            "goal": "ship a reviewer-first primary artifact with closure context",
+            "focus": deliverables[:4] or [primary_artifact.replace("_", " ")],
+        },
+    ]
+    return {
+        "schema": "agent-harness-generic-loop/v1",
+        "query": query,
+        "primary_artifact_kind": primary_artifact,
+        "selected_channels": list(selected_channels),
+        "deliverables": deliverables[:6],
+        "capability_count": len(capability_plan.get("steps", [])) if isinstance(capability_plan.get("steps", []), list) else 0,
+        "expansion_count": len(graph_expansion.get("actions", [])) if isinstance(graph_expansion.get("actions", []), list) else 0,
+        "phases": phases,
+    }
+
+
+def _material_contract_kinds(task_spec: dict[str, Any]) -> list[str]:
+    support_kinds = {"completion_packet", "delivery_bundle"}
+    contracts = task_spec.get("artifact_contracts", []) if isinstance(task_spec.get("artifact_contracts", []), list) else []
+    kinds: list[str] = []
+    for item in contracts:
+        if not isinstance(item, dict):
+            continue
+        kind = str(item.get("kind", "")).strip()
+        if not kind or kind in support_kinds or kind in kinds:
+            continue
+        kinds.append(kind)
+    return kinds
+
+
+def _surface_mode_for_artifact(kind: str) -> str:
+    normalized = str(kind or "").strip()
+    if normalized in {"patch_plan", "patch_draft"}:
+        return "patch"
+    if normalized in {"runbook", "custom:checklist"}:
+        return "runbook"
+    if normalized == "webpage_blueprint":
+        return "webpage"
+    if normalized == "slide_deck_plan":
+        return "slides"
+    if normalized == "chart_pack_spec":
+        return "chart"
+    if normalized == "podcast_episode_plan":
+        return "podcast"
+    if normalized == "video_storyboard":
+        return "video"
+    if normalized == "image_prompt_pack":
+        return "image"
+    if normalized in {"data_analysis_spec", "dataset_pull_spec", "dataset_loader_template"}:
+        return "data"
+    if _is_report_like_artifact(normalized):
+        return "report"
+    return "artifact"
+
+
+def output_modes_from_task_spec(task_spec: dict[str, Any]) -> list[str]:
+    """Derive requested output surfaces from artifact contracts instead of query templates."""
+
+    modes: list[str] = []
+    for kind in _material_contract_kinds(task_spec):
+        mode = _surface_mode_for_artifact(kind)
+        if mode not in modes:
+            modes.append(mode)
+    return modes or ["artifact"]
+
+
+def _derive_output_mode_from_task_spec(task_spec: dict[str, Any]) -> str:
+    primary = str(task_spec.get("primary_artifact_kind", "")).strip()
+    if primary:
+        return _surface_mode_for_artifact(primary)
+    return output_modes_from_task_spec(task_spec)[0]
+
+
+def _derive_execution_intent(
+    *,
+    task_spec: dict[str, Any],
+    target_hint: str,
+    workspace_summary: dict[str, Any],
+) -> str:
+    """Project a stable execution intent from task structure, not keyword classes."""
+
+    channels = set(
+        str(item).strip()
+        for item in task_spec.get("required_channels", [])
+        if str(item).strip()
+    ) if isinstance(task_spec.get("required_channels", []), list) else set()
+    material_contracts = _material_contract_kinds(task_spec)
+    primary = str(task_spec.get("primary_artifact_kind", "")).strip()
+    has_workspace_contract = any(_surface_mode_for_artifact(item) == "patch" for item in material_contracts)
+    has_ops_contract = any(item in {"runbook", "custom:checklist", "risk_register"} for item in material_contracts)
+    has_report_contract = any(_surface_mode_for_artifact(item) == "report" for item in material_contracts)
+    has_visual_contract = any(
+        _surface_mode_for_artifact(item) in {"webpage", "slides", "chart", "podcast", "video", "image", "data"}
+        for item in material_contracts
+    )
+    needs_validation = bool(task_spec.get("needs_validation", False))
+    command_ready = bool(workspace_summary.get("suggested_commands", [])) and bool(task_spec.get("needs_command_execution", False))
+
+    if has_workspace_contract or command_ready or ("workspace" in channels and needs_validation):
+        return "code"
+    if "workspace" in channels and "web" in channels:
+        return "mixed"
+    if has_ops_contract or ("risk" in channels and primary != "deliverable_report"):
+        return "ops"
+    if "web" in channels and "workspace" not in channels and (has_report_contract or not has_visual_contract or target_hint == "research"):
+        return "research"
+    if target_hint == "code" and "workspace" in channels:
+        return "code"
+    if target_hint == "ops" and ("risk" in channels or has_ops_contract):
+        return "ops"
+    if target_hint == "research" and "web" in channels and "workspace" not in channels:
+        return "research"
+    return "general"
+
+
+def _derive_reasoning_style(*, task_spec: dict[str, Any], execution_intent: str, output_mode: str) -> str:
+    channels = set(
+        str(item).strip()
+        for item in task_spec.get("required_channels", [])
+        if str(item).strip()
+    ) if isinstance(task_spec.get("required_channels", []), list) else set()
+    if execution_intent == "code":
+        return "debug"
+    if execution_intent == "ops":
+        return "procedural"
+    if execution_intent == "research" or ("web" in channels and output_mode == "report"):
+        return "evidence-led"
+    if output_mode in {"webpage", "slides", "podcast", "video", "image"}:
+        return "creative"
+    if output_mode in {"chart", "data"}:
+        return "analytic"
+    return "deliberate"
+
+
 def select_skill_priors(
     query: str,
     *,
-    execution_intent: str = "general",
-    output_mode: str = "artifact",
+    task_spec: dict[str, Any] | None = None,
+    capability_plan: dict[str, Any] | None = None,
+    execution_loop: dict[str, Any] | None = None,
     package_priors: list[dict[str, Any]] | None = None,
     limit: int = 4,
 ) -> list[SkillPrior]:
-    """Select best-fit skill priors without locking the runtime to one workflow."""
+    """Select skill priors from task contracts/capabilities instead of query heuristics."""
 
-    lowered = str(query or "").lower()
-    query_tokens = set(_tokens(query))
-    intent_boosts = {
-        "code": {"codebase_triage", "decompose_task", "validation_planner", "artifact_synthesis"},
-        "research": {"research_brief", "extract_facts", "validate_claims", "artifact_synthesis"},
-        "ops": {"ops_runbook", "identify_risks", "prioritize_items", "generate_recommendations"},
-        "benchmark": {"benchmark_ablation", "research_brief", "validation_planner", "compare_options"},
-        "mixed": {"decompose_task", "artifact_synthesis", "compare_options", "validation_planner"},
-        "general": {"decompose_task", "artifact_synthesis", "executive_summary"},
-    }
-    output_boosts = {
-        "patch": {"codebase_triage", "validation_planner"},
-        "runbook": {"ops_runbook", "identify_risks"},
-        "benchmark": {"benchmark_ablation", "validate_claims"},
-        "report": {"research_brief", "extract_facts", "artifact_synthesis"},
-        "artifact": {"artifact_synthesis", "executive_summary"},
-        "webpage": {"webpage_blueprint", "frontend_critique", "executive_summary"},
-        "slides": {"slide_deck_designer", "webpage_blueprint", "executive_summary"},
-        "chart": {"chart_storyboard", "data_analysis_plan", "extract_facts"},
-        "podcast": {"podcast_episode_plan", "research_brief", "synthesize_perspectives"},
-        "video": {"video_storyboard", "image_prompt_pack", "executive_summary"},
-        "image": {"image_prompt_pack", "brainstorm_ideas", "frontend_critique"},
-        "data": {"data_analysis_plan", "chart_storyboard", "extract_facts", "validation_planner"},
-    }
+    del query
+    task_spec = task_spec or {}
+    capability_plan = capability_plan or {}
+    execution_loop = execution_loop or {}
 
-    priors: list[SkillPrior] = []
-    package_skill_refs: dict[str, list[str]] = {}
+    skill_meta = {meta.name: meta for meta in list_all_skills()}
+    scores: dict[str, float] = {}
+    rationales: dict[str, list[str]] = {}
+
+    def add(name: str, score: float, reason: str) -> None:
+        meta = skill_meta.get(name)
+        if meta is None:
+            return
+        scores[name] = scores.get(name, 0.0) + score
+        rationales.setdefault(name, [])
+        if reason not in rationales[name]:
+            rationales[name].append(reason)
+
+    channels = [
+        str(item).strip()
+        for item in task_spec.get("required_channels", [])
+        if str(item).strip()
+    ] if isinstance(task_spec.get("required_channels", []), list) else []
+    material_contracts = _material_contract_kinds(task_spec)
+    output_modes = output_modes_from_task_spec(task_spec)
+    capability_steps = capability_plan.get("steps", []) if isinstance(capability_plan.get("steps", []), list) else []
+
+    for channel in channels:
+        if channel == "discovery":
+            add("decompose_task", 0.5, "task spec requires discovery-first decomposition")
+        elif channel == "workspace":
+            add("codebase_triage", 0.42, "workspace channel requires local artifact inspection")
+        elif channel == "web":
+            add("extract_facts", 0.34, "web channel requires evidence extraction")
+            add("validate_claims", 0.26, "web channel benefits from explicit claim checking")
+        elif channel == "risk":
+            add("identify_risks", 0.34, "risk channel requires governance/risk inspection")
+            add("ops_runbook", 0.16, "risk channel benefits from operational closure guidance")
+
+    for step in capability_steps:
+        if not isinstance(step, dict):
+            continue
+        ref = str(step.get("ref", "")).strip()
+        capability = str(step.get("capability", "")).strip()
+        reason = str(step.get("reason", "")).strip() or capability or ref
+        if ref in skill_meta:
+            add(ref, 0.46, f"capability plan includes {reason}")
+        if capability == "plan_validation":
+            add("validation_planner", 0.42, "capability graph leaves an explicit validation step")
+        if capability == "decompose_task":
+            add("decompose_task", 0.44, "capability graph includes task decomposition")
+
+    contract_skill_support = {
+        "patch_plan": [("codebase_triage", 0.54), ("validation_planner", 0.28)],
+        "patch_draft": [("codebase_triage", 0.56), ("validation_planner", 0.32)],
+        "runbook": [("ops_runbook", 0.58), ("identify_risks", 0.28)],
+        "risk_register": [("identify_risks", 0.5), ("ops_runbook", 0.24)],
+        "custom:checklist": [("ops_runbook", 0.42), ("prioritize_items", 0.18)],
+        "webpage_blueprint": [("webpage_blueprint", 0.58), ("frontend_critique", 0.26)],
+        "slide_deck_plan": [("slide_deck_designer", 0.58), ("executive_summary", 0.18)],
+        "chart_pack_spec": [("chart_storyboard", 0.58), ("data_analysis_plan", 0.28)],
+        "podcast_episode_plan": [("podcast_episode_plan", 0.58), ("synthesize_perspectives", 0.18)],
+        "video_storyboard": [("video_storyboard", 0.58), ("image_prompt_pack", 0.18)],
+        "image_prompt_pack": [("image_prompt_pack", 0.58), ("brainstorm_ideas", 0.18)],
+        "data_analysis_spec": [("data_analysis_plan", 0.58), ("chart_storyboard", 0.22)],
+        "dataset_pull_spec": [("data_analysis_plan", 0.44), ("extract_facts", 0.2)],
+        "dataset_loader_template": [("data_analysis_plan", 0.42), ("validation_planner", 0.18)],
+        "deliverable_report": [("artifact_synthesis", 0.42), ("executive_summary", 0.16)],
+        "evidence_bundle": [("research_brief", 0.24), ("extract_facts", 0.28)],
+        "workspace_findings": [("codebase_triage", 0.22), ("artifact_synthesis", 0.16)],
+    }
+    for kind in material_contracts:
+        if kind.startswith("custom:") and kind != "custom:checklist":
+            add("artifact_synthesis", 0.48, f"{kind} is a structured document contract")
+            add("executive_summary", 0.18, f"{kind} benefits from concise framing")
+            continue
+        for skill_name, score in contract_skill_support.get(kind, []):
+            add(skill_name, score, f"artifact contract requires {kind}")
+
+    if len(material_contracts) > 1 or len(output_modes) > 1:
+        add("artifact_synthesis", 0.44, "multiple deliverables need one coherent synthesis layer")
+
+    if bool(task_spec.get("needs_validation", False)):
+        add("validation_planner", 0.38, "task spec explicitly requires validation closure")
+
+    deliver_focus = execution_loop.get("deliverables", []) if isinstance(execution_loop.get("deliverables", []), list) else []
+    if deliver_focus:
+        primary_skill = _select_synthesis_skill(
+            query="",
+            primary_artifact_kind=str(task_spec.get("primary_artifact_kind", "")).strip(),
+            selected_channels=set(channels),
+            research_surface="web" in channels and "workspace" not in channels,
+            contracts=task_spec.get("artifact_contracts", []) if isinstance(task_spec.get("artifact_contracts", []), list) else [],
+            requested_surface_count=len(output_modes),
+        )
+        add(primary_skill, 0.36, "execution loop needs a primary delivery skill")
+
     for package in package_priors or []:
         if not isinstance(package, dict):
             continue
-        score = float(package.get("match_score", 0.0) or 0.0)
-        if score < 0.42:
+        if float(package.get("match_score", 0.0) or 0.0) < 0.42:
             continue
         package_name = str(package.get("name", "")).strip() or "package"
         for skill_name in package.get("skill_refs", []) if isinstance(package.get("skill_refs", []), list) else []:
             skill_text = str(skill_name).strip()
-            if not skill_text:
-                continue
-            package_skill_refs.setdefault(skill_text, []).append(package_name)
-    for meta in list_all_skills():
-        score = 0.0
-        rationale: list[str] = []
-        keyword_hits = [keyword for keyword in meta.confidence_keywords if keyword.lower() in lowered]
-        if keyword_hits:
-            score += 0.38 + 0.11 * len(keyword_hits[:3])
-            rationale.append(f"matched keywords: {', '.join(keyword_hits[:3])}")
-        if meta.name.lower() in lowered:
-            score += 0.42
-            rationale.append("skill name appears in query")
-        desc_tokens = set(_tokens(meta.description))
-        overlap = sorted(query_tokens & desc_tokens)
-        if overlap:
-            score += min(0.24, 0.06 * len(overlap[:4]))
-            rationale.append(f"description overlap: {', '.join(overlap[:3])}")
-        if meta.name in intent_boosts.get(execution_intent, set()):
-            score += 0.32
-            rationale.append(f"aligned with intent={execution_intent}")
-        if meta.name in output_boosts.get(output_mode, set()):
-            score += 0.18
-            rationale.append(f"aligned with output={output_mode}")
-        package_hits = package_skill_refs.get(meta.name, [])
-        if package_hits:
-            score += 0.38 + 0.06 * min(len(package_hits), 3)
-            rationale.append(f"recommended by packages: {', '.join(package_hits[:2])}")
-        if meta.category in {SkillCategory.ANALYSIS, SkillCategory.REASONING}:
-            score += 0.05
-        if score <= 0.0:
-            continue
-        priors.append(
-            SkillPrior(
-                name=meta.name,
-                score=score,
-                rationale=rationale,
-                category=meta.category.value,
-                tier=meta.tier.value,
-            )
+            if skill_text:
+                add(skill_text, 0.34, f"package prior recommends {package_name}")
+
+    if not scores:
+        fallback = ["decompose_task", "artifact_synthesis", "executive_summary"]
+        return [
+            SkillPrior(name=name, score=0.25 - 0.02 * index, rationale=["structural fallback"])
+            for index, name in enumerate(fallback[:limit])
+        ]
+
+    priors = [
+        SkillPrior(
+            name=name,
+            score=score + (0.03 if skill_meta[name].category in {SkillCategory.ANALYSIS, SkillCategory.REASONING} else 0.0),
+            rationale=rationales.get(name, []),
+            category=skill_meta[name].category.value,
+            tier=skill_meta[name].tier.value,
         )
-
-    priors.sort(key=lambda item: item.score, reverse=True)
-    if priors:
-        return priors[:limit]
-
-    defaults = {
-        "code": ["codebase_triage", "validation_planner", "decompose_task"],
-        "research": ["research_brief", "extract_facts", "validate_claims"],
-        "ops": ["ops_runbook", "identify_risks", "prioritize_items"],
-        "benchmark": ["benchmark_ablation", "compare_options", "validation_planner"],
-        "mixed": ["decompose_task", "artifact_synthesis", "validation_planner"],
-        "general": ["decompose_task", "artifact_synthesis", "executive_summary"],
-    }
-    return [
-        SkillPrior(name=name, score=0.25 - 0.02 * index, rationale=["intent fallback"])
-        for index, name in enumerate(defaults.get(execution_intent, defaults["general"])[:limit])
+        for name, score in scores.items()
+        if name in skill_meta
     ]
+    priors.sort(key=lambda item: item.score, reverse=True)
+    return priors[:limit]
 
 
 def inspect_workspace_capabilities(workspace_root: str | Path | None) -> dict[str, Any]:
@@ -872,30 +975,6 @@ def _required_channels_from_packages(package_priors: list[dict[str, Any]]) -> li
     return deduped
 
 
-def _query_requests_benchmark_artifacts(query: str) -> bool:
-    markers = [
-        "ablation",
-        "runner",
-        "run config",
-        "run-config",
-        "manifest",
-        "suite",
-        "gaia",
-        "swe-bench",
-        "webarena",
-        "tau-bench",
-        "benchmark manifest",
-        "benchmark config",
-        "evaluation config",
-        "run benchmark",
-        "\u57fa\u51c6",
-        "\u6d88\u878d",
-        "\u8dd1\u5206",
-    ]
-    lowered = str(query or "").lower()
-    return _count_markers(lowered, markers) > 0
-
-
 def _query_requests_data_artifacts(query: str) -> bool:
     markers = [
         "data analysis",
@@ -925,8 +1004,6 @@ def _package_graph_expansion_actions(*, package_priors: list[dict[str, Any]], se
         "validation_report": "validation_execution",
         "evidence_pack": "dataset_pull_spec",
         "evidence_bundle": "dataset_pull_spec",
-        "benchmark_manifest": "benchmark_manifest",
-        "benchmark_config": "benchmark_run_config",
         "chart_pack": "chart_pack_spec",
         "chart": "chart_pack_spec",
         "data_pack": "data_analysis_spec",
@@ -994,6 +1071,9 @@ def requested_output_modes(*, query: str, output_mode: str) -> list[str]:
 
     lowered = str(query or "").lower()
     rows = [
+        ("patch", ["patch", "diff", "fix", "implement", "code change", "\u8865\u4e01", "\u4fee\u590d"]),
+        ("runbook", ["runbook", "playbook", "operating procedure", "\u64cd\u4f5c\u624b\u518c", "\u9884\u6848"]),
+        ("report", ["report", "brief", "memo", "summary", "proposal", "\u62a5\u544a", "\u65b9\u6848", "\u603b\u7ed3"]),
         ("webpage", ["webpage", "website", "landing page", "landing", "html", "frontend", "web app", "\u7f51\u9875", "\u524d\u7aef"]),
         ("slides", ["slides", "slide", "deck", "presentation", "ppt", "keynote", "\u5e7b\u706f", "\u6f14\u793a"]),
         ("chart", ["chart", "charts", "graph", "plot", "visualization", "visualize", "\u56fe\u8868", "\u53ef\u89c6\u5316"]),
@@ -1035,13 +1115,7 @@ def _select_synthesis_skill(
     requested_surface_count: int,
 ) -> str:
     primary = str(primary_artifact_kind or "").strip()
-    support_kinds = {
-        "completion_packet",
-        "delivery_bundle",
-        "evidence_bundle",
-        "workspace_findings",
-        "risk_register",
-    }
+    support_kinds = {"completion_packet", "delivery_bundle", "evidence_bundle", "workspace_findings"}
     custom_contract_count = sum(
         1 for item in contracts if isinstance(item, dict) and str(item.get("kind", "")).startswith("custom:")
     )
@@ -1052,35 +1126,25 @@ def _select_synthesis_skill(
         and str(item.get("kind", "")).strip()
         and str(item.get("kind", "")).strip() not in support_kinds
     )
-    artifact_to_skill = {
-        "patch_plan": "codebase_triage",
-        "patch_draft": "codebase_triage",
-        "runbook": "ops_runbook",
-        "benchmark_manifest": "benchmark_ablation",
-        "benchmark_run_config": "benchmark_ablation",
-        "dataset_pull_spec": "benchmark_ablation",
-        "dataset_loader_template": "benchmark_ablation",
-        "webpage_blueprint": "webpage_blueprint",
-        "slide_deck_plan": "slide_deck_designer",
-        "chart_pack_spec": "chart_storyboard",
-        "podcast_episode_plan": "podcast_episode_plan",
-        "video_storyboard": "video_storyboard",
-        "image_prompt_pack": "image_prompt_pack",
-        "data_analysis_spec": "data_analysis_plan",
-        "custom:checklist": "ops_runbook",
-        "risk_register": "ops_runbook",
-    }
-    mapped = artifact_to_skill.get(primary)
-    if mapped:
-        return mapped
+    report_like_count = sum(
+        1
+        for item in contracts
+        if isinstance(item, dict)
+        and _is_report_like_artifact(str(item.get("kind", "")).strip())
+        and str(item.get("kind", "")).strip() not in support_kinds
+    )
+    if primary in {"runbook", "custom:checklist"}:
+        return "ops_runbook"
     if custom_contract_count > 0 or requested_surface_count > 1 or material_contract_count > 1:
         return "artifact_synthesis"
-    if research_surface and "web" in selected_channels and _is_report_like_artifact(primary):
+    if research_surface and "web" in selected_channels and report_like_count == 1 and _is_report_like_artifact(primary):
         lowered_query = query.lower()
-        if any(marker in lowered_query for marker in ["report", "research", "improvement", "roadmap", "strategy", "gaps"]):
+        if any(marker in lowered_query for marker in ["roadmap", "strategy", "improvement", "gaps", "decision"]):
             return "artifact_synthesis"
         return "research_brief"
-    if _is_report_like_artifact(primary):
+    if report_like_count > 0 or _is_report_like_artifact(primary):
+        if "risk" in selected_channels and "web" not in selected_channels:
+            return "ops_runbook"
         return "artifact_synthesis"
     return "artifact_synthesis"
 
@@ -1108,12 +1172,8 @@ def default_artifact_targets(
         targets.append("execution_trace")
     if output_mode == "patch":
         targets.append("patch_plan")
-    elif output_mode == "benchmark":
-        targets.append("benchmark_matrix")
     elif output_mode == "runbook":
         targets.append("runbook")
-    if output_mode != "benchmark" and _query_requests_benchmark_artifacts(query):
-        targets.append("benchmark_matrix")
     if _query_requests_data_artifacts(query):
         targets.append("data_analysis_spec")
     for mode in requested_output_modes(query=query, output_mode=output_mode):
@@ -1196,6 +1256,7 @@ def plan_graph_expansion(
     package_priors: list[dict[str, Any]] | None = None,
     task_spec: dict[str, Any] | None = None,
     capability_plan: dict[str, Any] | None = None,
+    execution_loop: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Plan additional executable graph nodes beyond analysis/report writing."""
 
@@ -1210,12 +1271,21 @@ def plan_graph_expansion(
         task_spec=task_spec,
         capability_plan=capability_plan,
     )
+    loop_context = execution_loop or build_execution_loop(
+        query=query,
+        task_spec=task_spec or {},
+        selected_channels=selected_channels,
+        capability_plan=capability_plan or {},
+        graph_expansion=local,
+        requires_command_execution=requires_command_execution,
+    )
     return refine_graph_expansion_with_live_model(
         query=query,
         execution_intent=execution_intent,
         output_mode=output_mode,
         workspace_summary=workspace_summary,
         skill_priors=skill_priors,
+        execution_loop=loop_context,
         local=local,
         live_model_overrides=live_model_overrides,
     )
@@ -1236,6 +1306,12 @@ def _default_graph_expansion(
     actions: list[dict[str, Any]] = []
     selected = set(selected_channels)
     lowered = str(query or "").lower()
+    contracts = task_spec.get("artifact_contracts", []) if isinstance(task_spec, dict) and isinstance(task_spec.get("artifact_contracts", []), list) else []
+    contract_kinds = {
+        str(item.get("kind", "")).strip()
+        for item in contracts
+        if isinstance(item, dict) and str(item.get("kind", "")).strip()
+    }
     explicit_data_build = any(
         marker in lowered for marker in ["dataset", "data analysis", "csv", "sql", "dashboard", "\u6570\u636e\u5206\u6790", "\u6570\u636e\u96c6"]
     )
@@ -1257,25 +1333,11 @@ def _default_graph_expansion(
                 "reason": "code-oriented tasks benefit from a concrete draft patch artifact",
             }
         )
-    if execution_intent == "benchmark" or output_mode == "benchmark" or _query_requests_benchmark_artifacts(query):
-        actions.append(
-            {
-                "kind": "benchmark_run_config",
-                "title": "Generate Benchmark Run Config",
-                "depends_on": ["analysis"],
-                "reason": "benchmark tasks need executable configuration, not just narrative",
-            }
-        )
-        actions.append(
-            {
-                "kind": "benchmark_manifest",
-                "title": "Generate Benchmark Manifest",
-                "depends_on": ["analysis"],
-                "reason": "benchmark tasks need a portable manifest for reproducibility",
-            }
-        )
-    if execution_intent in {"research", "benchmark", "mixed"} and "web" in selected and (
-        explicit_data_build or output_mode in {"data", "benchmark"} or _query_requests_data_artifacts(query)
+    if "web" in selected and (
+        explicit_data_build
+        or output_mode == "data"
+        or _query_requests_data_artifacts(query)
+        or bool(contract_kinds & {"data_analysis_spec", "dataset_pull_spec", "dataset_loader_template"})
     ):
         actions.append(
             {
@@ -1429,6 +1491,7 @@ def refine_graph_expansion_with_live_model(
     output_mode: str,
     workspace_summary: dict[str, Any],
     skill_priors: list[SkillPrior],
+    execution_loop: dict[str, Any],
     local: dict[str, Any],
     live_model_overrides: dict[str, Any] | None,
 ) -> dict[str, Any]:
@@ -1443,13 +1506,15 @@ def refine_graph_expansion_with_live_model(
         if not config:
             return local
         gateway = LiveModelGateway(config)
+        fallback_seed = _thin_graph_expansion_fallback(local)
         payload = {
             "query": query,
             "execution_intent": execution_intent,
             "output_mode": output_mode,
             "workspace_summary": workspace_summary,
             "skill_priors": [item.to_dict() for item in skill_priors[:4]],
-            "local_expansion": local,
+            "execution_loop": execution_loop,
+            "fallback_seed": fallback_seed,
         }
         messages = [
             {
@@ -1458,12 +1523,16 @@ def refine_graph_expansion_with_live_model(
                     "You are expanding a general agent task graph. "
                     "Return strict JSON with keys: nodes, replan_enabled, replan_focus, rationale. "
                     "Each node must include node_type from workspace_action, tool_call, subagent. "
+                    "The execution_loop describes the intended observe -> decide -> act -> deliver progression. "
+                    "Treat fallback_seed as a minimal structural fallback, not as a target you must copy. "
+                    "Prefer the smallest additions that advance the current loop toward a stronger primary deliverable. "
                     f"Allowed workspace_action kinds: {', '.join(sorted(allowed_workspace_action_kinds(include_internal=True)))}. "
                     "You may also emit kind starting with custom: when you include relative_path plus content_type or artifact_contract. "
                     "Allowed tool_call names: tool_search, workspace_file_search, workspace_file_read, external_resource_hub, "
                     "evidence_dossier_builder, code_experiment_design, policy_risk_matrix. "
-                    "Allowed subagent kinds: repair_probe, research_probe, benchmark_probe, general_probe. "
-                    "Only propose nodes that materially improve executable artifacts or evidence gathering."
+                    "Allowed subagent kinds: repair_probe, research_probe, general_probe. "
+                    "Only propose nodes that materially improve executable artifacts, evidence gathering, or delivery closure. "
+                    "Avoid ornamental support nodes when the request can be satisfied with a shorter path."
                 ),
             },
             {"role": "user", "content": json.dumps(payload, ensure_ascii=True)},
@@ -1483,7 +1552,7 @@ def refine_graph_expansion_with_live_model(
             nodes=nodes,
         )
         if not nodes:
-            return local
+            return fallback_seed
         replan_focus = [str(item).strip() for item in parsed.get("replan_focus", []) if str(item).strip()] if isinstance(parsed.get("replan_focus", []), list) else []
         rationale = list(local.get("rationale", []))
         rationale.append("live model refined graph expansion")
@@ -1510,7 +1579,32 @@ def refine_graph_expansion_with_live_model(
             "source": "live_model",
         }
     except Exception:
-        return local
+        return _thin_graph_expansion_fallback(local)
+
+
+def _thin_graph_expansion_fallback(local: dict[str, Any]) -> dict[str, Any]:
+    local_actions = local.get("actions", []) if isinstance(local.get("actions", []), list) else []
+    actions = [
+        {
+            "kind": str(item.get("kind", "")).strip(),
+            "title": str(item.get("title", "")).strip(),
+            "depends_on": list(item.get("depends_on", ["analysis"])) if isinstance(item.get("depends_on", []), list) else ["analysis"],
+            "reason": str(item.get("reason", "graph expansion fallback")).strip(),
+        }
+        for item in local_actions
+        if isinstance(item, dict) and str(item.get("kind", "")).strip()
+    ]
+    nodes = _normalize_graph_expansion_nodes({"actions": actions})
+    rationale = list(local.get("rationale", [])) if isinstance(local.get("rationale", []), list) else []
+    rationale.append("thin local fallback retained only executable artifact actions")
+    return {
+        "actions": actions,
+        "nodes": nodes,
+        "replan_enabled": bool(local.get("replan_enabled", bool(actions))),
+        "replan_focus": list(local.get("replan_focus", [])) if isinstance(local.get("replan_focus", []), list) else [],
+        "rationale": rationale[:8],
+        "source": "local_fallback",
+    }
 
 
 def _constrain_live_graph_expansion(
@@ -1523,9 +1617,6 @@ def _constrain_live_graph_expansion(
     lowered = str(query or "").lower()
     report_like = output_mode in {"report", "artifact"} and any(
         marker in lowered for marker in ["report", "memo", "brief", "research", "\u62a5\u544a", "\u5907\u5fd8\u5f55"]
-    )
-    explicit_benchmark_build = any(
-        marker in lowered for marker in ["benchmark manifest", "run config", "run-config", "ablation", "runner", "suite"]
     )
     explicit_data_build = any(
         marker in lowered for marker in ["dataset", "data analysis", "csv", "sql", "dashboard", "\u6570\u636e\u5206\u6790", "\u6570\u636e\u96c6"]
@@ -1569,10 +1660,6 @@ def _constrain_live_graph_expansion(
                 continue
             if kind in {"dataset_pull_spec", "dataset_loader_template", "data_analysis_spec"} and not explicit_data_build:
                 continue
-            if kind in {"benchmark_manifest", "benchmark_run_config"} and not (
-                execution_intent == "benchmark" or explicit_benchmark_build
-            ):
-                continue
         filtered.append(item)
     return filtered
 
@@ -1585,6 +1672,8 @@ def refine_deliberation_with_live_model(
     output_mode: str,
     skill_priors: list[SkillPrior],
     workspace_summary: dict[str, Any],
+    execution_loop: dict[str, Any],
+    required_channels: list[str],
     local: ChannelDeliberation,
     live_model_overrides: dict[str, Any] | None,
 ) -> ChannelDeliberation:
@@ -1607,6 +1696,8 @@ def refine_deliberation_with_live_model(
             "output_mode": output_mode,
             "skill_priors": [item.to_dict() for item in skill_priors[:4]],
             "workspace_summary": workspace_summary,
+            "execution_loop": execution_loop,
+            "required_channels": list(required_channels),
             "local_deliberation": local.to_dict(),
         }
         messages = [
@@ -1616,9 +1707,13 @@ def refine_deliberation_with_live_model(
                     "You are selecting evidence/action channels for a general agent task planner. "
                     "Return strict JSON with keys: selected_channels, rationale, channel_scores. "
                     "selected_channels must be an array chosen from workspace, web, discovery, risk. "
+                    "The execution_loop describes the intended observe -> decide -> act -> deliver progression. "
+                    "required_channels are hard structural requirements and must be preserved. "
+                    "Choose channels that are genuinely necessary to move that loop forward. "
                     "Use workspace only when local artifacts are likely necessary. "
                     "Use web only when external evidence is likely necessary. "
-                    "Prefer discovery for open-ended tasks."
+                    "Prefer discovery for open-ended tasks. "
+                    "Avoid over-selecting channels when a shorter path can still produce a strong primary deliverable."
                 ),
             },
             {"role": "user", "content": json.dumps(payload, ensure_ascii=True)},
@@ -1632,17 +1727,20 @@ def refine_deliberation_with_live_model(
         parsed = _coerce_json_dict(text)
         raw_selected = parsed.get("selected_channels", [])
         selected = [str(item).strip() for item in raw_selected if str(item).strip() in {"workspace", "web", "discovery", "risk"}]
+        selected = list(dict.fromkeys(list(required_channels) + selected))
         if not selected:
             return local
         raw_scores = parsed.get("channel_scores", {})
         llm_scores = {
-            key: _safe_float(raw_scores.get(key), local.scores.get(key, 0.0))
+            key: _safe_float(raw_scores.get(key), 0.88 if key in selected else 0.12)
             for key in {"workspace", "web", "discovery", "risk"}
         }
-        merged_scores = {
-            key: round((local.scores.get(key, 0.0) + llm_scores.get(key, local.scores.get(key, 0.0))) / 2.0, 4)
-            for key in {"workspace", "web", "discovery", "risk"}
-        }
+        merged_scores: dict[str, float] = {}
+        for key in {"workspace", "web", "discovery", "risk"}:
+            score = llm_scores.get(key, 0.12)
+            if key in required_channels:
+                score = max(score, 0.82)
+            merged_scores[key] = round(min(max(score, 0.0), 1.0), 4)
         rationale = list(local.rationale)
         rationale.append("live model refined channel selection")
         for item in parsed.get("rationale", []) if isinstance(parsed.get("rationale", []), list) else []:
@@ -1664,96 +1762,87 @@ def deliberate_channels(
     target: str,
     execution_intent: str,
     output_mode: str,
+    task_spec: dict[str, Any],
+    capability_plan: dict[str, Any],
     skill_priors: list[SkillPrior],
     workspace_root: str | Path | None,
     workspace_signal: int,
     external_signal: int,
     code_signal: int,
-    benchmark_signal: int,
     ops_signal: int,
 ) -> ChannelDeliberation:
-    """Choose evidence channels from priors and task constraints."""
-    lowered = str(query or "").lower()
-
-    prior_names = {item.name for item in skill_priors}
-    workspace_prior_hits = len(
-        prior_names & {"codebase_triage", "decompose_task", "validation_planner", "artifact_synthesis"}
+    """Choose channels from task/capability structure, with heuristics only as fallback."""
+    required_from_task = [
+        str(item).strip()
+        for item in task_spec.get("required_channels", [])
+        if str(item).strip()
+    ] if isinstance(task_spec.get("required_channels", []), list) else []
+    required_from_capability = [
+        str(item).strip()
+        for item in capability_plan.get("required_channels", [])
+        if str(item).strip()
+    ] if isinstance(capability_plan.get("required_channels", []), list) else []
+    structured_selected = list(dict.fromkeys(required_from_task + required_from_capability))
+    if structured_selected:
+        scores = {key: 0.12 for key in {"workspace", "web", "discovery", "risk"}}
+        rationale: list[str] = []
+        for item in structured_selected:
+            if item not in scores:
+                continue
+            scores[item] = 0.88 if item in required_from_task else 0.76
+        if "workspace" in structured_selected and workspace_root and Path(workspace_root).exists():
+            scores["workspace"] = max(scores["workspace"], 0.9)
+        if "discovery" in structured_selected:
+            rationale.append("channel selection follows the task spec and capability graph instead of keyword scoring")
+        else:
+            rationale.append("capability graph selected the minimum required channels")
+        if "workspace" in structured_selected:
+            rationale.append("workspace channel is structurally required for local artifact grounding")
+        if "web" in structured_selected:
+            rationale.append("web channel is structurally required for external evidence")
+        if "risk" in structured_selected:
+            rationale.append("risk channel is structurally required for governance or safety closure")
+        return ChannelDeliberation(
+            scores={key: round(value, 4) for key, value in scores.items()},
+            selected=structured_selected,
+            rationale=rationale[:8],
+        )
+    return _fallback_deliberate_channels(
+        query=query,
+        target=target,
+        execution_intent=execution_intent,
+        output_mode=output_mode,
+        skill_priors=skill_priors,
+        workspace_root=workspace_root,
+        workspace_signal=workspace_signal,
+        external_signal=external_signal,
+        code_signal=code_signal,
+        ops_signal=ops_signal,
     )
-    web_prior_hits = len(prior_names & {"research_brief", "extract_facts", "validate_claims", "benchmark_ablation"})
-    risk_prior_hits = len(prior_names & {"identify_risks", "ops_runbook", "validation_planner"})
 
-    workspace_score = 0.12 + 0.11 * workspace_signal + 0.14 * workspace_prior_hits
-    web_score = 0.12 + 0.11 * external_signal + 0.16 * web_prior_hits + 0.08 * benchmark_signal
-    discovery_score = 0.34 + 0.05 * len(skill_priors)
-    risk_score = 0.08 + 0.14 * ops_signal + 0.12 * risk_prior_hits
 
-    if target == "code":
-        workspace_score += 0.18
-    if target == "research":
-        web_score += 0.18
-    if target == "ops":
-        risk_score += 0.18
-    if output_mode == "patch":
-        workspace_score += 0.16
-    if output_mode == "benchmark":
-        web_score += 0.12
-        workspace_score += 0.08
-    if output_mode == "runbook":
-        risk_score += 0.12
-    if execution_intent == "mixed":
-        workspace_score += 0.08
-        web_score += 0.08
-    if execution_intent == "code":
-        workspace_score += 0.12
-    if execution_intent == "research":
-        web_score += 0.12
-    if execution_intent == "benchmark":
-        web_score += 0.14
-        workspace_score += 0.06
-    if execution_intent == "ops":
-        risk_score += 0.12
-    if workspace_root and Path(workspace_root).exists():
-        discovery_score += 0.03
-
-    scores = {
-        "workspace": round(min(workspace_score, 1.0), 4),
-        "web": round(min(web_score, 1.0), 4),
-        "discovery": round(min(discovery_score, 1.0), 4),
-        "risk": round(min(risk_score, 1.0), 4),
-    }
-
-    selected: list[str] = ["discovery"]
-    rationale: list[str] = []
-    rationale.append("open-ended tasks stay discovery-first so the agent can inspect skills and tools before committing")
-
-    mixed_intent = execution_intent == "mixed" or (
-        any(marker in lowered for marker in ["compare", "versus", "vs", "tradeoff", "方案", "对比"])
-        and workspace_signal > 0
-        and external_signal > 0
-    )
-    if scores["workspace"] >= 0.5 or (mixed_intent and scores["workspace"] >= 0.4):
-        selected.append("workspace")
-        rationale.append("workspace selected because local artifacts appear decision-relevant")
-    if scores["web"] >= 0.5 or (mixed_intent and scores["web"] >= 0.4):
-        selected.append("web")
-        rationale.append("web selected because external evidence is likely needed")
-    if not any(item in selected for item in {"workspace", "web"}):
-        if scores["workspace"] >= 0.44 and scores["workspace"] >= scores["web"]:
-            selected.append("workspace")
-            rationale.append("workspace selected as the strongest grounded channel under uncertainty")
-        elif scores["web"] >= 0.44:
-            selected.append("web")
-            rationale.append("web selected as the strongest external evidence channel under uncertainty")
-    if scores["risk"] >= 0.5:
-        selected.append("risk")
-        rationale.append("risk channel selected to constrain execution and validate governance")
-
-    deduped_selected: list[str] = []
-    for item in selected:
-        if item not in deduped_selected:
-            deduped_selected.append(item)
-
-    return ChannelDeliberation(scores=scores, selected=deduped_selected, rationale=rationale)
+def _fallback_deliberate_channels(
+    *,
+    query: str,
+    target: str,
+    execution_intent: str,
+    output_mode: str,
+    skill_priors: list[SkillPrior],
+    workspace_root: str | Path | None,
+    workspace_signal: int,
+    external_signal: int,
+    code_signal: int,
+    ops_signal: int,
+) -> ChannelDeliberation:
+    """Minimal structural fallback kept only when no explicit channel requirement exists."""
+    del query, target, execution_intent, output_mode, skill_priors, workspace_root, workspace_signal, external_signal, code_signal, ops_signal
+    selected = ["discovery"]
+    scores = {key: round(0.84 if key == "discovery" else 0.12, 4) for key in {"workspace", "web", "discovery", "risk"}}
+    rationale = [
+        "no structural channel requirement was inferred, so fallback stayed discovery-only",
+        "additional channels should come from live model deliberation or explicit task structure, not local guessing",
+    ]
+    return ChannelDeliberation(scores=scores, selected=selected, rationale=rationale[:8])
 
 
 def build_dynamic_task_graph(
@@ -1779,7 +1868,6 @@ def build_dynamic_task_graph(
     report_title = {
         "patch": "Patch Preparation Report",
         "runbook": "Operational Runbook",
-        "benchmark": "Benchmark Study",
         "report": "Research Report",
         "webpage": "Website Blueprint",
         "slides": "Slide Deck Plan",
@@ -1856,7 +1944,7 @@ def build_dynamic_task_graph(
         analysis_sources.append("skill_priors")
 
     if "workspace" in selected:
-        glob = "*.py" if resolved.execution_intent in {"code", "benchmark"} else "*"
+        glob = "*.py" if resolved.execution_intent == "code" else "*"
         focus_query = keywords[0] if keywords else query
         nodes.extend(
             [
@@ -2002,7 +2090,7 @@ def build_dynamic_task_graph(
 
     synthesis_sources = ["analysis"]
     if resolved.requires_validation:
-        validation_skill = "benchmark_ablation" if resolved.execution_intent == "benchmark" else "validation_planner"
+        validation_skill = "validation_planner"
         validation_depends = ["analysis"]
         if "evidence" in analysis_sources:
             validation_depends.append("evidence")
@@ -2132,10 +2220,10 @@ def build_dynamic_task_graph(
         synthesis_sources.append(action_id)
 
     research_surface = (
-        resolved.execution_intent in {"research", "benchmark"}
+        resolved.execution_intent == "research"
         or (resolved.output_mode == "report" and "web" in selected)
     )
-    if research_surface:
+    if research_surface and _should_materialize_research_support(query=query, task_spec=resolved.task_spec):
         memo_kinds = {
             "custom:memo",
             "custom:brief",
@@ -2344,6 +2432,7 @@ def build_dynamic_task_graph(
                     "workspace_summary": dict(resolved.workspace_summary),
                     "task_spec": dict(resolved.task_spec),
                     "capability_plan": dict(resolved.capability_plan),
+                    "execution_loop": dict(resolved.execution_loop),
                     "graph_expansion_source": str(resolved.graph_expansion.get("source", "local")),
                 },
             )
@@ -2369,13 +2458,95 @@ def build_dynamic_task_graph(
         )
     )
 
+    phased_nodes: list[TaskGraphNode] = []
+    for item in nodes:
+        metrics = dict(item.metrics)
+        metrics.setdefault("loop_phase", _loop_phase_for_node(item))
+        phased_nodes.append(
+            TaskGraphNode(
+                node_id=item.node_id,
+                title=item.title,
+                node_type=item.node_type,
+                status=item.status,
+                depends_on=list(item.depends_on),
+                commands=list(item.commands),
+                notes=list(item.notes),
+                artifacts=list(item.artifacts),
+                metrics=metrics,
+            )
+        )
+
     graph = ExecutableTaskGraph(
         graph_id=f"task-{slug}",
         mission_type=f"{resolved.execution_intent or 'general'}_task",
         query=query,
-        nodes=nodes,
+        nodes=phased_nodes,
+        metadata={
+            "execution_loop": dict(resolved.execution_loop),
+            "primary_artifact_kind": primary_artifact_kind,
+            "selected_channels": list(resolved.deliberation.selected),
+            "output_mode": resolved.output_mode,
+        },
     )
     return resolved, graph
+
+
+def _should_materialize_research_support(*, query: str, task_spec: dict[str, Any]) -> bool:
+    lowered = str(query or "").lower()
+    contracts = task_spec.get("artifact_contracts", []) if isinstance(task_spec.get("artifact_contracts", []), list) else []
+    kinds = {
+        str(item.get("kind", "")).strip()
+        for item in contracts
+        if isinstance(item, dict) and str(item.get("kind", "")).strip()
+    }
+    explicit_markers = [
+        "source matrix",
+        "research outline",
+        "direct baseline",
+        "baseline answer",
+        "compare with direct answer",
+    ]
+    support_kinds = {"custom:memo", "custom:brief", "custom:executive_memo", "custom:decision_memo", "custom:launch_memo"}
+    return bool((kinds & support_kinds) or any(marker in lowered for marker in explicit_markers))
+
+
+def _loop_phase_for_node(node: TaskGraphNode) -> str:
+    node_id = str(node.node_id or "").strip()
+    node_type = str(node.node_type or "").strip()
+    metrics = node.metrics if isinstance(node.metrics, dict) else {}
+    action_kind = str(metrics.get("action_kind", "")).strip()
+
+    observe_ids = {
+        "scope",
+        "capabilities",
+        "skill_priors",
+        "workspace_scan",
+        "workspace_focus",
+        "workspace_artifact",
+        "external_resources",
+        "evidence",
+        "evidence_artifact",
+        "risk",
+        "risk_artifact",
+    }
+    decide_ids = {"analysis", "analysis_artifact", "validation", "validation_artifact", "replan"}
+    deliver_ids = {"synthesis", "report", "execution_trace", "completion_packet", "delivery_bundle"}
+
+    if node_id in observe_ids:
+        return "observe"
+    if node_id in decide_ids:
+        return "decide"
+    if node_id in deliver_ids:
+        return "deliver"
+    if node_type == "workspace_action" and action_kind in {"completion_packet", "delivery_bundle"}:
+        return "deliver"
+    if node_type in {"tool_call", "workspace_snapshot"}:
+        return "observe"
+    if node_type in {"skill_call"}:
+        return "decide"
+    if node_type in {"workspace_action", "command", "subagent"}:
+        return "act"
+    return "act"
 
 
 def _coerce_json_dict(text: str) -> dict[str, Any]:
@@ -2413,7 +2584,7 @@ def _normalize_graph_expansion_nodes(payload: dict[str, Any]) -> list[dict[str, 
         "code_experiment_design",
         "policy_risk_matrix",
     }
-    allowed_subagent_kinds = {"repair_probe", "research_probe", "benchmark_probe", "general_probe"}
+    allowed_subagent_kinds = {"repair_probe", "research_probe", "general_probe"}
 
     raw_nodes: list[dict[str, Any]] = []
     nodes_payload = payload.get("nodes", [])
@@ -2538,3 +2709,5 @@ def _expansion_node_id(spec: dict[str, Any], existing_ids: set[str]) -> str:
 
 def node_ids_from_nodes(nodes: list[TaskGraphNode]) -> set[str]:
     return {item.node_id for item in nodes}
+
+

@@ -4,15 +4,13 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+from typing import Any
 
 import typer
 
-from app.benchmark.adapters import BenchmarkAdapterRunner
-from app.benchmark.evaluate import run_benchmark
 from app.core.state import AgentStyle, GraphState
 from app.core.mission import MissionRegistry
 from app.demo import (
-    demo_benchmark,
     demo_conflict_resolution,
     demo_full_trace,
     demo_marketplace,
@@ -48,7 +46,6 @@ from app.tracing.store import list_recent_traces, load_trace, save_trace
 from app.tracing.visualizer import render_trace_views
 from app.utils.console import Console
 from app.utils.display import (
-    print_benchmark_results,
     print_conflict_report,
     print_contract,
     print_execution_timeline,
@@ -70,7 +67,6 @@ HARNESS = HarnessEngine()
 PROPOSALS = ProposalRegistry()
 MISSIONS = MissionRegistry()
 STUDIO = StudioShowcaseBuilder(harness=HARNESS)
-BENCHMARK_ADAPTERS = BenchmarkAdapterRunner()
 
 
 def _parse_style(style: str) -> AgentStyle | None:
@@ -321,63 +317,6 @@ def run(
     if verbose:
         console.print("\n[dim]Full trace payload:[/]")
         console.print_json(json.dumps(payload.get("routing_trace", {}), indent=2, default=str))
-
-
-@app.command("benchmark")
-def benchmark_command() -> None:
-    """Run routing benchmark: greedy vs random vs complementary."""
-
-    result = run_benchmark()
-    print_benchmark_results(result)
-
-
-@app.command("benchmark-adapters")
-def benchmark_adapters_command() -> None:
-    """List unified benchmark adapters."""
-
-    console.print_json(json.dumps({"adapters": BENCHMARK_ADAPTERS.list_adapters()}, indent=2, default=str))
-
-
-@app.command("benchmark-suite")
-def benchmark_suite_command(
-    adapters: str = typer.Option("", "--adapters", help="Comma-separated adapter names"),
-    repeats: int = typer.Option(1, "--repeats", help="Repeat count for harness-lab adapters"),
-    output: str = typer.Option("", "--output", "-o", help="Optional output JSON file"),
-) -> None:
-    """Run unified benchmark suite across internal adapters."""
-
-    selected = [item.strip() for item in adapters.split(",") if item.strip()] if adapters else None
-    payload = BENCHMARK_ADAPTERS.run_suite(engine=HARNESS, adapters=selected, repeats=max(1, repeats))
-    if output:
-        path = Path(output)
-        path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_text(json.dumps(payload, indent=2, default=str), encoding="utf-8")
-        console.print(f"[green]Benchmark suite written:[/] {path}")
-        return
-    console.print_json(json.dumps(payload, indent=2, default=str))
-
-
-@app.command("benchmark-ablation")
-def benchmark_ablation_command(
-    repeats: int = typer.Option(1, "--repeats", help="Repeat count for ablation study"),
-    scenarios: str = typer.Option("", "--scenarios", help="Comma-separated scenario ids"),
-    output: str = typer.Option("", "--output", "-o", help="Optional output JSON file"),
-) -> None:
-    """Run standardized ablation study and failure clustering."""
-
-    scenario_ids = [item.strip() for item in scenarios.split(",") if item.strip()] if scenarios else None
-    payload = BENCHMARK_ADAPTERS.run_ablation(
-        engine=HARNESS,
-        repeats=max(1, repeats),
-        scenario_ids=scenario_ids,
-    )
-    if output:
-        path = Path(output)
-        path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_text(json.dumps(payload, indent=2, default=str), encoding="utf-8")
-        console.print(f"[green]Benchmark ablation written:[/] {path}")
-        return
-    console.print_json(json.dumps(payload, indent=2, default=str))
 
 
 @app.command("market-search")
@@ -708,7 +647,7 @@ def mode_compare_command(
 def demo_command(
     scenario: str = typer.Argument(
         "all",
-        help="Scenario: all, personality, conflict, benchmark, marketplace, trace, launch",
+        help="Scenario: all, personality, conflict, marketplace, trace, launch",
     ),
 ) -> None:
     """Run demo scenarios showcasing system capabilities."""
@@ -722,9 +661,6 @@ def demo_command(
     if scenario == "conflict":
         demo_conflict_resolution()
         return
-    if scenario == "benchmark":
-        demo_benchmark()
-        return
     if scenario == "marketplace":
         demo_marketplace()
         return
@@ -736,7 +672,7 @@ def demo_command(
         return
 
     raise typer.BadParameter(
-        "Scenario must be one of: all, personality, conflict, benchmark, marketplace, trace, launch"
+        "Scenario must be one of: all, personality, conflict, marketplace, trace, launch"
     )
 
 
@@ -1433,7 +1369,7 @@ def agent_thread_exec_task_command(
 def agent_thread_run_command(
     thread_id: str = typer.Argument(..., help="Persistent thread id"),
     query: str = typer.Argument(..., help="General task query"),
-    target: str = typer.Option("auto", "--target", help="auto | general | code | research | ops | benchmark"),
+    target: str = typer.Option("auto", "--target", help="auto | general | code | research | ops"),
     max_nodes: int = typer.Option(0, "--max-nodes", help="Optional execution slice size"),
     async_mode: bool = typer.Option(False, "--async/--sync", help="Queue in background or execute immediately"),
     output: str = typer.Option("", "--output", "-o", help="Optional output JSON file"),

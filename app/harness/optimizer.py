@@ -115,7 +115,7 @@ class HarnessOptimizer:
             OptimizationCandidate(mode="balanced", recipe="", auto_recipe=True, label="auto-balanced"),
         ]
 
-        if "web" in channels or primary in {"deliverable_report", "benchmark_manifest", "benchmark_run_config"}:
+        if "web" in channels or primary == "deliverable_report":
             candidates.append(OptimizationCandidate(mode="deep", recipe="", auto_recipe=True, label="auto-deep"))
         if "risk" in channels or "risk" in domains:
             candidates.append(OptimizationCandidate(mode="safety_critical", recipe="", auto_recipe=True, label="auto-safe"))

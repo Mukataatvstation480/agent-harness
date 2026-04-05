@@ -620,28 +620,26 @@ def test_engine_executes_generic_task_graph_inside_thread_workspace(tmp_path: Pa
     assert "Openable Artifact Manifest" in html
 
 
-def test_engine_executes_benchmark_actions_and_dataset_spec(tmp_path: Path) -> None:
+def test_engine_executes_dataset_actions_inside_thread_workspace(tmp_path: Path) -> None:
     engine = HarnessEngine()
     engine.thread_runtime = AgentThreadRuntime(tmp_path / "threads")
     engine.memory = HarnessMemoryStore(tmp_path / "memory.json")
     engine.scheduler.runtime = engine.thread_runtime
     engine.subagents.runtime = engine.thread_runtime
 
-    thread = engine.create_thread(title="Benchmark Task Thread")
+    thread = engine.create_thread(title="Data Task Thread")
     sandbox = engine.thread_runtime.sandbox_provider.get(tmp_path / "threads" / thread["thread_id"])
     sandbox.write_text("tests/test_demo.py", "def test_demo():\n    assert True\n", area="workspace")
 
     payload = engine.execute_thread_generic_task(
         thread["thread_id"],
-        "Design a benchmark and ablation study, generate run config, and prepare dataset pull spec.",
+        "Design an external evidence collection plan and prepare dataset pull spec plus loader template.",
         target="general",
     )
     persisted = engine.get_thread(thread["thread_id"])
 
     assert payload["execution"]["status"] == "completed"
     assert persisted is not None
-    assert any(item["relative_path"].endswith("run-config.json") for item in persisted["artifacts"])
-    assert any(item["relative_path"].endswith("manifest.json") for item in persisted["artifacts"])
     assert any(item["relative_path"].endswith("pull-spec.json") for item in persisted["artifacts"])
     assert any(item["relative_path"].endswith("loader_template.py") for item in persisted["artifacts"])
 
@@ -883,6 +881,74 @@ def test_workspace_action_can_use_live_model_generated_content(monkeypatch, tmp_
     assert "Hero claim from live model." in output_path.read_text(encoding="utf-8")
 
 
+def test_workspace_action_live_path_runs_before_local_fallback(monkeypatch, tmp_path: Path) -> None:
+    runtime = AgentThreadRuntime(tmp_path / "threads")
+    thread = runtime.create_thread(title="Live First Workspace Action")
+
+    class _FakeResponse:
+        def __init__(self, payload: dict[str, object]) -> None:
+            self.payload = json.dumps(payload).encode("utf-8")
+
+        def read(self) -> bytes:
+            return self.payload
+
+        def __enter__(self) -> "_FakeResponse":
+            return self
+
+        def __exit__(self, exc_type, exc, tb) -> bool:
+            return False
+
+    def fake_urlopen(req, timeout=0):  # type: ignore[no-untyped-def]
+        content = {
+            "relative_path": "web/live-first-page.md",
+            "content_text": "# Live First Page\n\nDirect live generation should win before local fallback.\n",
+            "rationale": ["live path produced a usable primary artifact immediately"],
+        }
+        return _FakeResponse(
+            {
+                "model": "demo-model",
+                "choices": [{"message": {"content": json.dumps(content)}, "finish_reason": "stop"}],
+            }
+        )
+
+    def fail_if_local(*args, **kwargs):  # type: ignore[no-untyped-def]
+        raise AssertionError("local workspace-action builder should not run when live generation succeeds")
+
+    monkeypatch.setattr(request, "urlopen", fake_urlopen)
+    monkeypatch.setattr(TaskGraphActionMapper, "_render_workspace_action_local", fail_if_local)
+
+    graph = {
+        "graph_id": "live-first-action",
+        "nodes": [
+            {"node_id": "scope", "title": "Scope", "node_type": "routing", "status": "ready", "depends_on": [], "commands": [], "notes": [], "artifacts": [], "metrics": {}},
+            {
+                "node_id": "page",
+                "title": "Generate Page",
+                "node_type": "workspace_action",
+                "status": "ready",
+                "depends_on": ["scope"],
+                "commands": [],
+                "notes": [],
+                "artifacts": [],
+                "metrics": {"action_kind": "webpage_blueprint", "prompt": "Create a landing page for the agent runtime"},
+            },
+        ],
+    }
+
+    execution = runtime.execute_task_graph(
+        thread["thread_id"],
+        graph=graph,
+        execution_label="live-first-action",
+        context={"query": "Create a landing page for the agent runtime", "live_model": {"base_url": "https://example.com/v1", "api_key": "secret", "model_name": "demo-model"}},
+    )
+
+    result = execution["context"]["node_results"]["page"]["result"]
+    output_path = Path(thread["workspace"]["workspace"]) / "web" / "live-first-page.md"
+    assert execution["status"] == "completed"
+    assert result["generation_source"] == "live_model"
+    assert output_path.exists()
+
+
 def test_skill_call_can_use_live_model_generated_content(monkeypatch, tmp_path: Path) -> None:
     runtime = AgentThreadRuntime(tmp_path / "threads")
     thread = runtime.create_thread(title="Live Skill Thread")
@@ -1103,7 +1169,7 @@ def test_custom_workspace_action_can_use_live_revision_loop(monkeypatch, tmp_pat
 def test_research_graph_includes_research_artifact_nodes(tmp_path: Path) -> None:
     engine = HarnessEngine()
     payload = engine.compile_generic_task_payload(
-        query="Generate a deep research report about benchmark strategy and evidence standards.",
+        query="Generate a deep research memo about benchmark strategy and evidence standards.",
         target="research",
         workspace_root=str(tmp_path),
     )
@@ -1229,7 +1295,9 @@ def test_thread_event_contract_exposes_node_timeline_and_frontend_snapshot(tmp_p
     assert any(item["event"] == "node_result" and item["summary"] for item in events)
     assert any(item["event"] == "artifact_written" and item["artifact_relative_path"].endswith("slides/deck-plan.md") for item in events)
     assert any(item["event"] == "node_completed" and item["phase"] == "completed" for item in events)
-    assert snapshot["metadata"]["event_contract"] == "agent-harness-thread-events/v2"
+    assert snapshot["metadata"]["event_contract"] == "agent-harness-thread-events/v3"
+    assert snapshot["metadata"]["current_loop_phase"] == "deliver"
+    assert snapshot["values"]["execution_loop"]["schema"] == "agent-harness-generic-loop/v1"
     assert any(item.get("node_type") == "workspace_action" for item in snapshot["tasks"])
     assert any(item.get("node_type") == "workspace_action" for item in snapshot["values"]["events"])
     assert any(item.get("artifact_relative_path", "").endswith("slides/deck-plan.md") for item in stream["timeline"])
@@ -1332,6 +1400,175 @@ def test_graph_replan_selects_missing_dependency_policy(tmp_path: Path) -> None:
     replan_result = payload["execution"]["context"]["node_results"]["replan"]["result"]
     assert replan_result["failure_policy"]["policy"] == "missing_dependency"
     assert any(item["relative_path"].endswith("replan_tool_workspace_file_search.json") for item in persisted["artifacts"])
+
+
+def test_graph_replan_live_model_receives_execution_loop(monkeypatch, tmp_path: Path) -> None:
+    captured_requests: list[dict[str, object]] = []
+
+    class _FakeResponse:
+        def __init__(self, payload: dict[str, object]) -> None:
+            self.payload = json.dumps(payload).encode("utf-8")
+
+        def read(self) -> bytes:
+            return self.payload
+
+        def __enter__(self) -> "_FakeResponse":
+            return self
+
+        def __exit__(self, exc_type, exc, tb) -> bool:
+            return False
+
+    def fake_urlopen(req, timeout=0):  # type: ignore[no-untyped-def]
+        captured_requests.append(json.loads(req.data.decode("utf-8")))
+        content = {
+            "actions": [
+                {
+                    "node_type": "workspace_action",
+                    "kind": "patch_scaffold",
+                    "title": "Generate Repair Scaffold",
+                    "reason": "advance act phase with a concrete repair artifact",
+                }
+            ]
+        }
+        return _FakeResponse(
+            {
+                "model": "demo-model",
+                "choices": [{"message": {"content": json.dumps(content)}, "finish_reason": "stop"}],
+            }
+        )
+
+    monkeypatch.setattr("app.harness.live_agent.request.urlopen", fake_urlopen)
+
+    graph = {
+        "graph_id": "live-replan",
+        "metadata": {
+            "execution_loop": {
+                "schema": "agent-harness-generic-loop/v1",
+                "phases": [
+                    {"phase": "observe", "goal": "gather missing context"},
+                    {"phase": "decide", "goal": "pick the smallest repair"},
+                    {"phase": "act", "goal": "materialize the missing artifact"},
+                    {"phase": "deliver", "goal": "close the task"},
+                ],
+            }
+        },
+        "nodes": [],
+    }
+
+    mapper = TaskGraphActionMapper()
+    replan_node = {
+        "node_id": "replan",
+        "title": "Replan",
+        "node_type": "graph_replan",
+        "status": "ready",
+        "depends_on": ["completion_packet"],
+        "commands": [],
+        "notes": [],
+        "artifacts": [],
+        "metrics": {
+            "prompt": "Inspect the workspace and fix the failing path",
+            "replan_focus": ["artifacts", "validation"],
+            "execution_loop": {
+                "schema": "agent-harness-generic-loop/v1",
+                "phases": [
+                    {"phase": "observe", "goal": "gather missing context"},
+                    {"phase": "decide", "goal": "pick the smallest repair"},
+                    {"phase": "act", "goal": "materialize the missing artifact"},
+                    {"phase": "deliver", "goal": "close the task"},
+                ],
+            },
+            "loop_phase": "decide",
+        },
+    }
+    mapper._live_replan_suggestions(
+        node=replan_node,
+        graph=graph,
+        context={
+            "query": "Inspect the workspace and fix the failing path",
+            "current_loop_phase": "decide",
+            "live_model": {"base_url": "https://example.com/v1", "api_key": "secret", "model_name": "demo-model"},
+            "node_results": {},
+        },
+        metrics=replan_node["metrics"],
+        failure_policy={"policy": "artifact_gap", "summary": "patch draft is still missing"},
+        completion_packet={"state_gap": {"missing_artifacts": ["patch_draft"], "missing_validation": True}},
+        state_gap={"missing_artifacts": ["patch_draft"], "missing_validation": True},
+        capability_replan={"steps": []},
+        fallback_seed=[{"node_type": "workspace_action", "kind": "patch_draft", "title": "Generate Missing Patch Draft"}],
+    )
+
+    assert captured_requests
+    payload = json.loads(str(captured_requests[0]["messages"][1]["content"]))
+    assert payload["execution_loop"]["schema"] == "agent-harness-generic-loop/v1"
+    assert payload["current_loop_phase"] == "decide"
+    assert payload["state_gap"]["missing_artifacts"] == ["patch_draft"]
+    assert payload["fallback_seed"]
+    assert payload["capability_replan"] == {"steps": []}
+
+
+def test_live_subagent_plan_receives_execution_loop(monkeypatch) -> None:
+    mapper = TaskGraphActionMapper()
+    captured_requests: list[dict[str, object]] = []
+
+    class _FakeResponse:
+        def __init__(self, payload: dict[str, object]) -> None:
+            self.payload = json.dumps(payload).encode("utf-8")
+
+        def read(self) -> bytes:
+            return self.payload
+
+        def __enter__(self) -> "_FakeResponse":
+            return self
+
+        def __exit__(self, exc_type, exc, tb) -> bool:
+            return False
+
+    def fake_urlopen(req, timeout=0):  # type: ignore[no-untyped-def]
+        captured_requests.append(json.loads(req.data.decode("utf-8")))
+        content = {
+            "skill_name": "research_brief",
+            "tool_calls": [
+                {"name": "external_resource_hub", "args": {"query": "collect current external references", "limit": 4}}
+            ],
+            "rationale": ["current phase is observe, so gather the smallest missing evidence first"],
+        }
+        return _FakeResponse(
+            {
+                "model": "demo-model",
+                "choices": [{"message": {"content": json.dumps(content)}, "finish_reason": "stop"}],
+            }
+        )
+
+    monkeypatch.setattr("app.harness.live_agent.request.urlopen", fake_urlopen)
+
+    payload = mapper._live_subagent_plan(
+        subagent_kind="research_probe",
+        objective="Investigate current external evidence for the runtime",
+        source_text="Need stronger evidence before synthesis.",
+        local_plan={"skill_name": "research_brief", "tool_calls": [{"name": "external_resource_hub", "args": {"query": "Investigate current external evidence for the runtime", "limit": 5}}], "rationale": ["local plan"]},
+        graph={
+            "graph_id": "subagent-live-plan",
+            "metadata": {
+                "execution_loop": {
+                    "schema": "agent-harness-generic-loop/v1",
+                    "phases": [
+                        {"phase": "observe", "goal": "gather missing context"},
+                        {"phase": "decide", "goal": "choose the minimal next move"},
+                        {"phase": "act", "goal": "materialize requested work"},
+                        {"phase": "deliver", "goal": "ship the primary result"},
+                    ],
+                }
+            },
+            "summary": {"phase_summary": [{"phase": "observe", "completed_nodes": 0, "node_count": 2}]},
+        },
+        context={"current_loop_phase": "observe", "live_model": {"base_url": "https://example.com/v1", "api_key": "secret", "model_name": "demo-model"}},
+    )
+
+    assert payload is not None
+    assert captured_requests
+    request_payload = json.loads(str(captured_requests[0]["messages"][1]["content"]))
+    assert request_payload["execution_loop"]["schema"] == "agent-harness-generic-loop/v1"
+    assert request_payload["current_loop_phase"] == "observe"
 
 
 def test_subagent_can_use_live_model_generated_mini_plan(monkeypatch, tmp_path: Path) -> None:

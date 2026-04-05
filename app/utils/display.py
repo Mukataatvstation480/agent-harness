@@ -210,42 +210,6 @@ def print_reasoning_path(path: list[dict]) -> None:
     console.print(Panel(render_reasoning_tree(path), title="Reasoning Path", border_style="blue"))
 
 
-def print_benchmark_results(results: dict) -> None:
-    """Print benchmark result table with strategy metrics."""
-
-    strategies = results.get("strategies", {})
-    if not strategies:
-        console.print("[dim]No benchmark strategy results available.[/]")
-        return
-
-    table = Table(title="Benchmark Results")
-    table.add_column("Strategy")
-    table.add_column("Jaccard", justify="right")
-    table.add_column("Precision", justify="right")
-    table.add_column("Recall", justify="right")
-    table.add_column("F1", justify="right")
-
-    best_name = None
-    best_f1 = -1.0
-    for name, metrics in strategies.items():
-        f1 = float(metrics.get("f1", 0.0))
-        if f1 > best_f1:
-            best_f1 = f1
-            best_name = name
-
-    for name, metrics in strategies.items():
-        style = "bold green" if name == best_name else ""
-        table.add_row(
-            f"[{style}]{name}[/{style}]" if style else name,
-            f"{float(metrics.get('jaccard', 0.0)):.3f}",
-            f"{float(metrics.get('precision', 0.0)):.3f}",
-            f"{float(metrics.get('recall', 0.0)):.3f}",
-            f"{float(metrics.get('f1', 0.0)):.3f}",
-        )
-
-    console.print(table)
-
-
 def print_marketplace_browser(skills: list[dict]) -> None:
     """Print marketplace skills as compact panels."""
 

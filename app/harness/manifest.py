@@ -340,8 +340,8 @@ class ToolManifestRegistry:
             HarnessToolManifest(
                 name="code_experiment_design",
                 tool_type=ToolType.CODE,
-                summary="Design reproducible ablation and benchmark plans for research-grade evaluation.",
-                tags=["research", "benchmark", "ablation", "evaluation", "design"],
+                summary="Design reproducible experiment plans and evaluation studies for research-grade analysis.",
+                tags=["research", "experiment", "evaluation", "design"],
                 intents=["research", "design", "analysis"],
                 capabilities=["hypothesis_design", "metric_selection", "validity_analysis"],
                 risk_level="low",

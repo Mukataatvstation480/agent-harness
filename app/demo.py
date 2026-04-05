@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import json
 
-from app.benchmark.evaluate import run_benchmark
 from app.coordination.conflicts import ConflictDetector
 from app.coordination.consensus import ConsensusBuilder
 from app.core.state import GraphState
@@ -20,7 +19,6 @@ from app.studio.flagship import StudioShowcaseBuilder
 from app.tracing.visualizer import render_trace_views
 from app.utils.console import Console
 from app.utils.display import (
-    print_benchmark_results,
     print_conflict_report,
     print_contract,
     print_marketplace_browser,
@@ -97,15 +95,8 @@ def demo_conflict_resolution() -> None:
     print_conflict_report(conflicts, consensus)
 
 
-def demo_benchmark() -> None:
-    """Demo 4: benchmark strategy comparison."""
-
-    result = run_benchmark()
-    print_benchmark_results(result)
-
-
 def demo_marketplace() -> None:
-    """Demo 5: marketplace search and trending."""
+    """Demo 4: marketplace search and trending."""
 
     console.print("[bold]Trending Skills[/]")
     print_marketplace_browser(get_trending_skills(limit=3))
@@ -115,7 +106,7 @@ def demo_marketplace() -> None:
 
 
 def demo_full_trace() -> None:
-    """Demo 6: full reasoning path from query to output."""
+    """Demo 5: full reasoning path from query to output."""
 
     result = _invoke("Summarize this report and highlight the main risks.")
     path = result.get("reasoning_path") or [
@@ -139,7 +130,7 @@ def demo_full_trace() -> None:
 
 
 def demo_skill_card_lifecycle() -> None:
-    """Demo 7: inspect a skill card and lifecycle status."""
+    """Demo 6: inspect a skill card and lifecycle status."""
 
     card = get_skill_card("identify_risks")
     if not card:
@@ -155,7 +146,7 @@ def demo_skill_card_lifecycle() -> None:
 
 
 def demo_mode_comparison() -> None:
-    """Demo 8: compare routing behavior across modes."""
+    """Demo 7: compare routing behavior across modes."""
 
     query = "Audit this plan, identify risks, challenge assumptions, and provide safe recommendations."
     console.print(f"[bold]Query:[/] {query}")
@@ -169,7 +160,7 @@ def demo_mode_comparison() -> None:
 
 
 def demo_dissent_rescue() -> None:
-    """Demo 9: show structured dissent and contract output."""
+    """Demo 8: show structured dissent and contract output."""
 
     query = "Review this high-risk recommendation and find weaknesses or counterarguments."
     result = _invoke(query, mode=SystemMode.SAFETY_CRITICAL)
@@ -242,7 +233,6 @@ def run_all_demos() -> None:
         ("Basic Routing", demo_basic_routing),
         ("Personality Comparison", demo_personality_comparison),
         ("Conflict Resolution", demo_conflict_resolution),
-        ("Benchmark", demo_benchmark),
         ("Marketplace", demo_marketplace),
         ("Full Trace", demo_full_trace),
         ("SkillCard Lifecycle", demo_skill_card_lifecycle),

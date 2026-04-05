@@ -217,7 +217,7 @@ class LabProductBuilder:
                 f"value_index {round(float(trend.get('value_index_delta', 0.0)), 3):+}."
             )
         else:
-            points.append("No previous run found; this run establishes initial benchmark history.")
+            points.append("No previous run found; this run establishes the initial regression history.")
 
         if int(streak.get("streak", 0)) >= 3:
             points.append(

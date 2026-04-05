@@ -22,6 +22,9 @@ class ThreadWorkspaceStreamBuilder:
         delivery_bundle = self._read_delivery_bundle(artifacts)
         showcase = self._build_showcase(thread_payload, executions, artifacts)
         timeline = self._build_timeline(events)
+        current_execution = executions[-1] if executions else {}
+        graph_metadata = current_execution.get("graph", {}).get("metadata", {}) if isinstance(current_execution.get("graph", {}), dict) else {}
+        execution_loop = graph_metadata.get("execution_loop", {}) if isinstance(graph_metadata.get("execution_loop", {}), dict) else {}
         return {
             "schema": self.SCHEMA,
             "thread_id": thread_payload.get("thread_id", ""),
@@ -40,6 +43,8 @@ class ThreadWorkspaceStreamBuilder:
             },
             "completion_packet": completion_packet,
             "delivery_bundle": delivery_bundle,
+            "execution_loop": execution_loop,
+            "current_phase": str(current_execution.get("current_loop_phase", "")),
             "showcase": showcase,
             "messages": messages[-8:],
             "artifacts": artifacts[-12:],
@@ -63,6 +68,8 @@ class ThreadWorkspaceStreamBuilder:
         metrics = payload.get("metrics", {}) if isinstance(payload.get("metrics", {}), dict) else {}
         showcase = payload.get("showcase", {}) if isinstance(payload.get("showcase", {}), dict) else {}
         delivery_bundle = payload.get("delivery_bundle", {}) if isinstance(payload.get("delivery_bundle", {}), dict) else {}
+        execution_loop = payload.get("execution_loop", {}) if isinstance(payload.get("execution_loop", {}), dict) else {}
+        current_phase = str(payload.get("current_phase", "")).strip()
         messages = payload.get("messages", []) if isinstance(payload.get("messages", []), list) else []
         artifacts = payload.get("artifacts", []) if isinstance(payload.get("artifacts", []), list) else []
         executions = payload.get("executions", []) if isinstance(payload.get("executions", []), list) else []
@@ -71,6 +78,7 @@ class ThreadWorkspaceStreamBuilder:
         workspace = payload.get("workspace", {}) if isinstance(payload.get("workspace", {}), dict) else {}
         deliverable_index = delivery_bundle.get("deliverable_index", []) if isinstance(delivery_bundle.get("deliverable_index", []), list) else []
         artifact_manifest = delivery_bundle.get("artifact_manifest", []) if isinstance(delivery_bundle.get("artifact_manifest", []), list) else []
+        loop_phases = execution_loop.get("phases", []) if isinstance(execution_loop.get("phases", []), list) else []
         return f"""<!doctype html>
 <html lang="en">
 <head>
@@ -135,6 +143,18 @@ class ThreadWorkspaceStreamBuilder:
       <div class="status">
         <strong>{html.escape(str(header.get("status", "")))}</strong>
         <span>Task: {html.escape(str(showcase.get("task", header.get("latest_query", ""))))}</span>
+        <span>Phase: {html.escape(current_phase or "n/a")}</span>
+      </div>
+      <div class="hero-grid">
+        <div class="mini-panel">
+          <div class="title">Primary Deliverable</div>
+          <div class="quote">{html.escape(str(showcase.get("primary_label", "No primary deliverable identified.")))}</div>
+          <div class="muted" style="margin-top:8px">{html.escape(str(showcase.get("primary_summary", "")))}</div>
+        </div>
+        <div class="mini-panel">
+          <div class="title">Execution Loop</div>
+          <ul>{"".join(f"<li><strong>{html.escape(str(item.get('phase','')))}</strong>: {html.escape(str(item.get('goal','')))}</li>" for item in loop_phases) or "<li>No execution loop.</li>"}</ul>
+        </div>
       </div>
       <div class="hero-grid">
         <div class="mini-panel">
@@ -369,6 +389,8 @@ class ThreadWorkspaceStreamBuilder:
             "summary": summary,
             "deliverables": prioritized_deliverables[:4],
             "value_points": value_points[:4],
+            "primary_label": preview_title,
+            "primary_summary": result_body[:280],
             "result_title": preview_title,
             "result_body": result_body,
             "primary_artifact": {
@@ -427,7 +449,6 @@ class ThreadWorkspaceStreamBuilder:
             ("video", ["video/"], "Prepared a video storyboard with scene-by-scene beats.", "Creates a media artifact that downstream teams can directly produce."),
             ("images", ["images/"], "Prepared an image prompt pack for reusable visual generation.", "Supports visual asset production without locking to one generator."),
             ("analysis", ["analysis/data-analysis-spec"], "Prepared a data-analysis specification with metrics and outputs.", "Pushes the task toward reproducible analytics rather than loose commentary."),
-            ("benchmarks", ["benchmarks/"], "Prepared benchmark execution artifacts.", "Makes evaluation portable and reproducible."),
             ("datasets", ["datasets/"], "Prepared external data pull or loader artifacts.", "Grounds research and analysis tasks in reproducible evidence collection."),
         ]
         for artifact in artifacts:

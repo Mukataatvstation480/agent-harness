@@ -39,7 +39,7 @@ class ToolDiscoveryEngine:
         "context": ["memory", "history", "context", "state", "previous", "workspace", "artifact", "file"],
         "design": ["design", "architecture", "blueprint", "pattern"],
         "operations": ["daily", "routine", "meeting", "todo", "task", "workflow", "productivity"],
-        "evaluation": ["benchmark", "evaluate", "experiment", "ablation", "reproducible", "study", "paper"],
+        "evaluation": ["evaluate", "experiment", "ablation", "reproducible", "study", "paper"],
         "creative": ["creative", "design", "ui", "ux", "brand", "visual", "campaign", "presentation"],
         "enterprise": ["enterprise", "stakeholder", "board", "communication", "governance", "compliance"],
     }

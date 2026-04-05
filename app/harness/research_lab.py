@@ -118,7 +118,7 @@ class HarnessResearchLab:
         }
 
     def list_scenarios(self) -> list[dict[str, Any]]:
-        """Return available benchmark scenarios."""
+        """Return available research-lab scenarios."""
 
         return [item.to_dict() for item in self._scenarios]
 

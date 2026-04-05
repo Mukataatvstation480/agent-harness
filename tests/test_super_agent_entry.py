@@ -78,6 +78,7 @@ def test_thread_first_super_agent_runs_and_records_packages(tmp_path: Path) -> N
 
     assert payload["schema"] == "agent-harness-thread-super-agent/v1"
     assert payload["route"]["kind"] == "task_graph"
+    assert payload["route"]["phases"] == ["observe", "decide", "act", "deliver"]
     assert payload["execution"]["status"] == "completed"
     assert any(item["name"] == "code-mission" for item in payload["packages"])
 
@@ -121,6 +122,7 @@ def test_thread_first_super_agent_infers_research_target_from_task_spec(tmp_path
 
     assert payload["route"]["target"] == "research"
     assert any("primary deliverable" in item for item in payload["route"]["rationale"])
+    assert any("loop:" in item for item in payload["route"]["rationale"])
 
 
 def test_analyze_task_request_keeps_discovery_and_allows_mixed_channels() -> None:
@@ -132,6 +134,7 @@ def test_analyze_task_request_keeps_discovery_and_allows_mixed_channels() -> Non
     assert "discovery" in profile.deliberation.selected
     assert "workspace" in profile.deliberation.selected
     assert "web" in profile.deliberation.selected
+    assert profile.execution_loop.get("schema") == "agent-harness-generic-loop/v1"
 
 
 def test_runtime_settings_centralize_thread_memory_and_sandbox_paths(tmp_path: Path) -> None:

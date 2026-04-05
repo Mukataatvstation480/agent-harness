@@ -116,7 +116,6 @@ class MissionRegistry:
         creative = {"webpage_blueprint", "slide_deck_plan", "podcast_episode_plan", "video_storyboard", "image_prompt_pack"}
         analytics = {"chart_pack_spec", "data_analysis_spec", "dataset_pull_spec", "dataset_loader_template"}
         implementation = {"patch_plan", "patch_draft"}
-        benchmark = {"benchmark_manifest", "benchmark_run_config"}
         operations = {"runbook", "custom:checklist"}
         strategy_docs = {"custom:decision_memo", "custom:executive_memo", "custom:launch_memo", "custom:one_pager"}
         research_docs = {"deliverable_report", "custom:brief", "custom:memo", "workspace_findings", "evidence_bundle"}
@@ -127,8 +126,6 @@ class MissionRegistry:
             return self._profiles_by_name["analytics_pack"]
         if primary in implementation:
             return self._profiles_by_name["implementation_pack"]
-        if primary in benchmark:
-            return self._profiles_by_name["implementation_pack"] if "workspace" in channels else self._profiles_by_name["research_pack"]
         if primary in operations or (primary == "risk_register" and "workspace" not in channels):
             return self._profiles_by_name["operations_pack"]
         if primary in strategy_docs:
@@ -777,7 +774,7 @@ class MissionRegistry:
                     MissionDeliverableBlueprint("Promotion Checklist", "What must pass before the result becomes default.", "release committee"),
                     MissionDeliverableBlueprint("Evidence Packet", "External and internal citations linked to the claim.", "reviewers"),
                 ],
-                keyword_patterns=[r"(research|study|paper|benchmark|experiment|lab|evaluation|hypothesis)"],
+                keyword_patterns=[r"(research|study|paper|experiment|lab|evaluation|hypothesis)"],
             ),
             MissionProfile(
                 name="operations_pack",

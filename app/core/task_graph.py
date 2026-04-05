@@ -59,11 +59,20 @@ class ExecutableTaskGraph:
 
     SCHEMA = "agent-harness-executable-task-graph/v1"
 
-    def __init__(self, *, graph_id: str, mission_type: str, query: str, nodes: list[TaskGraphNode]) -> None:
+    def __init__(
+        self,
+        *,
+        graph_id: str,
+        mission_type: str,
+        query: str,
+        nodes: list[TaskGraphNode],
+        metadata: dict[str, Any] | None = None,
+    ) -> None:
         self.graph_id = graph_id
         self.mission_type = mission_type
         self.query = query
         self.nodes = nodes
+        self.metadata = dict(metadata or {})
 
     def to_dict(self) -> dict[str, Any]:
         completed = sum(1 for node in self.nodes if node.status == "completed")
@@ -78,6 +87,7 @@ class ExecutableTaskGraph:
             "graph_id": self.graph_id,
             "mission_type": self.mission_type,
             "query": self.query,
+            "metadata": dict(self.metadata),
             "nodes": [item.to_dict() for item in self.nodes],
             "edges": self._edges(),
             "summary": {
@@ -86,6 +96,7 @@ class ExecutableTaskGraph:
                 "completion_ratio": round(completed / max(len(self.nodes), 1), 4),
                 "runnable_nodes": runnable,
                 "critical_path": self._critical_path(),
+                "phase_summary": self._phase_summary(),
             },
         }
 
@@ -120,3 +131,29 @@ class ExecutableTaskGraph:
             return []
         best_path = max((walk(node.node_id) for node in self.nodes), key=len, default=[])
         return best_path
+
+    def _phase_summary(self) -> list[dict[str, Any]]:
+        phases: dict[str, dict[str, Any]] = {}
+        order = {"observe": 0, "decide": 1, "act": 2, "deliver": 3}
+        for node in self.nodes:
+            metrics = node.metrics if isinstance(node.metrics, dict) else {}
+            phase = str(metrics.get("loop_phase", "")).strip() or "act"
+            bucket = phases.setdefault(
+                phase,
+                {
+                    "phase": phase,
+                    "node_count": 0,
+                    "completed_nodes": 0,
+                    "nodes": [],
+                },
+            )
+            bucket["node_count"] += 1
+            if node.status == "completed":
+                bucket["completed_nodes"] += 1
+            bucket["nodes"].append(node.node_id)
+        rows = list(phases.values())
+        rows.sort(key=lambda item: order.get(str(item.get("phase", "")), 99))
+        for item in rows:
+            node_count = max(int(item.get("node_count", 0)), 1)
+            item["completion_ratio"] = round(int(item.get("completed_nodes", 0)) / node_count, 4)
+        return rows

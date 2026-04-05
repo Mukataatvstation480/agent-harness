@@ -539,7 +539,7 @@ def research_brief(text: str) -> str:
         "## Report Direction\n\n"
         f"A strong final report should isolate the main failure mode, compare alternatives where needed, and end with a concrete improvement path for {focus[2] if len(focus) > 2 else 'real users'} rather than a generic survey.\n\n"
         "## Open Gaps\n\n"
-        f"- Gather benchmarks, failure cases, and direct artifacts touching {focus[1] if len(focus) > 1 else 'runtime behavior'}.\n"
+        f"- Gather failure cases and direct artifacts touching {focus[1] if len(focus) > 1 else 'runtime behavior'}.\n"
         "- Separate anecdotal wins from reproducible gains.\n"
         "- Tie each recommendation to evidence instead of letting the brief stay purely conceptual.\n"
         "--- (skill: research_brief)"
@@ -558,21 +558,6 @@ def ops_runbook(text: str) -> str:
         "- Artifact: leave a handoff note plus validation record.\n"
         "--- (skill: ops_runbook)"
     )
-
-
-def benchmark_ablation(text: str) -> str:
-    """Produce a compact benchmark and ablation design."""
-
-    focus = _keywords(text, limit=3)
-    return (
-        "Benchmark Ablation Plan:\n"
-        f"- Baseline: current pipeline centered on {focus[0] if focus else 'the default configuration'}.\n"
-        f"- Ablation A: remove or weaken {focus[1] if len(focus) > 1 else 'dynamic discovery'}.\n"
-        f"- Ablation B: tighten validation around {focus[2] if len(focus) > 2 else 'artifact quality'}.\n"
-        "- Report: compare pass rate, value, latency, and failure clusters.\n"
-        "--- (skill: benchmark_ablation)"
-    )
-
 
 def frontend_critique(text: str) -> str:
     """Generate a sharp product or interface critique with redesign priorities."""
@@ -646,7 +631,7 @@ def slide_deck_designer(text: str) -> str:
         f"- Slide 1: opening tension framed around {topic}.\n"
         f"- Slide 2: system or market context for {focus[0] if focus else 'the audience'}.\n"
         f"- Slide 3: product or method mechanism centered on {focus[1] if len(focus) > 1 else 'the differentiator'}.\n"
-        "- Slide 4: proof section with benchmarks, user evidence, or execution artifacts.\n"
+        "- Slide 4: proof section with external evidence, user evidence, or execution artifacts.\n"
         f"- Slide 5: rollout or adoption path constrained by {focus[2] if len(focus) > 2 else 'risk and dependencies'}.\n"
         "- Slide 6: closing ask with a single decision, owner, and next checkpoint.\n"
         "--- (skill: slide_deck_designer)"
@@ -989,7 +974,7 @@ SKILL_REGISTRY: dict[str, dict[str, Any]] = {
             confidence_keywords=["research", "study", "hypothesis", "paper", "question", "evidence plan"],
             tier=SkillTier.EXPERT,
             compute_cost=1.4,
-            synergies=["extract_facts", "benchmark_ablation", "validate_claims"],
+            synergies=["extract_facts", "validate_claims", "artifact_synthesis"],
             conflicts=[],
         ),
     },
@@ -1006,22 +991,6 @@ SKILL_REGISTRY: dict[str, dict[str, Any]] = {
             tier=SkillTier.ADVANCED,
             compute_cost=1.1,
             synergies=["prioritize_items", "generate_recommendations", "validation_planner"],
-            conflicts=[],
-        ),
-    },
-    "benchmark_ablation": {
-        "fn": benchmark_ablation,
-        "metadata": SkillMetadata(
-            name="benchmark_ablation",
-            description="Produce a benchmark runner plan with ablations, metrics, and failure analysis hooks",
-            strengths=["benchmark framing", "ablation design", "evaluation rigor"],
-            weaknesses=["does not execute benchmarks", "depends on a real task suite to be conclusive"],
-            category=SkillCategory.ANALYSIS,
-            output_type="structured",
-            confidence_keywords=["benchmark", "ablation", "metric", "runner", "evaluation", "failure cluster"],
-            tier=SkillTier.EXPERT,
-            compute_cost=1.4,
-            synergies=["research_brief", "validation_planner", "compare_options"],
             conflicts=[],
         ),
     },
@@ -1069,7 +1038,7 @@ SKILL_REGISTRY: dict[str, dict[str, Any]] = {
             confidence_keywords=["data", "dataset", "analysis", "analytics", "cohort", "metric", "sql"],
             tier=SkillTier.EXPERT,
             compute_cost=1.4,
-            synergies=["chart_storyboard", "extract_facts", "benchmark_ablation"],
+            synergies=["chart_storyboard", "extract_facts", "validation_planner"],
             conflicts=[],
         ),
     },

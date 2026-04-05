@@ -62,7 +62,7 @@ class HarnessValueScorer:
             "value_index": value_index,
             "band": band,
             "kind": "internal_heuristic",
-            "benchmark_validated": False,
+            "externally_validated": False,
             "dimensions": [item.to_dict() for item in dimensions],
             "narrative": narrative,
             "visual_hooks": hooks,
@@ -76,7 +76,7 @@ class HarnessValueScorer:
                     "discovery_count",
                     "live_agent_calls",
                 ],
-                "warning": "Value index is an internal weighted heuristic for product regression tracking, not a public benchmark score.",
+                "warning": "Value index is an internal weighted heuristic for product regression tracking, not an externally audited score.",
             },
         }
 

@@ -165,7 +165,7 @@ def test_task_graph_builder_infers_web_research_without_repo_context(tmp_path) -
 
 def test_research_report_query_prefers_report_mode_over_benchmark_mode(tmp_path) -> None:
     profile = analyze_task_request(
-        "Write a deep research report on benchmark strategy and evidence standards for general agent frameworks.",
+        "Write a deep research report on evidence standards and delivery quality for general agent frameworks.",
         target="research",
         workspace_root=tmp_path,
     )
@@ -177,7 +177,7 @@ def test_research_report_query_prefers_report_mode_over_benchmark_mode(tmp_path)
 
 def test_research_report_with_benchmark_scope_keeps_report_as_primary_deliverable(tmp_path) -> None:
     profile = analyze_task_request(
-        "Generate a deep research and improvement report covering benchmark strategy, experimental design, evidence standards, and a concrete upgrade roadmap for a general agent framework.",
+        "Generate a deep research and improvement report covering experimental design, evidence standards, and a concrete upgrade roadmap for a general agent framework.",
         target="research",
         workspace_root=tmp_path,
     )
@@ -191,14 +191,12 @@ def test_research_report_with_benchmark_scope_keeps_report_as_primary_deliverabl
     assert profile.output_mode == "report"
     assert "deliverable_report" in artifact_kinds
     assert profile.task_spec.get("primary_artifact_kind") == "deliverable_report"
-    assert "benchmark_manifest" not in artifact_kinds
-    assert "benchmark_run_config" not in artifact_kinds
     assert "data_analysis_spec" not in artifact_kinds
 
 
 def test_research_report_only_adds_support_artifacts_when_explicitly_requested(tmp_path) -> None:
     profile = analyze_task_request(
-        "Generate a deep research report, include a benchmark manifest, run config, and dataset pull plan for the evaluation appendix.",
+        "Generate a deep research report, include a dataset pull plan and data analysis spec for the evaluation appendix.",
         target="research",
         workspace_root=tmp_path,
     )
@@ -210,12 +208,12 @@ def test_research_report_only_adds_support_artifacts_when_explicitly_requested(t
     }
 
     assert "deliverable_report" in artifact_kinds
-    assert {"benchmark_manifest", "benchmark_run_config", "data_analysis_spec"}.issubset(artifact_kinds)
+    assert {"dataset_pull_spec", "data_analysis_spec"}.issubset(artifact_kinds)
 
 
 def test_publishable_report_query_does_not_false_positive_into_data_mode(tmp_path) -> None:
     profile = analyze_task_request(
-        "Produce a publishable report with concrete findings and a benchmark roadmap for a general-purpose agent framework.",
+        "Produce a publishable report with concrete findings and an evidence-backed roadmap for a general-purpose agent framework.",
         target="research",
         workspace_root=tmp_path,
     )
@@ -265,6 +263,25 @@ def test_research_memo_is_deferred_until_supporting_research_artifacts_exist(tmp
     memo_node = next(item for item in nodes if item["node_id"] == "action_custom-memo")
     assert {"source_matrix", "report_outline", "direct_baseline"}.issubset(set(memo_node["depends_on"]))
     assert {"source_matrix", "report_outline", "direct_baseline"}.issubset(set(memo_node["metrics"]["source_node_ids"]))
+
+
+def test_plain_research_report_skips_optional_support_artifacts(tmp_path) -> None:
+    tools = ToolRegistry()
+    graph = tools.call(
+        ToolCall(
+            name="task_graph_builder",
+            tool_type=ToolType.CODE,
+            args={
+                "query": "Write a cited deep research report about general agent frameworks.",
+                "target": "research",
+                "workspace_root": str(tmp_path),
+            },
+        )
+    )
+
+    assert graph.success is True
+    node_ids = {item["node_id"] for item in graph.output["graph"]["nodes"]}
+    assert {"source_matrix", "report_outline", "direct_baseline"}.isdisjoint(node_ids)
 
 
 def test_task_graph_builder_infers_workspace_grounded_repo_analysis(tmp_path) -> None:
@@ -326,7 +343,7 @@ def test_task_graph_builder_supports_hybrid_task_context(tmp_path) -> None:
     assert "external_resources" in node_ids
 
 
-def test_task_graph_builder_expands_benchmark_graph_with_executable_actions(tmp_path) -> None:
+def test_task_graph_builder_expands_data_graph_with_executable_actions(tmp_path) -> None:
     workspace = tmp_path / "workspace"
     workspace.mkdir(parents=True, exist_ok=True)
     (workspace / "tests").mkdir(parents=True, exist_ok=True)
@@ -338,7 +355,7 @@ def test_task_graph_builder_expands_benchmark_graph_with_executable_actions(tmp_
             name="task_graph_builder",
             tool_type=ToolType.CODE,
             args={
-                "query": "Build a benchmark and ablation plan, produce run config, and pull external evaluation data",
+                "query": "Build an evaluation data collection plan, prepare a loader template, and pull external evidence data",
                 "workspace_root": str(workspace),
             },
         )
@@ -347,13 +364,15 @@ def test_task_graph_builder_expands_benchmark_graph_with_executable_actions(tmp_
     assert graph.success is True
     assert graph.output["profile"]["graph_expansion"]["replan_enabled"] is True
     node_ids = {item["node_id"] for item in graph.output["graph"]["nodes"]}
-    assert {"action_benchmark_run_config", "action_dataset_pull_spec", "replan"}.issubset(node_ids)
+    assert {"action_dataset_pull_spec", "action_dataset_loader_template", "replan"}.issubset(node_ids)
 
 
 def test_task_graph_builder_can_use_live_model_for_channel_selection(monkeypatch, tmp_path) -> None:
     workspace = tmp_path / "workspace"
     workspace.mkdir(parents=True, exist_ok=True)
     (workspace / "notes.md").write_text("general notes", encoding="utf-8")
+
+    request_payloads: list[dict[str, object]] = []
 
     class _FakeResponse:
         def __init__(self, payload: dict[str, object]) -> None:
@@ -369,6 +388,7 @@ def test_task_graph_builder_can_use_live_model_for_channel_selection(monkeypatch
             return False
 
     def fake_urlopen(req, timeout=0):  # type: ignore[no-untyped-def]
+        request_payloads.append(json.loads(req.data.decode("utf-8")))
         return _FakeResponse(
             {
                 "model": "demo-model",
@@ -417,11 +437,15 @@ def test_task_graph_builder_can_use_live_model_for_channel_selection(monkeypatch
     selected = set(graph.output["profile"]["selected_channels"])
     assert {"discovery", "web"}.issubset(selected)
     assert "live model refined channel selection" in graph.output["profile"]["deliberation"]["rationale"]
+    deliberation_payload = json.loads(str(request_payloads[0]["messages"][1]["content"]))
+    assert deliberation_payload["execution_loop"]["schema"] == "agent-harness-generic-loop/v1"
+    assert deliberation_payload["execution_loop"]["phases"][0]["phase"] == "observe"
 
 
 def test_task_graph_builder_can_use_live_model_for_graph_expansion(monkeypatch, tmp_path) -> None:
     workspace = tmp_path / "workspace"
     workspace.mkdir(parents=True, exist_ok=True)
+    request_payloads: list[dict[str, object]] = []
 
     class _FakeResponse:
         def __init__(self, payload: dict[str, object]) -> None:
@@ -458,6 +482,7 @@ def test_task_graph_builder_can_use_live_model_for_graph_expansion(monkeypatch, 
     ]
 
     def fake_urlopen(req, timeout=0):  # type: ignore[no-untyped-def]
+        request_payloads.append(json.loads(req.data.decode("utf-8")))
         payload = responses.pop(0)
         return _FakeResponse(payload)
 
@@ -483,3 +508,8 @@ def test_task_graph_builder_can_use_live_model_for_graph_expansion(monkeypatch, 
     assert graph.success is True
     assert graph.output["profile"]["graph_expansion"]["source"] == "live_model"
     assert any(item["kind"] == "patch_scaffold" for item in graph.output["profile"]["graph_expansion"]["actions"])
+    expansion_payload = json.loads(str(request_payloads[1]["messages"][1]["content"]))
+    assert expansion_payload["execution_loop"]["schema"] == "agent-harness-generic-loop/v1"
+    assert expansion_payload["execution_loop"]["phases"][0]["phase"] == "observe"
+    assert expansion_payload["fallback_seed"]["source"] == "local_fallback"
+    assert expansion_payload["fallback_seed"]["actions"]

@@ -151,7 +151,7 @@ class ProposalRegistry:
                     ProposalPillarBlueprint(
                         title="Proof Engine",
                         summary="Every release claim is backed by pilot evidence, replayable traces, and lab gates.",
-                        integration="Feed pilot traces and release benchmarks into the same decision packet.",
+                        integration="Feed pilot traces and release checkpoints into the same decision packet.",
                         live_key="research_pillar",
                     ),
                 ],
@@ -217,27 +217,27 @@ class ProposalRegistry:
                 ],
                 business_summary=[
                     "Move from isolated experiments to a governed release pipeline.",
-                    "Treat reproducibility and benchmark history as launch requirements.",
+                    "Treat reproducibility and evidence history as launch requirements.",
                     "Use staged release criteria so research wins can survive real production scrutiny.",
                 ],
                 critical_risks=[
                     "Research signals look promising but do not translate to production operating constraints.",
-                    "Benchmarks are strong but decision-makers cannot inspect the supporting evidence quickly enough.",
+                    "Evaluation signals look promising but decision-makers cannot inspect the supporting evidence quickly enough.",
                     "Experimental branches proliferate faster than governance can review them.",
                 ],
                 impact_labels=["Experiment throughput", "Evidence quality", "Release confidence", "Stakeholder trust"],
                 keyword_patterns=[
-                    r"(research|lab|experiment|benchmark|study|paper)",
+                    r"(research|lab|experiment|study|paper)",
                     r"(researcher|researchers|promotion criteria|release promotion|paper-grade)",
                     r"(improvement|upgrade|roadmap|system gaps|evidence standards|deep research)",
                 ],
                 pillars=[
-                    ProposalPillarBlueprint("Research Throughput", "Increase experiment velocity without breaking comparability.", "Route candidate ideas into benchmark-ready release packets.", "growth_pillar"),
-                    ProposalPillarBlueprint("Governed Promotion", "Promote only the candidates that pass quality and safety gates.", "Tie release promotion to the same benchmark trail.", "governance_pillar"),
+                    ProposalPillarBlueprint("Research Throughput", "Increase experiment velocity without breaking comparability.", "Route candidate ideas into deliverable-ready release packets.", "growth_pillar"),
+                    ProposalPillarBlueprint("Governed Promotion", "Promote only the candidates that pass quality and safety gates.", "Tie release promotion to the same evidence trail.", "governance_pillar"),
                     ProposalPillarBlueprint("Decision Readout", "Convert experiment evidence into board-readable launch claims.", "Attach lab and runtime evidence to the operating memo.", "research_pillar"),
                 ],
                 phases=[
-                    ProposalPhaseBlueprint("Phase 1 - Benchmark Foundation", ["Stabilize scenario suites and quality gates.", "Define success metrics before scaling experiments."], ["scenario coverage complete", "quality gates agreed"]),
+                    ProposalPhaseBlueprint("Phase 1 - Evaluation Foundation", ["Stabilize scenario suites and quality gates.", "Define success metrics before scaling experiments."], ["scenario coverage complete", "quality gates agreed"]),
                     ProposalPhaseBlueprint("Phase 2 - Candidate Promotion", ["Run contenders through repeatable evaluation.", "Package evidence for decision review."], ["promotion packet complete", "release committee review ready"]),
                     ProposalPhaseBlueprint("Phase 3 - Production Rollout", ["Ship the winning candidate with monitoring hooks.", "Track post-launch drift against lab expectations."], ["post-launch drift within threshold", "rollback plan validated"]),
                 ],

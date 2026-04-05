@@ -95,7 +95,7 @@ class RecipeRegistry:
             return self._recipes.get("enterprise-ops")
         if any(token in lowered for token in ["daily", "routine", "todo", "meeting", "workflow", "productivity"]):
             return self._recipes.get("daily-operator")
-        if any(token in lowered for token in ["benchmark", "ablation", "experiment", "reproducible", "paper"]):
+        if any(token in lowered for token in ["experiment", "reproducible", "paper", "study", "evidence"]):
             return self._recipes.get("research-rig")
         if any(token in lowered for token in ["creative", "brand", "design", "visual", "campaign", "presentation"]):
             return self._recipes.get("creative-studio")
@@ -129,7 +129,7 @@ class RecipeRegistry:
 
         if primary_artifact in {"patch_draft", "patch_plan"} or ("code-mission" in package_names and "workspace" in channels):
             return self._recipes.get("router-forge")
-        if "deep-research" in package_names or primary_artifact in {"benchmark_manifest", "benchmark_run_config"}:
+        if "deep-research" in package_names:
             return self._recipes.get("research-rig")
         if primary_artifact in {"webpage_blueprint", "slide_deck_plan", "video_storyboard", "image_prompt_pack"}:
             return self._recipes.get("creative-studio")
@@ -338,8 +338,8 @@ class RecipeRegistry:
             HarnessRecipe(
                 name="research-rig",
                 version="1.0.0",
-                description="Research-oriented workflow for benchmark design and reproducible experiments.",
-                tags=["research", "benchmark", "ablation"],
+                description="Research-oriented workflow for evidence-backed investigation and reproducible experiments.",
+                tags=["research", "evidence", "analysis"],
                 default_mode="deep",
                 steps=[
                     RecipeStep(
@@ -350,13 +350,13 @@ class RecipeRegistry:
                     ),
                     RecipeStep(
                         step_id="evidence-dossier",
-                        title="Collect benchmark anchors and evaluation references",
+                        title="Collect evaluation anchors and evidence references",
                         tool="evidence_dossier_builder",
                         args={"limit": 6},
                     ),
                     RecipeStep(
                         step_id="reference-pack",
-                        title="Attach external references and benchmark anchors",
+                        title="Attach external references and source anchors",
                         tool="external_resource_hub",
                         args={"limit": 6},
                     ),

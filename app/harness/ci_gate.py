@@ -1,4 +1,4 @@
-"""CI quality gate powered by harness research lab benchmarks."""
+"""CI quality gate powered by harness research-lab regressions."""
 
 from __future__ import annotations
 

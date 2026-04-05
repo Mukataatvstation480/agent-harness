@@ -62,7 +62,7 @@ def test_build_showcase_payload_shape() -> None:
 def test_write_showcase_with_interop_bundle(tmp_path: Path) -> None:
     builder = StudioShowcaseBuilder(harness=HarnessEngine())
     payload = builder.build_showcase(
-        query="Benchmark strategy options and produce a governance-ready recommendation.",
+        query="Evaluation strategy options and produce a governance-ready recommendation.",
         mode="balanced",
         lab_preset="daily",
         lab_repeats=1,
@@ -101,6 +101,8 @@ def test_write_showcase_with_interop_bundle(tmp_path: Path) -> None:
     assert "Openable Files" in html_content
     assert "Appendix" in html_content
     assert "Primary Deliverable Raw Text" in html_content
+    assert "Delivery Boundary And Review" in html_content
+    assert "Benchmark Fit And Boundary" not in html_content
     assert "Research Lab Leaderboard" in html_content
 
 
@@ -146,7 +148,7 @@ def test_enterprise_query_maps_to_enterprise_rollout_scenario() -> None:
 def test_research_query_maps_to_research_ops_scenario() -> None:
     builder = StudioShowcaseBuilder(harness=HarnessEngine())
     payload = builder.build_showcase(
-        query="Build an applied research lab operating plan with benchmark experiments, paper-grade evidence, and release promotion criteria.",
+        query="Build an applied research lab operating plan with controlled experiments, paper-grade evidence, and release promotion criteria.",
         mode="deep",
         lab_preset="research",
         lab_repeats=1,
@@ -164,7 +166,7 @@ def test_research_query_maps_to_research_ops_scenario() -> None:
 def test_research_improvement_report_prefers_research_scenario() -> None:
     builder = StudioShowcaseBuilder(harness=HarnessEngine())
     payload = builder.build_showcase(
-        query="Generate a deep research and improvement report for agent-harness as an applied research platform, covering benchmark strategy, evidence standards, system gaps, and a 12-week upgrade roadmap.",
+        query="Generate a deep research and improvement report for agent-harness as an applied research platform, covering evidence standards, system gaps, and a 12-week upgrade roadmap.",
         mode="deep",
         lab_preset="research",
         lab_repeats=1,

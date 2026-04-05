@@ -242,6 +242,10 @@ class AgentThreadRuntime:
         events = payload.get("events", []) if isinstance(payload.get("events", []), list) else []
         active_execution = executions[-1] if executions else {}
         runnable = active_execution.get("graph", {}).get("summary", {}).get("runnable_nodes", []) if isinstance(active_execution.get("graph", {}), dict) else []
+        graph_metadata = active_execution.get("graph", {}).get("metadata", {}) if isinstance(active_execution.get("graph", {}), dict) else {}
+        execution_loop = graph_metadata.get("execution_loop", {}) if isinstance(graph_metadata.get("execution_loop", {}), dict) else {}
+        if not execution_loop:
+            execution_loop = self._fallback_execution_loop(active_execution.get("graph", {}))
         uploads = self._sandbox(thread_id).list_files("uploads")
         output_virtuals = []
         for item in artifacts:
@@ -262,17 +266,19 @@ class AgentThreadRuntime:
                 "title": payload.get("title", ""),
                 "artifacts": output_virtuals,
                 "events": self._serialize_frontend_events(events),
+                "execution_loop": execution_loop,
             },
             "next": [str(item) for item in runnable],
             "tasks": self._serialize_task_events(events),
             "metadata": {
                 "thread_id": payload.get("thread_id", thread_id),
                 "source": "agent-harness-thread-runtime",
-                "event_contract": "agent-harness-thread-events/v2",
+                "event_contract": "agent-harness-thread-events/v3",
                 "status": payload.get("status", ""),
                 "agent_name": payload.get("agent_name", ""),
                 "step": len(payload.get("events", [])),
                 "active_execution_id": payload.get("control", {}).get("active_execution_id", ""),
+                "current_loop_phase": str(active_execution.get("current_loop_phase", "")),
             },
             "created_at": payload.get("created_at", ""),
             "checkpoint": {
@@ -423,7 +429,9 @@ class AgentThreadRuntime:
         execution_context.setdefault("thread_id", thread_id)
         execution_context.setdefault("workspace", payload.get("workspace", sandbox.workspace_paths()))
         execution_context.setdefault("node_results", {})
+        execution_context.setdefault("current_loop_phase", "")
         execution["context"] = execution_context
+        execution.setdefault("current_loop_phase", "")
         processed = 0
 
         while True:
@@ -461,6 +469,23 @@ class AgentThreadRuntime:
                     },
                 )
                 return execution
+
+            node_loop_phase = self._node_loop_phase(node)
+            if node_loop_phase and str(execution.get("current_loop_phase", "")) != node_loop_phase:
+                execution["current_loop_phase"] = node_loop_phase
+                execution_context["current_loop_phase"] = node_loop_phase
+                execution["context"] = execution_context
+                self._save_execution(thread_id, payload, execution)
+                self.append_event(
+                    thread_id,
+                    {
+                        "event": "loop_phase_changed",
+                        "event_contract": "agent-harness-thread-events/v3",
+                        "execution_id": execution["execution_id"],
+                        "phase": node_loop_phase,
+                        "summary": f"entered {node_loop_phase} phase",
+                    },
+                )
 
             node["status"] = "running"
             self._save_execution(thread_id, payload, execution)
@@ -540,6 +565,7 @@ class AgentThreadRuntime:
             payload = self.load_thread(thread_id) or payload
 
         execution["status"] = "completed"
+        execution["current_loop_phase"] = "deliver"
         execution["updated_at"] = _utc_now()
         self._refresh_graph_summary(execution["graph"])
         payload["status"] = "completed"
@@ -550,9 +576,10 @@ class AgentThreadRuntime:
             {
                 "event": "execution_completed",
                 "execution_id": execution["execution_id"],
-                "node_count": len(execution.get("graph", {}).get("nodes", [])),
-            },
-        )
+                    "node_count": len(execution.get("graph", {}).get("nodes", [])),
+                    "phase": str(execution.get("current_loop_phase", "")),
+                },
+            )
         return execution
 
     def resume_execution(self, thread_id: str, execution_id: str) -> dict[str, Any]:
@@ -788,6 +815,7 @@ class AgentThreadRuntime:
             "updated_at": _utc_now(),
             "parent_execution_id": parent_execution_id,
             "interrupt_reason": "",
+            "current_loop_phase": "",
             "graph": graph_copy,
             "node_results": [],
             "context": dict(context or {}),
@@ -922,16 +950,33 @@ class AgentThreadRuntime:
                 tasks[key] = {
                     "id": key,
                     "name": name or execution_id,
-                    "kind": kind or "task",
-                    "status": str(event.get("status", "")) or event_name.replace("task_", ""),
+                "kind": kind or "task",
+                "status": str(event.get("status", "")) or event_name.replace("task_", ""),
+                "event_id": int(event.get("event_id", 0)),
+                "updated_at": str(event.get("timestamp", "")),
+                "execution_id": execution_id,
+                "loop_phase": str(event.get("phase", "")),
+                "completed_nodes": int(event.get("completed_nodes", 0)),
+                "node_count": int(event.get("node_count", 0)),
+            }
+                continue
+            if event_name not in {"node_started", "node_result", "artifact_written", "node_completed", "loop_phase_changed"}:
+                continue
+            if event_name == "loop_phase_changed":
+                node_key = f"{execution_id}:phase:{str(event.get('phase', ''))}" if execution_id else f"phase:{str(event.get('phase', ''))}"
+                tasks[node_key] = {
+                    "id": node_key,
+                    "name": f"{str(event.get('phase', '')).title()} Phase",
+                    "kind": "loop_phase",
+                    "status": "active",
                     "event_id": int(event.get("event_id", 0)),
                     "updated_at": str(event.get("timestamp", "")),
                     "execution_id": execution_id,
+                    "phase": str(event.get("phase", "")),
+                    "summary": str(event.get("summary", "")),
                     "completed_nodes": int(event.get("completed_nodes", 0)),
                     "node_count": int(event.get("node_count", 0)),
                 }
-                continue
-            if event_name not in {"node_started", "node_result", "artifact_written", "node_completed"}:
                 continue
             node_id = str(event.get("node_id", "")).strip()
             node_key = f"{execution_id}:{node_id}" if execution_id and node_id else key or node_id
@@ -948,6 +993,7 @@ class AgentThreadRuntime:
                 "node_id": node_id,
                 "node_type": str(event.get("node_type", "")),
                 "phase": str(event.get("phase", "")),
+                "loop_phase": str(event.get("loop_phase", event.get("phase", ""))),
                 "summary": str(event.get("summary", "")),
                 "artifact_relative_path": str(event.get("artifact_relative_path", "")),
                 "artifact_kind": str(event.get("artifact_kind", "")),
@@ -974,6 +1020,7 @@ class AgentThreadRuntime:
                     "node_title": str(event.get("node_title", "")),
                     "node_type": str(event.get("node_type", "")),
                     "summary": str(event.get("summary", "")),
+                    "loop_phase": str(event.get("loop_phase", event.get("phase", ""))),
                     "artifact_relative_path": str(event.get("artifact_relative_path", "")),
                     "artifact_kind": str(event.get("artifact_kind", "")),
                     "preview": str(event.get("preview", "")),
@@ -997,8 +1044,9 @@ class AgentThreadRuntime:
         artifact_payload = artifact or {}
         return {
             "event": event,
-            "event_contract": "agent-harness-thread-events/v2",
+            "event_contract": "agent-harness-thread-events/v3",
             "phase": phase,
+            "loop_phase": AgentThreadRuntime._node_loop_phase(node),
             "execution_id": execution_id,
             "node_id": str(node.get("node_id", "")),
             "node_title": str(node.get("title", "")),
@@ -1013,6 +1061,50 @@ class AgentThreadRuntime:
             "preview": AgentThreadRuntime._result_preview(result_payload),
             "artifact_relative_path": str(artifact_payload.get("relative_path", "")),
             "artifact_kind": str(artifact_payload.get("kind", "")),
+        }
+
+    @staticmethod
+    def _node_loop_phase(node: dict[str, Any]) -> str:
+        metrics = node.get("metrics", {}) if isinstance(node.get("metrics", {}), dict) else {}
+        return str(metrics.get("loop_phase", "")).strip()
+
+    @staticmethod
+    def _fallback_execution_loop(graph: dict[str, Any]) -> dict[str, Any]:
+        summary = graph.get("summary", {}) if isinstance(graph.get("summary", {}), dict) else {}
+        phase_summary = summary.get("phase_summary", []) if isinstance(summary.get("phase_summary", []), list) else []
+        if not phase_summary:
+            inferred: dict[str, dict[str, int | str]] = {}
+            for node in graph.get("nodes", []) if isinstance(graph.get("nodes", []), list) else []:
+                if not isinstance(node, dict):
+                    continue
+                metrics = node.get("metrics", {}) if isinstance(node.get("metrics", {}), dict) else {}
+                phase = str(metrics.get("loop_phase", "")).strip()
+                if not phase:
+                    node_type = str(node.get("node_type", "")).strip()
+                    phase = "deliver" if node_type in {"workspace_action", "file_write"} else "act"
+                bucket = inferred.setdefault(phase, {"phase": phase, "node_count": 0, "completed_nodes": 0})
+                bucket["node_count"] = int(bucket.get("node_count", 0)) + 1
+                if str(node.get("status", "")) == "completed":
+                    bucket["completed_nodes"] = int(bucket.get("completed_nodes", 0)) + 1
+            phase_summary = list(inferred.values())
+        phases = [
+            {
+                "phase": str(item.get("phase", "")).strip(),
+                "goal": "progress current runnable work in this phase",
+                "focus": [f"{int(item.get('completed_nodes', 0))}/{int(item.get('node_count', 0))} nodes completed"],
+            }
+            for item in phase_summary
+            if isinstance(item, dict) and str(item.get("phase", "")).strip()
+        ]
+        return {
+            "schema": "agent-harness-generic-loop/v1",
+            "query": str(graph.get("query", "")),
+            "primary_artifact_kind": str(graph.get("metadata", {}).get("primary_artifact_kind", "")) if isinstance(graph.get("metadata", {}), dict) else "",
+            "selected_channels": list(graph.get("metadata", {}).get("selected_channels", [])) if isinstance(graph.get("metadata", {}), dict) and isinstance(graph.get("metadata", {}).get("selected_channels", []), list) else [],
+            "deliverables": [],
+            "capability_count": 0,
+            "expansion_count": 0,
+            "phases": phases,
         }
 
     @staticmethod

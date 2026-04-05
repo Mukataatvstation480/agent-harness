@@ -115,23 +115,33 @@ Tracked demo snapshots live in `docs/demo/`.
 
 Open the full index: [docs/demo/README.md](./docs/demo/README.md)
 
+Open the HTML file first if you want the fastest overview.
+
+Snapshot set refreshed on April 6, 2026 with local runs only. No live API secrets are stored in these artifacts.
+
 ### Live Fintech Launch
 
+- Theme: a regulated AI customer-support copilot launch plan for a fintech
+- Open first: [docs/demo/live/showcase.html](./docs/demo/live/showcase.html)
 - Deliverable: [docs/demo/live/deliverable.md](./docs/demo/live/deliverable.md)
-- Showcase: [docs/demo/live/showcase.html](./docs/demo/live/showcase.html)
 - Press Brief: [docs/demo/live/press-brief.md](./docs/demo/live/press-brief.md)
+- JSON payload: [docs/demo/live/showcase.json](./docs/demo/live/showcase.json)
 
 ### Enterprise Rollout Pack
 
+- Theme: an enterprise AI operating layer rollout with checkpoints, adoption phases, and delivery packaging
+- Open first: [docs/demo/enterprise/showcase.html](./docs/demo/enterprise/showcase.html)
 - Deliverable: [docs/demo/enterprise/deliverable.md](./docs/demo/enterprise/deliverable.md)
-- Showcase: [docs/demo/enterprise/showcase.html](./docs/demo/enterprise/showcase.html)
 - Press Brief: [docs/demo/enterprise/press-brief.md](./docs/demo/enterprise/press-brief.md)
+- JSON payload: [docs/demo/enterprise/showcase.json](./docs/demo/enterprise/showcase.json)
 
 ### Research Promotion Pack
 
+- Theme: a deep research and runtime-improvement memo on how agent runtimes should beat direct model answers
+- Open first: [docs/demo/research/showcase.html](./docs/demo/research/showcase.html)
 - Deliverable: [docs/demo/research/deliverable.md](./docs/demo/research/deliverable.md)
-- Showcase: [docs/demo/research/showcase.html](./docs/demo/research/showcase.html)
 - Press Brief: [docs/demo/research/press-brief.md](./docs/demo/research/press-brief.md)
+- JSON payload: [docs/demo/research/showcase.json](./docs/demo/research/showcase.json)
 
 ---
 

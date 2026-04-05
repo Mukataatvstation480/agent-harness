@@ -9,6 +9,12 @@ These are tracked showcase snapshots that ship with the repository.
 
 `reports/` is local runtime output and is intentionally gitignored.
 
+Refresh date: April 6, 2026.
+
+Open each `showcase.html` first if you want the fastest product-level walkthrough.
+
+These snapshot files were generated locally and do not embed any live API key.
+
 ## 1. Live Fintech Launch
 
 ![Live Fintech Launch](./live/showcase.png)

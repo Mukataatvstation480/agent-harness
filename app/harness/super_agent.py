@@ -20,12 +20,14 @@ class SuperAgentRoute:
     kind: str
     target: str
     rationale: list[str] = field(default_factory=list)
+    phases: list[str] = field(default_factory=list)
 
     def to_dict(self) -> dict[str, Any]:
         return {
             "kind": self.kind,
             "target": self.target,
             "rationale": list(self.rationale),
+            "phases": list(self.phases),
         }
 
 
@@ -156,10 +158,19 @@ class ThreadFirstSuperAgent:
             rationale.append("thread workspace inspection is required")
         if profile.get("requires_external_evidence"):
             rationale.append("external evidence collection is required")
+        execution_loop = profile.get("execution_loop", {}) if isinstance(profile.get("execution_loop", {}), dict) else {}
+        phases = [
+            str(item.get("phase", "")).strip()
+            for item in execution_loop.get("phases", [])
+            if isinstance(item, dict) and str(item.get("phase", "")).strip()
+        ]
+        if phases:
+            rationale.append(f"loop: {' -> '.join(phases)}")
         return SuperAgentRoute(
             kind="task_graph",
             target=target,
             rationale=rationale or ["generic executable task graph compiled"],
+            phases=phases,
         )
 
     @staticmethod
