@@ -27,8 +27,8 @@ from app.utils.display import (
 
 console = Console()
 PRESS_DEMO_QUERY = (
-    "Design a 90-day launch plan for a regulated AI customer-support copilot at a fintech, "
-    "balancing growth targets, auditability, human override policy, and research credibility."
+    "Create a practical execution plan with evidence-backed milestones, risk controls, "
+    "and measurable checkpoints for delivering a complex project."
 )
 
 

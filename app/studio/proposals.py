@@ -1,4 +1,4 @@
-"""Scenario-aware proposal defaults for flagship showcase generation."""
+"""Scenario-aware proposal defaults for task execution planning."""
 
 from __future__ import annotations
 
@@ -93,235 +93,122 @@ class ProposalRegistry:
     def _defaults() -> list[ProposalScenario]:
         return [
             ProposalScenario(
-                name="regulated_copilot_launch",
-                theme=(
-                    "Launching a regulated AI customer-support copilot with revenue pressure, auditability, and "
-                    "research credibility held in one operating model."
-                ),
+                name="research_ops",
+                theme="Delivering research-grade evidence and analysis with operational rigor.",
                 release_need=(
-                    "A fintech launch team needs a 90-day plan that can ship a customer-support copilot, "
-                    "keep a human override path, satisfy model-risk governance, and generate proof strong enough "
-                    "for procurement, compliance, and executive rollout decisions."
+                    "A team needs a plan that moves from investigation through evidence collection "
+                    "to actionable findings with quality gates."
                 ),
-                audience_takeaway=(
-                    "This package turns a risky AI feature launch into a staged operating program with "
-                    "commercial goals, control checkpoints, and evidence for expansion."
-                ),
-                headline="90-Day Launch Plan for a Regulated AI Support Copilot",
+                audience_takeaway="A structured research pipeline with evidence anchors and decision readiness.",
+                headline="Research and Evidence Delivery Plan",
                 strategy_plan=[
-                    "Concentrate the launch on one revenue-linked support workflow instead of a broad AI platform story.",
-                    "Prove operator control, auditability, and model-risk containment before scaling volume.",
-                    "Translate pilot evidence into a release gate that commercial, risk, and research leaders can all sign.",
+                    "Frame the core question and define what evidence would answer it.",
+                    "Collect and validate evidence before drawing conclusions.",
+                    "Package findings into actionable deliverables with clear next steps.",
                 ],
                 business_summary=[
-                    "Start with a narrow customer-support workflow where response time and auditability matter enough to measure.",
-                    "Use human override, evidence logging, and gated rollout as first-class launch features rather than afterthoughts.",
-                    "Expand only after the pilot proves containment, operator adoption, and measurable service uplift.",
+                    "Start with a focused question and measurable success criteria.",
+                    "Build evidence incrementally with quality checks at each stage.",
+                    "Convert findings into decision-ready artifacts.",
                 ],
                 critical_risks=[
-                    "Customer-facing hallucinations escaping human review.",
-                    "Override policy exists on paper but is too slow for live operations.",
-                    "Pilot metrics show engagement but not enough compliance evidence for expansion.",
+                    "Evidence quality is too thin to support the conclusion.",
+                    "Scope creep dilutes the core question.",
+                    "Findings are not actionable without further work.",
                 ],
-                impact_labels=[
-                    "Pilot throughput lift",
-                    "Audit readiness",
-                    "Operator adoption",
-                    "Expansion readiness",
-                ],
+                impact_labels=["Evidence quality", "Decision readiness", "Execution clarity", "Risk visibility"],
                 keyword_patterns=[
+                    r"(research|study|experiment|evidence|analysis|investigate|evaluate)",
+                    r"(improvement|upgrade|roadmap|gaps|standards|deep research)",
+                ],
+                pillars=[
+                    ProposalPillarBlueprint("Evidence Pipeline", "Systematic evidence collection and validation.", "Feeds into decision artifacts.", "research_pillar"),
+                    ProposalPillarBlueprint("Quality Gates", "Review and validation checkpoints.", "Prevents premature conclusions.", "governance_pillar"),
+                    ProposalPillarBlueprint("Decision Readout", "Actionable findings for stakeholders.", "Translates evidence into action.", "growth_pillar"),
+                ],
+                phases=[
+                    ProposalPhaseBlueprint("Phase 1 - Frame", ["Define the core question.", "Identify evidence sources and success criteria."], ["question defined", "evidence plan ready"]),
+                    ProposalPhaseBlueprint("Phase 2 - Investigate", ["Collect and validate evidence.", "Run analysis and synthesis."], ["evidence collected", "analysis complete"]),
+                    ProposalPhaseBlueprint("Phase 3 - Deliver", ["Package findings.", "Present actionable recommendations."], ["deliverable ready", "decision review complete"]),
+                ],
+            ),
+            ProposalScenario(
+                name="implementation_plan",
+                theme="Planning and executing a technical implementation with validation and risk management.",
+                release_need=(
+                    "A team needs a concrete implementation plan with architecture decisions, "
+                    "migration steps, and validation gates."
+                ),
+                audience_takeaway="A phased implementation roadmap with risk mitigation and quality checkpoints.",
+                headline="Implementation and Delivery Plan",
+                strategy_plan=[
+                    "Define the target architecture and key technical decisions upfront.",
+                    "Break the work into validated phases with clear rollback boundaries.",
+                    "Prove correctness through tests and evidence before expanding scope.",
+                ],
+                business_summary=[
+                    "Start with the highest-risk technical decision and validate it first.",
+                    "Use phased delivery with rollback capability at each stage.",
+                    "Track quality through automated tests and manual review gates.",
+                ],
+                critical_risks=[
+                    "Architecture assumptions are invalidated during implementation.",
+                    "Integration complexity exceeds estimates.",
+                    "Validation coverage is too thin to catch regressions.",
+                ],
+                impact_labels=["Technical correctness", "Delivery velocity", "Risk mitigation", "Quality assurance"],
+                keyword_patterns=[
+                    r"(implement|build|code|deploy|migrate|refactor|architecture)",
+                    r"(enterprise|workflow|platform|rollout|security|operations)",
+                    r"(copilot|assistant|agent|launch|plan)",
                     r"(regulated|compliance|audit|policy|governance)",
-                    r"(support|service|customer)",
-                    r"(copilot|assistant|agent)",
-                    r"(fintech|bank|payments|insurance)",
                 ],
                 pillars=[
-                    ProposalPillarBlueprint(
-                        title="Commercial Wedge",
-                        summary="Target one support workflow with visible revenue or retention pressure.",
-                        integration="Connect launch scope to the frontline KPI dashboard and ticket-routing path.",
-                        live_key="growth_pillar",
-                    ),
-                    ProposalPillarBlueprint(
-                        title="Control Surface",
-                        summary="Human override, audit logging, and policy escalation stay in the request path.",
-                        integration="Bind policy checks to case routing, override capture, and review queues.",
-                        live_key="governance_pillar",
-                    ),
-                    ProposalPillarBlueprint(
-                        title="Proof Engine",
-                        summary="Every release claim is backed by pilot evidence, replayable traces, and lab gates.",
-                        integration="Feed pilot traces and release checkpoints into the same decision packet.",
-                        live_key="research_pillar",
-                    ),
+                    ProposalPillarBlueprint("Architecture", "Target state and integration design.", "Foundation for all execution phases.", "growth_pillar"),
+                    ProposalPillarBlueprint("Validation", "Tests, gates, and quality checks.", "Proves correctness at each phase.", "governance_pillar"),
+                    ProposalPillarBlueprint("Delivery", "Phased rollout with rollback capability.", "Controls risk during execution.", "research_pillar"),
                 ],
                 phases=[
-                    ProposalPhaseBlueprint(
-                        phase="Phase 1 - Scope And Control Setup",
-                        actions=[
-                            "Limit the first release to one support motion with stable documentation and bounded risk.",
-                            "Define override ownership, escalation path, and audit log schema before model exposure grows.",
-                            "Instrument baseline service metrics and reviewer workload before turning on automation.",
-                        ],
-                        success_metrics=[
-                            "baseline metrics captured",
-                            "override policy signed off",
-                            "audit schema wired into launch logs",
-                        ],
-                    ),
-                    ProposalPhaseBlueprint(
-                        phase="Phase 2 - Pilot And Evidence Collection",
-                        actions=[
-                            "Run the copilot in shadow or assisted mode with sampled human review.",
-                            "Track response quality, override frequency, and policy exceptions in one operating dashboard.",
-                            "Build a release packet that procurement, risk, and product leaders can read without extra translation.",
-                        ],
-                        success_metrics=[
-                            "quality threshold sustained",
-                            "override load within staffing plan",
-                            "evidence packet complete",
-                        ],
-                    ),
-                    ProposalPhaseBlueprint(
-                        phase="Phase 3 - Controlled Expansion",
-                        actions=[
-                            "Open the copilot to more queues only after gates pass on quality, safety, and operator adoption.",
-                            "Separate fast rollback levers from growth levers so expansion does not compromise containment.",
-                            "Turn pilot proof into the board narrative for regional or workflow expansion.",
-                        ],
-                        success_metrics=[
-                            "gates passed for next queue",
-                            "rollback tested",
-                            "expansion case approved",
-                        ],
-                    ),
+                    ProposalPhaseBlueprint("Phase 1 - Design", ["Define architecture and key decisions.", "Identify risks and dependencies."], ["architecture defined", "risks mapped"]),
+                    ProposalPhaseBlueprint("Phase 2 - Build", ["Implement in validated phases.", "Run tests and collect evidence."], ["implementation complete", "tests passing"]),
+                    ProposalPhaseBlueprint("Phase 3 - Ship", ["Deploy with monitoring.", "Validate in production."], ["deployment complete", "monitoring active"]),
                 ],
             ),
             ProposalScenario(
-                name="research_ops_platform",
-                theme=(
-                    "Launching an applied research platform that must ship product value while preserving experimental rigor."
-                ),
+                name="general_task",
+                theme="Executing a general task with planning, evidence, and quality assurance.",
                 release_need=(
-                    "A research and product organization needs one operating plan that can move experiments into production "
-                    "without losing reproducibility, auditability, or decision quality."
+                    "A team needs a concrete plan to accomplish a task with evidence-backed decisions "
+                    "and measurable quality gates."
                 ),
-                audience_takeaway=(
-                    "The proposal connects experiment design, evidence review, and product rollout into one repeatable system."
-                ),
-                headline="Applied Research Delivery Operating Plan",
+                audience_takeaway="A structured execution plan with evidence, validation, and clear deliverables.",
+                headline="Task Execution Plan",
                 strategy_plan=[
-                    "Align experiment throughput with release evidence rather than running research and product on separate tracks.",
-                    "Use one scorecard for value, reproducibility, and safety before promotion to production.",
-                    "Package experiment results into operating decisions that non-research stakeholders can use."
+                    "Define scope and success criteria before starting execution.",
+                    "Collect evidence and validate assumptions throughout.",
+                    "Package results into reviewable deliverables.",
                 ],
                 business_summary=[
-                    "Move from isolated experiments to a governed release pipeline.",
-                    "Treat reproducibility and evidence history as launch requirements.",
-                    "Use staged release criteria so research wins can survive real production scrutiny.",
+                    "Start with clear scope and measurable goals.",
+                    "Execute in phases with validation at each checkpoint.",
+                    "Deliver artifacts that stakeholders can inspect and act on.",
                 ],
                 critical_risks=[
-                    "Research signals look promising but do not translate to production operating constraints.",
-                    "Evaluation signals look promising but decision-makers cannot inspect the supporting evidence quickly enough.",
-                    "Experimental branches proliferate faster than governance can review them.",
+                    "Scope expands faster than evidence quality.",
+                    "Results are not actionable without further refinement.",
+                    "Quality gates are skipped under time pressure.",
                 ],
-                impact_labels=["Experiment throughput", "Evidence quality", "Release confidence", "Stakeholder trust"],
-                keyword_patterns=[
-                    r"(research|lab|experiment|study|paper)",
-                    r"(researcher|researchers|promotion criteria|release promotion|paper-grade)",
-                    r"(improvement|upgrade|roadmap|system gaps|evidence standards|deep research)",
-                ],
-                pillars=[
-                    ProposalPillarBlueprint("Research Throughput", "Increase experiment velocity without breaking comparability.", "Route candidate ideas into deliverable-ready release packets.", "growth_pillar"),
-                    ProposalPillarBlueprint("Governed Promotion", "Promote only the candidates that pass quality and safety gates.", "Tie release promotion to the same evidence trail.", "governance_pillar"),
-                    ProposalPillarBlueprint("Decision Readout", "Convert experiment evidence into board-readable launch claims.", "Attach lab and runtime evidence to the operating memo.", "research_pillar"),
-                ],
-                phases=[
-                    ProposalPhaseBlueprint("Phase 1 - Evaluation Foundation", ["Stabilize scenario suites and quality gates.", "Define success metrics before scaling experiments."], ["scenario coverage complete", "quality gates agreed"]),
-                    ProposalPhaseBlueprint("Phase 2 - Candidate Promotion", ["Run contenders through repeatable evaluation.", "Package evidence for decision review."], ["promotion packet complete", "release committee review ready"]),
-                    ProposalPhaseBlueprint("Phase 3 - Production Rollout", ["Ship the winning candidate with monitoring hooks.", "Track post-launch drift against lab expectations."], ["post-launch drift within threshold", "rollback plan validated"]),
-                ],
-            ),
-            ProposalScenario(
-                name="enterprise_ai_rollout",
-                theme="Rolling out an enterprise AI operating layer with stronger governance than point-solution copilots.",
-                release_need=(
-                    "An enterprise team needs a rollout design that can prove operational value, control security risk, "
-                    "and avoid becoming another disconnected AI pilot."
-                ),
-                audience_takeaway=(
-                    "The system is framed as an operating layer with phased adoption, evidence gates, and ecosystem leverage."
-                ),
-                headline="Enterprise AI Operating Layer Rollout Plan",
-                strategy_plan=[
-                    "Choose one workflow wedge and one governance model before expanding platform scope.",
-                    "Integrate discovery, execution, and release evidence instead of running them as isolated workstreams.",
-                    "Use interoperability as an expansion lever, not an afterthought.",
-                ],
-                business_summary=[
-                    "Build around a single high-friction workflow first.",
-                    "Keep release gates visible to security and operators from day one.",
-                    "Turn ecosystem compatibility into a deployment multiplier.",
-                ],
-                critical_risks=[
-                    "Platform scope expands before any workflow proves value.",
-                    "Local pilot success cannot be repeated in the next environment.",
-                    "Governance review happens after integration choices are already expensive to reverse.",
-                ],
-                impact_labels=["Workflow time saved", "Deployment readiness", "Governance coverage", "Ecosystem leverage"],
-                keyword_patterns=[
-                    r"(enterprise|workflow|operations|rollout|deployment|platform)",
-                    r"(operating layer|business ops|security|cio)",
-                ],
-                pillars=[
-                    ProposalPillarBlueprint("Workflow Wedge", "Start with one workflow that benefits from orchestration and evidence capture.", "Wire the wedge directly into the rollout scorecard.", "growth_pillar"),
-                    ProposalPillarBlueprint("Governance By Default", "Move security and policy checks into the operating loop.", "Attach controls to runtime routing and release decisions.", "governance_pillar"),
-                    ProposalPillarBlueprint("Portable Capability", "Export skills and evidence so adoption is not trapped in one runtime.", "Use interoperability bundles to accelerate adjacent teams.", "research_pillar"),
-                ],
-                phases=[
-                    ProposalPhaseBlueprint("Phase 1 - Wedge Selection", ["Choose the first workflow and define owner metrics.", "Instrument current-state baseline."], ["workflow owner assigned", "baseline captured"]),
-                    ProposalPhaseBlueprint("Phase 2 - Controlled Deployment", ["Launch with guardrails and evidence collection.", "Verify deployment and security readiness."], ["deployment checklist passed", "evidence bundle generated"]),
-                    ProposalPhaseBlueprint("Phase 3 - Expansion Playbook", ["Replicate the pattern to the next workflow.", "Use interop to accelerate ecosystem adoption."], ["second workflow approved", "interop bundle consumed"]),
-                ],
-            ),
-            ProposalScenario(
-                name="generic_launch",
-                theme="Launching an AI product with growth, governance, and research credibility kept in balance.",
-                release_need=(
-                    "A launch team needs a concrete operating plan that can expand the product, control governance risk, "
-                    "and prove the system is credible enough to release."
-                ),
-                audience_takeaway=(
-                    "This is not just a prompt response. It is a release-ready strategy package with routing evidence, "
-                    "evaluation results, and ecosystem-portable artifacts."
-                ),
-                headline="Flagship AI Platform Launch Plan",
-                strategy_plan=[
-                    "Synthesize competing business, governance, and research perspectives into one operating thesis.",
-                    "Map major release risks before launch and make the downside visible.",
-                    "Convert the result into a release recommendation backed by measurable gates.",
-                ],
-                business_summary=[
-                    "Build one operating model that aligns growth, governance, and research instead of optimizing them separately.",
-                    "Release in phased checkpoints so the team can prove value before expanding scope.",
-                    "Use explicit release gates so launch quality is evidence-backed rather than intuition-backed.",
-                ],
-                critical_risks=[
-                    "Launch scope expands faster than proof quality.",
-                    "Governance review arrives after product commitments are already fixed.",
-                    "The product story is stronger than the evidence packet behind it.",
-                ],
-                impact_labels=["Value creation", "Safety posture", "Release confidence", "Ecosystem leverage"],
+                impact_labels=["Value creation", "Quality assurance", "Execution clarity", "Risk management"],
                 keyword_patterns=[],
                 pillars=[
-                    ProposalPillarBlueprint("Growth Engine", "Business capability bundle", "Integrated into the release stack", "growth_pillar"),
-                    ProposalPillarBlueprint("Governance Core", "Business capability bundle", "Integrated into the release stack", "governance_pillar"),
-                    ProposalPillarBlueprint("Research Credibility", "Business capability bundle", "Integrated into the release stack", "research_pillar"),
+                    ProposalPillarBlueprint("Execution", "Core task delivery.", "Integrated into the delivery pipeline.", "growth_pillar"),
+                    ProposalPillarBlueprint("Governance", "Quality and risk controls.", "Prevents shortcuts and regressions.", "governance_pillar"),
+                    ProposalPillarBlueprint("Evidence", "Supporting data and validation.", "Backs every decision with proof.", "research_pillar"),
                 ],
                 phases=[
-                    ProposalPhaseBlueprint("Phase 1 - Focus", ["Choose the first release wedge.", "Define operating and risk owners."], ["wedge defined", "owners assigned"]),
-                    ProposalPhaseBlueprint("Phase 2 - Prove", ["Run a controlled launch.", "Collect measurable evidence."], ["evidence collected", "gate review ready"]),
-                    ProposalPhaseBlueprint("Phase 3 - Expand", ["Scale only after gates pass.", "Package the expansion case."], ["expansion approved", "rollout tracked"]),
+                    ProposalPhaseBlueprint("Phase 1 - Scope", ["Define the task and success criteria.", "Identify resources and risks."], ["scope defined", "plan ready"]),
+                    ProposalPhaseBlueprint("Phase 2 - Execute", ["Run the plan.", "Collect evidence and validate."], ["execution complete", "evidence collected"]),
+                    ProposalPhaseBlueprint("Phase 3 - Deliver", ["Package results.", "Review and hand off."], ["deliverable ready", "review complete"]),
                 ],
             ),
         ]

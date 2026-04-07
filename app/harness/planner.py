@@ -2,14 +2,32 @@
 
 from __future__ import annotations
 
+from dataclasses import dataclass, field
 from typing import Any
 
 from app.harness.models import ToolCall, ToolType
 from app.harness.task_profile import TaskProfile, analyze_task_request
 
 
+@dataclass
+class PlannerConfig:
+    """Tunable limits for the planner — override per instance or via settings."""
+
+    max_plan_steps: int = 12
+    workspace_search_limit: int = 10
+    skill_search_limit: int = 8
+    external_resource_limit: int = 8
+    evidence_limit: int = 6
+    risk_evidence_limit: int = 5
+    tool_search_limit: int = 8
+    tool_type_overrides: dict[str, ToolType] = field(default_factory=dict)
+
+
 class HarnessPlanner:
     """Generate task-aware plans and fallback tool decisions."""
+
+    def __init__(self, config: PlannerConfig | None = None) -> None:
+        self.config = config or PlannerConfig()
 
     def build_plan(
         self,
@@ -25,7 +43,7 @@ class HarnessPlanner:
         primary_artifact = str(task_spec.get("primary_artifact_kind", profile.output_mode)).strip()
         plan = ["understand goal, constraints, and desired end state"]
         steps = profile.capability_plan.get("steps", []) if isinstance(profile.capability_plan.get("steps", []), list) else []
-        for step in steps[:8]:
+        for step in steps[:self.config.max_plan_steps]:
             if not isinstance(step, dict):
                 continue
             title = str(step.get("title", "")).strip()
@@ -64,18 +82,18 @@ class HarnessPlanner:
         }
         seen = used | event_tools
 
-        for tool_name, args in self._candidate_tool_sequence(profile):
+        for tool_name, args in self._candidate_tool_sequence(profile, self.config):
             if tool_name in seen:
                 continue
             return ToolCall(
                 name=tool_name,
-                tool_type=self._tool_type(tool_name),
+                tool_type=self._tool_type(tool_name, self.config),
                 args=args,
             )
         return None
 
     @staticmethod
-    def _candidate_tool_sequence(profile: TaskProfile) -> list[tuple[str, dict[str, object]]]:
+    def _candidate_tool_sequence(profile: TaskProfile, config: PlannerConfig) -> list[tuple[str, dict[str, object]]]:
         task_spec = profile.task_spec if isinstance(profile.task_spec, dict) else {}
         required_channels = {
             str(item).strip()
@@ -105,20 +123,20 @@ class HarnessPlanner:
             if ref == "workspace_file_search":
                 args.setdefault("query", primary)
                 args.setdefault("glob", glob)
-                args.setdefault("limit", 8)
+                args.setdefault("limit", config.workspace_search_limit)
             elif ref == "code_skill_search":
                 args.setdefault("query", skill_query)
-                args.setdefault("limit", 6)
+                args.setdefault("limit", config.skill_search_limit)
             elif ref == "external_resource_hub":
                 args.setdefault("query", profile.query)
-                args.setdefault("limit", 6)
+                args.setdefault("limit", config.external_resource_limit)
             elif ref == "evidence_dossier_builder":
                 args.setdefault("query", profile.query)
-                args.setdefault("limit", 5)
+                args.setdefault("limit", config.evidence_limit)
                 args.setdefault("domains", profile.domains or ["general"])
             elif ref == "policy_risk_matrix":
                 args.setdefault("query", profile.query)
-                args.setdefault("evidence_limit", 4)
+                args.setdefault("evidence_limit", config.risk_evidence_limit)
             else:
                 args.setdefault("query", profile.query)
             sequence.append((ref, args))
@@ -131,6 +149,7 @@ class HarnessPlanner:
             skill_query=skill_query,
             glob=glob,
             seen_tools=seen_tools,
+            config=config,
         ):
             seen_tools.add(tool_name)
             sequence.append((tool_name, args))
@@ -149,26 +168,26 @@ class HarnessPlanner:
         skill_query: str,
         glob: str,
         seen_tools: set[str],
+        config: PlannerConfig,
     ) -> list[tuple[str, dict[str, object]]]:
         sequence: list[tuple[str, dict[str, object]]] = []
         if "discovery" in required_channels and "tool_search" not in seen_tools:
-            sequence.append(("tool_search", {"query": primary_artifact or profile.query, "limit": 6}))
+            sequence.append(("tool_search", {"query": primary_artifact or profile.query, "limit": config.tool_search_limit}))
         if "discovery" in required_channels and "code_skill_search" not in seen_tools:
-            sequence.append(("code_skill_search", {"query": skill_query, "target": profile.target_hint, "limit": 6}))
+            sequence.append(("code_skill_search", {"query": skill_query, "target": profile.target_hint, "limit": config.skill_search_limit}))
         if "workspace" in required_channels and "workspace_file_search" not in seen_tools:
-            sequence.append(("workspace_file_search", {"query": primary, "glob": glob, "limit": 8}))
+            sequence.append(("workspace_file_search", {"query": primary, "glob": glob, "limit": config.workspace_search_limit}))
         if "web" in required_channels and "external_resource_hub" not in seen_tools:
-            sequence.append(("external_resource_hub", {"query": profile.query, "limit": 6}))
+            sequence.append(("external_resource_hub", {"query": profile.query, "limit": config.external_resource_limit}))
         if (
             "web" in required_channels
-            and primary_artifact in {"deliverable_report", "data_analysis_spec"}
             and "evidence_dossier_builder" not in seen_tools
         ):
             sequence.append(
-                ("evidence_dossier_builder", {"query": profile.query, "limit": 5, "domains": profile.domains or ["general"]})
+                ("evidence_dossier_builder", {"query": profile.query, "limit": config.evidence_limit, "domains": profile.domains or ["general"]})
             )
         if "risk" in required_channels and "policy_risk_matrix" not in seen_tools:
-            sequence.append(("policy_risk_matrix", {"query": profile.query, "evidence_limit": 4}))
+            sequence.append(("policy_risk_matrix", {"query": profile.query, "evidence_limit": config.risk_evidence_limit}))
         return sequence
 
     @staticmethod
@@ -178,17 +197,23 @@ class HarnessPlanner:
             for item in profile.workspace_summary.get("languages", [])
             if str(item).strip()
         } if isinstance(profile.workspace_summary, dict) else set()
+        lang_ext_map = {
+            "python": "*.py", "go": "*.go", "rust": "*.rs", "java": "*.java",
+            "c": "*.{c,h}", "cpp": "*.{cpp,hpp,cc,h}", "ruby": "*.rb",
+            "php": "*.php", "swift": "*.swift", "kotlin": "*.{kt,kts}",
+            "typescript": "*.{ts,tsx}", "javascript": "*.{js,jsx}",
+        }
         if primary_artifact in {"patch_draft", "patch_plan"}:
-            if "python" in languages:
-                return "*.py"
-            if {"typescript", "javascript"} & languages:
-                return "*.{ts,tsx,js,jsx}"
-            return "*"
+            for lang, ext in lang_ext_map.items():
+                if lang in languages:
+                    return ext
         return "*"
 
     @staticmethod
-    def _tool_type(tool_name: str) -> ToolType:
-        mapping = {
+    def _tool_type(tool_name: str, config: PlannerConfig) -> ToolType:
+        if tool_name in config.tool_type_overrides:
+            return config.tool_type_overrides[tool_name]
+        default_mapping = {
             "workspace_file_search": ToolType.CODE,
             "external_resource_hub": ToolType.BROWSER,
             "evidence_dossier_builder": ToolType.BROWSER,
@@ -198,4 +223,4 @@ class HarnessPlanner:
             "code_experiment_design": ToolType.CODE,
             "memory_context_digest": ToolType.CODE,
         }
-        return mapping.get(tool_name, ToolType.CODE)
+        return default_mapping.get(tool_name, ToolType.CODE)
