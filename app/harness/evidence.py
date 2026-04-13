@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import html
 import json
 import re
 from dataclasses import dataclass, field
@@ -125,6 +126,51 @@ class EvidenceProviderRegistry:
             domains=["general"],
         ))
 
+    def enable_tavily(self, api_key: str) -> None:
+        """Dynamically add Tavily web search as an evidence source."""
+        if not api_key:
+            return
+        already = any(s.source_type == "tavily" for s in self.sources)
+        if already:
+            return
+        self.resolved_headers["tavily_api_key"] = api_key
+        self.sources.insert(0, EvidenceSourceConfig(
+            source_id="tavily_web_search",
+            source_type="tavily",
+            enabled=True,
+            timeout_seconds=10,
+            domains=["general"],
+        ))
+
+    def enable_duckduckgo(self) -> None:
+        """Add no-key DuckDuckGo HTML search fallback."""
+        already = any(s.source_type == "duckduckgo" for s in self.sources)
+        if already:
+            return
+        self.sources.append(EvidenceSourceConfig(
+            source_id="duckduckgo_web_search",
+            source_type="duckduckgo",
+            enabled=True,
+            timeout_seconds=10,
+            domains=["general"],
+        ))
+
+    def enable_searxng(self, base_url: str) -> None:
+        """Add optional SearXNG backend if user runs their own instance."""
+        if not base_url:
+            return
+        already = any(s.source_type == "searxng" for s in self.sources)
+        if already:
+            return
+        self.sources.append(EvidenceSourceConfig(
+            source_id="searxng_web_search",
+            source_type="searxng",
+            enabled=True,
+            url=base_url,
+            timeout_seconds=10,
+            domains=["general"],
+        ))
+
     def list_sources(self) -> list[dict[str, Any]]:
         return [
             {
@@ -212,6 +258,12 @@ class EvidenceProviderRegistry:
             return self._load_static_catalog(source)
         if source.source_type == "live_search":
             return self._load_live_search(source=source, query=query)
+        if source.source_type == "tavily":
+            return self._load_tavily(source=source, query=query)
+        if source.source_type == "duckduckgo":
+            return self._load_duckduckgo(source=source, query=query)
+        if source.source_type == "searxng":
+            return self._load_searxng(source=source, query=query)
         return []
 
     def _load_local_dossier(self, source: EvidenceSourceConfig) -> list[EvidenceRecord]:
@@ -409,6 +461,144 @@ class EvidenceProviderRegistry:
             for row in records
         ]
 
+    def _load_tavily(self, source: EvidenceSourceConfig, query: str) -> list[EvidenceRecord]:
+        """Use Tavily API for real web search."""
+        api_key = self.resolved_headers.get("tavily_api_key", "")
+        if not api_key:
+            return []
+
+        payload = json.dumps({
+            "api_key": api_key,
+            "query": query,
+            "max_results": 6,
+            "include_answer": False,
+            "search_depth": "basic",
+        }).encode("utf-8")
+
+        req = request.Request(
+            "https://api.tavily.com/search",
+            data=payload,
+            headers={"Content-Type": "application/json"},
+            method="POST",
+        )
+        try:
+            with request.urlopen(req, timeout=source.timeout_seconds or 10) as response:
+                result = json.loads(response.read().decode("utf-8", errors="replace"))
+        except Exception:
+            return []
+
+        results = result.get("results", [])
+        if not isinstance(results, list):
+            return []
+
+        records: list[EvidenceRecord] = []
+        for idx, item in enumerate(results[:8]):
+            if not isinstance(item, dict):
+                continue
+            title = str(item.get("title", "")).strip()
+            if not title:
+                continue
+            records.append(
+                EvidenceRecord(
+                    record_id=f"tavily-{idx}",
+                    title=title,
+                    summary=str(item.get("content", ""))[:500],
+                    source_id=source.source_id,
+                    source_type="tavily",
+                    evidence_type="web_search",
+                    url=str(item.get("url", "")),
+                    tags=[],
+                    domains=list(source.domains),
+                    trust_score=min(1.0, float(item.get("score", 0.7))),
+                    freshness_hint="live",
+                    content=str(item.get("content", "")),
+                )
+            )
+        return records
+
+    def _load_duckduckgo(self, source: EvidenceSourceConfig, query: str) -> list[EvidenceRecord]:
+        """No-key HTML search fallback via DuckDuckGo."""
+        url = "https://html.duckduckgo.com/html/?" + parse.urlencode({"q": query})
+        req = request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+        try:
+            with request.urlopen(req, timeout=source.timeout_seconds or 10) as response:
+                body = response.read().decode("utf-8", errors="replace")
+        except Exception:
+            return []
+
+        records: list[EvidenceRecord] = []
+        # Extract lightweight results from result links/snippets.
+        pattern = re.compile(
+            r'<a[^>]*class="result__a"[^>]*href="(?P<href>[^"]+)"[^>]*>(?P<title>.*?)</a>.*?(?:<a[^>]*class="result__snippet"[^>]*>|<div[^>]*class="result__snippet"[^>]*>)(?P<snippet>.*?)(?:</a>|</div>)',
+            re.IGNORECASE | re.DOTALL,
+        )
+        for idx, match in enumerate(pattern.finditer(body)):
+            href = html.unescape(re.sub(r"<.*?>", "", match.group("href"))).strip()
+            title = html.unescape(re.sub(r"<.*?>", "", match.group("title"))).strip()
+            snippet = html.unescape(re.sub(r"<.*?>", "", match.group("snippet"))).strip()
+            if not title:
+                continue
+            # DDG wraps outbound URLs in uddg=
+            parsed = parse.urlparse(href)
+            qs = parse.parse_qs(parsed.query)
+            if "uddg" in qs and qs["uddg"]:
+                href = qs["uddg"][0]
+            records.append(EvidenceRecord(
+                record_id=f"ddg-{idx}",
+                title=title,
+                summary=snippet[:500],
+                source_id=source.source_id,
+                source_type="duckduckgo",
+                evidence_type="web_search",
+                url=href,
+                tags=[],
+                domains=list(source.domains),
+                trust_score=0.72,
+                freshness_hint="live",
+                content=snippet,
+            ))
+            if len(records) >= 8:
+                break
+        return records
+
+    def _load_searxng(self, source: EvidenceSourceConfig, query: str) -> list[EvidenceRecord]:
+        """Optional no-key/own-instance SearXNG backend."""
+        if not source.url:
+            return []
+        base = source.url.rstrip("/")
+        url = f"{base}/search?" + parse.urlencode({"q": query, "format": "json", "language": "en"})
+        req = request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+        try:
+            with request.urlopen(req, timeout=source.timeout_seconds or 10) as response:
+                payload = json.loads(response.read().decode("utf-8", errors="replace"))
+        except Exception:
+            return []
+        rows = payload.get("results", []) if isinstance(payload, dict) else []
+        if not isinstance(rows, list):
+            return []
+        records: list[EvidenceRecord] = []
+        for idx, item in enumerate(rows[:8]):
+            if not isinstance(item, dict):
+                continue
+            title = str(item.get("title", "")).strip()
+            if not title:
+                continue
+            records.append(EvidenceRecord(
+                record_id=f"searxng-{idx}",
+                title=title,
+                summary=str(item.get("content", ""))[:500],
+                source_id=source.source_id,
+                source_type="searxng",
+                evidence_type="web_search",
+                url=str(item.get("url", "")),
+                tags=[],
+                domains=list(source.domains),
+                trust_score=0.74,
+                freshness_hint="live",
+                content=str(item.get("content", "")),
+            ))
+        return records
+
     def _load_live_search(self, source: EvidenceSourceConfig, query: str) -> list[EvidenceRecord]:
         """Use the live model API to generate relevant evidence via function calling."""
         import os
@@ -525,5 +715,14 @@ class EvidenceProviderRegistry:
         overlap = sum(1 for token in tokens if token in haystack)
         domain_bonus = sum(1 for item in target_domains if item in [domain.lower() for domain in record.domains]) * 0.5
         tag_bonus = sum(1 for item in target_tags if item in [tag.lower() for tag in record.tags]) * 0.4
-        score = min(5.0, overlap * 0.18 + domain_bonus + tag_bonus + record.trust_score * 0.45)
+        source_priority = {
+            "tavily": 0.35,
+            "searxng": 0.28,
+            "duckduckgo": 0.24,
+            "live_search": 0.18,
+            "http_json": 0.15,
+            "local_dossier": 0.12,
+            "static_catalog": 0.08,
+        }.get(record.source_type, 0.1)
+        score = min(5.0, overlap * 0.18 + domain_bonus + tag_bonus + record.trust_score * 0.45 + source_priority)
         return EvidenceRecord(**{**record.__dict__, "score": round(score, 4)})

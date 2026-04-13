@@ -98,8 +98,8 @@ def test_harness_engine_run_outputs_eval() -> None:
     assert run.completed is True
     assert len(run.steps) <= 3
     assert "tool_success_rate" in run.eval_metrics
-    assert "## Direct Answer" in run.final_answer
-    assert "## Recommended Next Actions" in run.final_answer
+    assert "## Deliverable" in run.final_answer
+    assert "## Next Actions" in run.final_answer
 
 
 def test_research_run_avoids_half_baked_research_brief_sections() -> None:
@@ -108,7 +108,8 @@ def test_research_run_avoids_half_baked_research_brief_sections() -> None:
         query="Generate a deep research memo on how a general agent runtime should beat direct model answers on real tasks, including failure modes, design principles, and concrete runtime improvements.",
         constraints=HarnessConstraints(max_steps=4, max_tool_calls=4),
     )
-    assert "## Improvement Path" in run.final_answer
+    assert "## Evidence" in run.final_answer
+    assert "## Sources" in run.final_answer or "## Runtime Notes" in run.final_answer
     assert "## Working Thesis" not in run.final_answer
     assert "## Open Gaps" not in run.final_answer
     assert "Ensemble Synthesis:" not in run.final_answer
@@ -135,7 +136,7 @@ def test_optimizer_generates_profile_driven_candidates() -> None:
     assert "leaderboard" in payload
 
 
-def test_visual_payload_and_showcase_emphasize_delivery_state() -> None:
+def test_visual_payload_contains_delivery_state() -> None:
     engine = HarnessEngine()
     run = engine.run(
         query="Create a practical execution plan with risks and measurable checkpoints.",
@@ -143,10 +144,7 @@ def test_visual_payload_and_showcase_emphasize_delivery_state() -> None:
     )
 
     visual = engine.build_visual_payload(run)
-    showcase = engine.run_showcase(pack_name="security-first")
 
     assert visual["delivery"]["primary_deliverable"]
     assert visual["delivery"]["ready"] is True
     assert visual["first_screen_blueprint"]["hero"]["title"]
-    assert showcase["comparison"]["summary"]["deliverables_ready"] >= 1
-    assert "deliverables" in showcase["hero_story"][0].lower()

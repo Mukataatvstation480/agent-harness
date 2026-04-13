@@ -1313,9 +1313,9 @@ def get_synergy_pairs() -> list[tuple[str, str, float]]:
 def _fallback_marketplace_skill(name: str, text: str) -> str:
     return (
         f"Marketplace Skill `{name}` Output:\n"
-        f"- Query interpreted: {text}\n"
-        "- Evidence: synthetic local execution (replace with real tool backend)\n"
-        "- Confidence: medium"
+        f"- Query: {text}\n"
+        "- This marketplace skill is discoverable but does not yet have a concrete runtime backend in this harness.\n"
+        "- Treat this as a capability placeholder and rely on built-in skills or external packages for real execution."
     )
 
 

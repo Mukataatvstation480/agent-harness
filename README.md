@@ -44,7 +44,7 @@ Depending on the task, the main deliverable can be:
 
 Supporting artifacts can include:
 
-- evidence bundles (live search + static references)
+- evidence bundles (Tavily > public web search > live_search > static catalog)
 - workspace findings
 - validation plans or execution traces
 - source matrices
@@ -70,6 +70,19 @@ The runtime is built around one short loop:
 4. execute a small task graph inside the thread workspace
 5. publish one primary deliverable plus reviewable evidence and follow-up artifacts
 
+## Evidence Pipeline
+
+The runtime now uses a multi-backend evidence stack with clear priority:
+
+1. **Tavily** (if `TAVILY_API_KEY` is set)
+2. **Public search** fallback:
+   - DuckDuckGo HTML search (no key)
+   - SearXNG (if `SEARXNG_BASE_URL` is set)
+3. **LLM-powered live_search** (uses the configured model to produce reference candidates)
+4. **Static catalog + local dossiers**
+
+Priority is enforced in scoring, so stronger backends win when multiple sources return relevant evidence.
+
 ## Live Agent Enhancement
 
 When a live model API is configured, the runtime adds a **4-stage reasoning chain**:
@@ -85,31 +98,32 @@ This chain means the final output has been through analysis, writing, review, an
 
 ## Demo Gallery
 
-All demos are generated with real API calls (GPT-4o via live agent). Each demo runs the full agent loop: planning, evidence collection, 4-stage live reasoning, and deliverable packaging.
+The current demo set compares three execution modes of the same runtime:
 
-### Research: Reducing LLM Hallucination
+### 1. Public Search Fallback (No Key Required)
 
-> "What are the top 3 most impactful techniques for reducing LLM hallucination in production systems?"
+> "Compare Redis, Valkey, and Memcached for low-latency caching in a high-traffic API."
 
-- [Full output](./docs/demo/research-hallucination.md)
-- 12 evidence records | 4 live agent calls | Value index 74.17
-- Covers: RAG, constrained decoding, fine-tuning with RLHF
+- [Full output](./docs/demo/public-search-fallback.md)
+- Uses DuckDuckGo / SearXNG fallback when no Tavily key is present
+- No live-agent chain, deterministic evidence-first synthesis only
+- Good baseline for no-key environments
 
-### Engineering: Rate Limiting Architecture
+### 2. Cheap Fallback Synthesis
 
-> "Design a rate limiting system for a high-traffic REST API. Include architecture, algorithms, and failure handling."
+> "Summarize the key risks of deploying LLMs in production and give 3 concrete mitigations."
 
-- [Full output](./docs/demo/engineering-ratelimit.md)
-- 6 evidence records | 4 live agent calls | Value index 75.37
-- Covers: Token Bucket vs Sliding Window, Redis vs DynamoDB state stores, circuit breakers, monitoring
+- [Full output](./docs/demo/cheap-fallback-synthesis.md)
+- Uses a single cheap-model synthesis pass when `live_model` is configured but full live-agent mode is off
+- Better than the old template-based fallback, but cheaper than the 4-stage chain
 
-### Analysis: Database Comparison for SaaS
+### 3. Full Live Agent
 
-> "Compare PostgreSQL, MongoDB, and DynamoDB for a multi-tenant SaaS app handling 10k req/s."
+> "Compare React, Vue, and Svelte for building a real-time dashboard."
 
-- [Full output](./docs/demo/analysis-database.md)
-- 6 evidence records | 4 live agent calls | Value index 78.04
-- Covers: comparison matrix, scaling trade-offs, concrete recommendation with justification
+- [Full output](./docs/demo/full-live-agent.md)
+- Uses the full 4-stage path: analysis -> synthesis -> critique -> revision
+- Highest quality path when a live model is configured
 
 ---
 
@@ -129,7 +143,14 @@ The live agent doesn't just generate -- it reviews its own output. Critique find
 
 ### 4. Real Evidence, Not Templates
 
-Evidence collection uses live search via the LLM API when configured, producing task-specific references instead of hardcoded static links. The evidence digest flows directly into synthesis and revision prompts.
+Evidence collection now prefers the strongest available backend in order:
+
+- Tavily (keyed, highest priority)
+- public web search fallback (DuckDuckGo / optional SearXNG)
+- LLM-powered live_search
+- static catalog + local dossiers
+
+The evidence digest flows directly into synthesis and revision prompts.
 
 ### 5. Thread + Workspace + Recovery
 
@@ -193,6 +214,10 @@ Or use environment variables:
 export AGENT_HARNESS_MODEL_BASE_URL=https://your-endpoint/v1
 export AGENT_HARNESS_MODEL_API_KEY=your_api_key
 export AGENT_HARNESS_MODEL_NAME=gpt-4o
+# Optional higher-quality real web search
+export TAVILY_API_KEY=your_tavily_key
+# Optional self-hosted public metasearch
+export SEARXNG_BASE_URL=http://localhost:8080
 python -m app.main harness-live "Write an evidence-backed research brief"
 ```
 
